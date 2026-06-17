@@ -6,7 +6,7 @@ The Web UI provides a browser-based interface for managing your camera.
 
 - **Live Preview** — Real-time video feed with low-latency preview
 - **PTZ Controls** — Hover over the preview to reveal pan/tilt controls. Double-click the center circle to reset position.
-- **Night Vision** — Hover over the bottom of the preview for night vision settings (day/night threshold, tolerance)
+- **Night Vision** — Day/night mode settings are in a configuration menu (not on the live preview)
 - **Settings** — Network, video, motion, OSD, and system configuration
 - **Tools** — MQTT, email, telegram, diagnostics, and more
 

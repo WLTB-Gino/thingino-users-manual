@@ -2,7 +2,7 @@
 
 ## SD Card
 
-SD cards are mounted automatically at `/mnt/mmc`. Format as FAT32, exFAT, or ext4.
+SD cards are mounted automatically at `/mnt/mmcblk0p1`. Format as FAT32, exFAT, or ext4.
 
 To trigger a diagnostics report via SD card, create a file named `.diag` in the root of a blank SD card and insert it into the running camera.
 

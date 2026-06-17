@@ -45,17 +45,13 @@ Set `media.gmp-gmpopenh264.enabled` to `true` in Firefox `about:config`.
 
 **Soft brick** (bootloader works): Place `autoupdate-full.bin` on a FAT32 SD card and reboot.
 
-**Hard brick** (bootloader broken): Use the [universal unbricker](https://unbricker.wltechblog.com/) to create a recovery SD card, then use the flash glitch method (short pins 5 & 6 on the flash chip during power-on).
+**Hard brick** (bootloader broken): Use the [universal unbricker](https://unbricker.wltechblog.com/) to create a recovery SD card, then use the flash glitch method (short pins 5 & 6 on the flash chip during power-on). **Note:** The universal unbricker does **not** work with Wyze devices.
 
 Unbricker video walkthrough: https://www.youtube.com/watch?v=qDzM3QEmY6Q
 
 ## Camera Sensor Identification
 
 Camera sensors **cannot** be identified visually. Check `/proc/device-info` or boot logs for the sensor model. GalaxyCore sensors (GC-prefixed) generally have better low-light performance.
-
-## Unsupported Camera Types
-
-**Solar and battery-powered cameras are NOT supported.** They use the Zeratul platform with a separate MCU that controls power — Thingino cannot keep the main SoC powered on.
 
 ---
 

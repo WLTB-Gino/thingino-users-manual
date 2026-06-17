@@ -14,6 +14,10 @@ Thingino is an open source firmware that replaces the stock firmware on IP camer
 
 Thingino is transitioning from **prudynt** to **Raptor**, its own fully open modular streaming system. Raptor is now the default streamer in the master branch.
 
+## Unsupported Camera Types
+
+**Solar and battery-powered cameras are NOT supported.** They use the Zeratul platform with a separate MCU that controls power — Thingino cannot keep the main SoC powered on.
+
 ## Community
 
 - **Telegram**: https://t.me/thingino

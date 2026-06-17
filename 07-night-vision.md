@@ -7,7 +7,7 @@ Thingino automatically switches between day (color) and night (IR) modes based o
 - **Day/Night Threshold** — Light level at which the camera switches modes
 - **Day/Night Tolerance** — Buffer to prevent frequent switching from minor light changes
 
-Both are adjustable from the Web UI (hover over the bottom of the live preview) or via `jct`.
+Both are adjustable from the Web UI configuration menu or via `jct`.
 
 ## IR-CUT Filter
 

@@ -47,11 +47,11 @@ Thingino works with most NVR/VMS software via ONVIF or direct RTSP:
 
 | Software | Method |
 |----------|--------|
-| **UniFi Protect** | ONVIF events (motion) |
-| **Frigate** | RTSP |
-| **Blue Iris** | RTSP |
-| **Synology Surveillance Station** | ONVIF or RTSP |
-| **iSpy / Agent DVR** | RTSP |
+| **UniFi Protect** | ONVIF |
+| **Frigate** | ONVIF |
+| **Blue Iris** | ONVIF |
+| **Synology Surveillance Station** | ONVIF |
+| **iSpy / Agent DVR** | ONVIF |
 
 ---
 

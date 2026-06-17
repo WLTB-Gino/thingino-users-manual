@@ -26,7 +26,9 @@ mpv rtsp://thingino:thingino@192.168.1.10:554/ch0 --profile=low-latency --no-cac
 
 ## WebRTC (Live View)
 
-WebRTC provides ultra-low-latency live view in the Web UI. The camera's streaming daemon handles WebRTC negotiation automatically.
+> **Note**: WebRTC is only available with **Raptor**, which is currently in development builds only. It is not available in release builds (which use prudynt) until Raptor becomes part of the release.
+
+When available, WebRTC provides ultra-low-latency live view in the Web UI. The camera's streaming daemon handles WebRTC negotiation automatically.
 
 > **Firefox note**: If you get a 400 Bad Request error, ensure `media.gmp-gmpopenh264.enabled` is set to `true` in Firefox's `about:config`. The camera only supports H.264 video.
 
