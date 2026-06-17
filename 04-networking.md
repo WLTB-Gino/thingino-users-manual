@@ -46,11 +46,12 @@ Simply plug in the adapter; it should be recognized automatically.
 
 ## VPNs
 
-Thingino supports several VPN solutions for remote access:
+Thingino supports VPN solutions for remote access:
 
 - **Wireguard** — Included by default in all releases
-- **ZeroTier** — See the [ZeroTier wiki page](https://github.com/themactep/thingino-firmware/wiki/VPN:-Zerotier)
-- **OpenVPN** — Available as a package
+- **ZeroTier** — Available in custom builds for cameras with 16MB flash. See the [ZeroTier wiki page](https://github.com/themactep/thingino-firmware/wiki/VPN:-Zerotier)
+
+> **Note:** OpenVPN is not tested or promoted. Use Wireguard for VPN access.
 
 ---
 
