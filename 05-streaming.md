@@ -64,11 +64,9 @@ convert logo-100x30-alpha.png -depth 8 bgra:logo.bgra
 Privacy mode blacks out all video streams (RTSP, recordings, JPEG) while keeping the ISP running:
 
 ```sh
-printf 'PRIVACY ch=0 value=on\n' > /run/prudynt/video_ctrl
-printf 'PRIVACY ch=0 value=off\n' > /run/prudynt/video_ctrl
+privacy on
+privacy off
 ```
-
-Use `ch=all` or omit `ch=` to toggle all streams.
 
 ## Encoder Rate Control
 
