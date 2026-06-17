@@ -2,13 +2,20 @@
 
 ## WiFi
 
-WiFi credentials are set during provisioning. To reconfigure:
+WiFi credentials are stored in `/etc/wpa_supplicant.conf` (not in JSON config). To reconfigure:
 
 ```sh
-jct /etc/thingino.json set wifi.ssid "YourNetwork"
-jct /etc/thingino.json set wifi.key "YourPassword"
-/etc/init.d/S36wireless restart
+# Non-interactively
+wlan configure "YourNetwork" "YourPassword"
+
+# Interactive wizard
+wlan setup
+
+# Remove stored credentials
+wlan reset
 ```
+
+A reboot is required after changing WiFi credentials.
 
 ### WiFi Disconnect Reason Codes
 
