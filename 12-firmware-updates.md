@@ -29,3 +29,8 @@ cat /etc/os-release
 ```
 
 Thingino releases are tagged as `firmware-YYYY-MM-DD` on GitHub.
+
+---
+
+← [Previous: System Configuration](11-system-config.md) | [Next: Troubleshooting](13-troubleshooting.md) →
+

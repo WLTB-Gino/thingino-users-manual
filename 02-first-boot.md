@@ -35,3 +35,8 @@ SSH (Dropbear) is available for command-line access:
 ```sh
 ssh root@hostname.local
 ```
+
+---
+
+← [Previous: Overview](01-overview.md) | [Next: Web UI](03-web-ui.md) →
+

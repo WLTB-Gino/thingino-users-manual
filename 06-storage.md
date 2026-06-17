@@ -24,3 +24,8 @@ Thingino uses OverlayFS to provide a writable layer over the read-only root file
 - **Upper layer** — Writable JFFS2 partition (`data.jffs2`)
 
 Changes to configuration files persist across reboots. The overlay partition is limited in size — use SD card or NFS for large files.
+
+---
+
+← [Previous: Streaming & Video](05-streaming.md) | [Next: Night Vision & Lighting](07-night-vision.md) →
+

@@ -38,3 +38,8 @@ IR LED beam angle should match the lens:
 ## White Light LEDs
 
 Some cameras include white light LEDs for full-color night vision. These can be controlled via the Web UI, `jct`, or Home Assistant.
+
+---
+
+← [Previous: Storage & Recording](06-storage.md) | [Next: Motion Detection & Alerts](08-motion-alerts.md) →
+

@@ -26,3 +26,8 @@
 ---
 
 *This manual is a living document. Submit corrections or suggestions via the [Thingino community](https://discord.gg/gFc9jR2eXV).*
+
+---
+
+← [Previous: Troubleshooting](13-troubleshooting.md)
+

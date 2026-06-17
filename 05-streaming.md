@@ -81,3 +81,8 @@ Advanced encoders support custom quantizer and bitrate limits via the streamer c
     "max_bitrate": 4200000
 }
 ```
+
+---
+
+← [Previous: Networking](04-networking.md) | [Next: Storage & Recording](06-storage.md) →
+

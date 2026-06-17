@@ -19,3 +19,8 @@ Thingino is transitioning from **prudynt** to **Raptor**, its own fully open mod
 - **Telegram**: https://t.me/thingino
 - **Discord**: https://discord.gg/gFc9jR2eXV
 - **Wiki**: https://github.com/themactep/thingino-firmware/wiki
+
+---
+
+[Next: First Boot & Initial Setup](02-first-boot.md) →
+

@@ -44,3 +44,8 @@ Thingino supports several VPN solutions for remote access:
 - **ZeroTier** — See the [ZeroTier wiki page](https://github.com/themactep/thingino-firmware/wiki/VPN:-Zerotier)
 - **Wireguard** — Available as a package
 - **OpenVPN** — Available as a package
+
+---
+
+← [Previous: Web UI](03-web-ui.md) | [Next: Streaming & Video](05-streaming.md) →
+

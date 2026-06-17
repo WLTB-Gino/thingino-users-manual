@@ -46,3 +46,8 @@ GPIO pins for SD card power and WiFi modules are configured in `/etc/thingino.js
 ## DHCP Timezone
 
 Thingino automatically receives timezone from DHCP Option 101 and NTP server from DHCP Option 42.
+
+---
+
+← [Previous: PTZ (Pan-Tilt-Zoom)](10-ptz.md) | [Next: Firmware Updates](12-firmware-updates.md) →
+

@@ -56,3 +56,8 @@ Camera sensors **cannot** be identified visually. Check `/proc/device-info` or b
 ## Unsupported Camera Types
 
 **Solar and battery-powered cameras are NOT supported.** They use the Zeratul platform with a separate MCU that controls power — Thingino cannot keep the main SoC powered on.
+
+---
+
+← [Previous: Firmware Updates](12-firmware-updates.md) | [Next: Glossary](14-glossary.md) →
+

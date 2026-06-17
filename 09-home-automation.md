@@ -52,3 +52,8 @@ Thingino works with most NVR/VMS software via ONVIF or direct RTSP:
 | **Blue Iris** | RTSP |
 | **Synology Surveillance Station** | ONVIF or RTSP |
 | **iSpy / Agent DVR** | RTSP |
+
+---
+
+← [Previous: Motion Detection & Alerts](08-motion-alerts.md) | [Next: PTZ (Pan-Tilt-Zoom)](10-ptz.md) →
+

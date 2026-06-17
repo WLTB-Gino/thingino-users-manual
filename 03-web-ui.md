@@ -13,3 +13,8 @@ The Web UI provides a browser-based interface for managing your camera.
 ## Configuration Editor
 
 Advanced settings are available through the Web UI's configuration editor, which directly edits `/etc/thingino.json`. You can also use the `jct` CLI tool from the shell.
+
+---
+
+← [Previous: First Boot & Initial Setup](02-first-boot.md) | [Next: Networking](04-networking.md) →
+

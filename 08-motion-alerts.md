@@ -21,3 +21,8 @@ When motion is detected, Thingino can send alerts via:
 | **XMPP** | `send2xmpp` | Send message via Jabber/XMPP |
 
 Enable via the Web UI under **Tools** or through `jct /etc/prudynt.json`.
+
+---
+
+← [Previous: Night Vision & Lighting](07-night-vision.md) | [Next: Home Automation & Integration](09-home-automation.md) →
+
