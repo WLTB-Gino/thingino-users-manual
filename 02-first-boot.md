@@ -23,7 +23,11 @@ Thingino syncs time via NTP. The NTP server and timezone can be configured autom
 
 To set timezone manually on the camera:
 ```sh
-jct /etc/thingino.json set timezone "America/New_York"
+# Set by name
+tzselect -n "America/New_York"
+
+# Or use interactive mode
+tzselect -i
 ```
 
 ## Shell Access
