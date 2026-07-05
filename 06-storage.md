@@ -2,7 +2,7 @@
 
 ## SD Card
 
-SD cards are mounted automatically at `/mnt/mmcblk0p1`. Format as FAT32, exFAT, or ext4.
+SD cards are mounted automatically at `/mnt/mmcblk0p1`. Format as FAT32 for best compatibility. Note that ext4 support is **not enabled by default** — it requires enabling `BR2_PACKAGE_THINGINO_KOPT_EXTFS` in the build config. exFAT may also require additional kernel options.
 
 To trigger a diagnostics report via SD card, create a file named `.diag` in the root of a blank SD card and insert it into the running camera.
 

@@ -2,7 +2,7 @@
 
 ## What is Thingino?
 
-Thingino is an open source firmware that replaces the stock firmware on IP cameras powered by Ingenic T-series SoCs (T10, T20, T21, T23, T30, T31). It provides a full-featured camera system with RTSP streaming, ONVIF support, motion detection, night vision, and home automation integration — without cloud dependencies or vendor lock-in.
+Thingino is an open source firmware that replaces the stock firmware on IP cameras powered by Ingenic T-series SoCs (T10, T20, T21, T23, T30, T31, T32, T33). It provides a full-featured camera system with RTSP streaming, ONVIF support, motion detection, night vision, and home automation integration — without cloud dependencies or vendor lock-in.
 
 ## Design Philosophy
 

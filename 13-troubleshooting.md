@@ -43,11 +43,21 @@ Set `media.gmp-gmpopenh264.enabled` to `true` in Firefox `about:config`.
 
 ## Unbricking
 
-**Soft brick** (bootloader works): Place `autoupdate-full.bin` on a FAT32 SD card and reboot.
+**Soft brick** (bootloader works): Place `autoupdate-full.bin` on a FAT32 SD card and reboot. Note: `autoupdate-full.bin` only works when Thingino is already installed. Use a 2GB–8GB SD card for best compatibility.
 
 **Hard brick** (bootloader broken): Use the [universal unbricker](https://unbricker.wltechblog.com/) to create a recovery SD card, then use the flash glitch method (short pins 5 & 6 on the flash chip during power-on). **Note:** The universal unbricker does **not** work with Wyze devices.
 
 Unbricker video walkthrough: https://www.youtube.com/watch?v=qDzM3QEmY6Q
+
+## Copying Files via SCP
+
+Thingino uses Dropbear SSH, which does **not** support the SFTP protocol. If you're using OpenSSH 9.0+, always use the `-O` flag:
+
+```sh
+scp -O file.txt root@hostname.local:/tmp/
+```
+
+Without `-O`, OpenSSH defaults to the SFTP protocol and the transfer will fail.
 
 ## Camera Sensor Identification
 

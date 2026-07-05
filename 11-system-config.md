@@ -15,13 +15,13 @@
 
 ```sh
 # Read a value
-jct /etc/thingino.json get wifi.ssid
+jct /etc/thingino.json get ha.enabled
 
 # Set a value
-jct /etc/thingino.json set wifi.ssid "MyNetwork"
+jct /etc/thingino.json set ha.enabled true
 
 # Delete a key
-jct /etc/thingino.json delete wifi.key
+jct /etc/thingino.json delete ha.enable_reboot
 ```
 
 ## GPIO Configuration
