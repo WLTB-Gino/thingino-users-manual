@@ -1,6 +1,6 @@
 # Thingino User's Manual
 
-<img src="https://raw.githubusercontent.com/themactep/thingino-firmware/master/docs/logos/thingino-logo-512px.png" width="120" alt="Thingino Logo" />
+<img src="thingino-logo.svg" width="120" alt="Thingino Logo" />
 
 > Open source firmware for IP cameras powered by Ingenic SoCs.
 
