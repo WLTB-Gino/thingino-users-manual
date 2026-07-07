@@ -52,6 +52,15 @@ Thingino supports customizable OSD overlays:
 - **Brightness indicator** — Shows current ISP gain
 - **Logo** — Custom BGRA image overlay
 
+### OSD Modes
+
+OSD can operate in two modes:
+
+- **Burned-in** (default) — Overlay is rendered directly into the video stream, visible in all clients
+- **Metadata (SEI)** — Overlay data is embedded as SEI metadata in the H.264 stream, not visible in the live video. Useful for recordings where you want clean video but still need timestamp/OSD info for post-processing
+
+When using SEI metadata mode, the `sei-overlay.py` script (in the firmware repo's `scripts/` directory) can extract the metadata from recorded MP4 files and burn it in later, or export it as ASS/SRT subtitles.
+
 ### Creating a logo
 
 Create a transparent PNG, then convert to BGRA:
