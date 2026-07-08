@@ -30,6 +30,19 @@ tzselect -n "America/New_York"
 tzselect -i
 ```
 
+## Factory Reset
+
+If you need to start over (e.g., wrong WiFi credentials, misconfigured settings), you can perform a factory reset:
+
+1. **Hold down the camera's button** (the same button used for provisioning)
+2. **Plug in power** while continuing to hold the button
+3. **Keep holding for 5 seconds** after power is applied, then release
+4. The camera will **erase all configuration data** and boot back into provisioning mode
+
+> ⚠️ **Important:** Do not interrupt the reset process or you may end up with a bricked camera. Let it complete fully.
+
+This is the fastest way to recover from incorrect WiFi credentials without needing to access the camera over the network.
+
 ## Shell Access
 
 SSH (Dropbear) is available for command-line access:
