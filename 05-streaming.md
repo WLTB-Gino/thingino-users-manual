@@ -26,7 +26,7 @@ mpv rtsp://thingino:thingino@192.168.1.10:554/ch0 --profile=low-latency --no-cac
 
 ## WebRTC (Live View)
 
-> **Note**: WebRTC is only available with **Raptor**, which is currently in development builds only. It is not available in release builds (which use prudynt) until Raptor becomes part of the release.
+> **Note**: WebRTC is only available with **Raptor**, which is currently in development builds only. It is **not available** in stable release builds (which use Prudynt).
 
 When available, WebRTC provides ultra-low-latency live view in the Web UI. The camera's streaming daemon handles WebRTC negotiation automatically.
 
@@ -45,23 +45,36 @@ ONVIF motion events work with UniFi Protect and other NVRs that support third-pa
 
 ## OSD (On-Screen Display)
 
-Thingino supports customizable OSD overlays:
+Thingino supports customizable OSD overlays with the following element types:
 
-- **Time/Date** — Display current time
-- **Custom Text** — User-defined text label
-- **Brightness indicator** — Shows current ISP gain
-- **Logo** — Custom BGRA image overlay
+- **Timestamp** — Display current date/time (strftime format)
+- **Hostname** — Camera hostname
+- **IP Address** — Camera's IP address
+- **Uptime** — Time since boot
+- **Gain** — ISP gain indicator
+- **Static Text** — User-defined text label
 
-### OSD Modes
+### How OSD Works on Stable (Prudynt)
 
-OSD can operate in two modes:
+On stable release builds, OSD data is **embedded as SEI metadata** within the H.264 stream — it is **not burned into the video pixels**. This means:
 
-- **Burned-in** (default) — Overlay is rendered directly into the video stream, visible in all clients
-- **Metadata (SEI)** — Overlay data is embedded as SEI metadata in the H.264 stream, not visible in the live video. Useful for recordings where you want clean video but still need timestamp/OSD info for post-processing
+- Standard RTSP players (VLC, Blue Iris, Frigate) **cannot display** the OSD overlay
+- Only the Thingino **Web UI dashboard** renders the OSD (as an SVG overlay on top of the video)
+- The OSD is not visible in recorded video clips
+- This design avoids performance issues on less powerful camera hardware
 
-When using SEI metadata mode, the `sei-overlay.py` script (in the firmware repo's `scripts/` directory) can extract the metadata from recorded MP4 files and burn it in later, or export it as ASS/SRT subtitles.
+### Restoring OSD in RTSP/Recordings
 
-### Creating a logo
+Two scripts are available on the firmware repo's `ciao` branch for post-processing:
+
+- **`sei-overlay.py`** — Extracts SEI metadata from recorded MP4 files and burns it into the video, or exports as ASS/SRT subtitles
+- **`sei-rtsp.py`** — Real-time tool that pulls a live RTSP stream, extracts SEI, and re-broadcasts with OSD burned in (via ffmpeg drawtext)
+
+### OSD Configuration
+
+OSD is configured per-stream in `/etc/prudynt.json` under `osd`. Each element has a type, format, and position. Position uses `x,y` format with negative values offset from the right/bottom edge. The Web UI has a dedicated OSD editor page at **Streamer → OSD**.
+
+### Creating a Logo
 
 Create a transparent PNG, then convert to BGRA:
 ```sh

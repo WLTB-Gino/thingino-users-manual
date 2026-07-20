@@ -4,6 +4,14 @@
 
 Motion detection is built into the camera using the SoC's hardware IVS (Intelligent Video System). Enable it from the Web UI under **Motion Guard**.
 
+Motion is configured in `/etc/prudynt.json` under the `motion` section. Key settings include:
+
+- **Sensitivity** — Motion detection sensitivity level
+- **ROI (Region of Interest)** — Define rectangular regions to monitor for motion
+- **Cooldown time** — Seconds to wait before allowing another motion trigger
+- **Video length** — Duration of recorded clips when motion is detected
+- **Monitor stream** — Which stream to monitor (0 = main, 1 = sub)
+
 ## Alert Methods
 
 When motion is detected, Thingino can send alerts via:

@@ -2,7 +2,10 @@
 
 ## Web UI
 
-Hover over the live preview to access PTZ controls. Double-click the center circle to return to home position.
+Hover over the live preview to access PTZ controls. Two control modes are available in **Settings → Pan/Tilt Motors → Behavior → Preview PTZ controls**:
+
+- **Step move** (default) — Click or double-click directional buttons to move in steps
+- **Continuous move** — Press and hold directional buttons for smooth continuous movement
 
 ## MQTT / Home Assistant
 

@@ -19,7 +19,9 @@
 | **OSD** | On-Screen Display |
 | **PTZ** | Pan-Tilt-Zoom |
 | **RTSP** | Real Time Streaming Protocol |
+| **SEI** | Supplemental Enhancement Information (H.264 metadata for OSD) |
 | **SoC** | System on a Chip |
+| **TIMPS** | Tiny IMP Streamer (lightweight alternative streamer for Ingenic SoCs) |
 | **OverlayFS** | Filesystem layering (read-only base + writable overlay) |
 | **U-Boot** | Universal Bootloader |
 

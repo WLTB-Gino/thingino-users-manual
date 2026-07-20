@@ -53,10 +53,21 @@ When enabled, cron entries are automatically generated for your location's sunri
 
 ### Threshold & Tolerance
 
-- **Day/Night Threshold** — Light level at which the camera switches modes
-- **Day/Night Tolerance** — Buffer to prevent frequent switching from minor light changes
+Day/night switching is now handled by **daynightd**, a dedicated daemon that uses EV log2 as the primary brightness metric (T31/T23/T21/T30) or gain log2 (T20). The thresholds are configurable:
 
-Both are adjustable from the Web UI configuration menu or via `jct`.
+- **Night threshold** — EV log2 value at which the camera switches to night mode (default: 550000)
+- **Day threshold** — EV log2 value at which the camera switches back to day mode (default: 350000)
+- **Brightness percentage thresholds** — Optional overrides (`night_threshold_pct`, `day_threshold_pct`) that use a 0–100 brightness metric instead of raw EV values
+
+The daemon also includes configurable sample counts (how many consecutive samples must exceed the threshold before switching) and a hysteresis factor to prevent flapping.
+
+Configure via `jct`:
+```sh
+jct /etc/thingino.json set daynight.ev_night_threshold 550000
+jct /etc/thingino.json set daynight.ev_day_threshold 350000
+```
+
+Day/night thresholds and behavior are also adjustable from the Web UI configuration page.
 
 ## IR-CUT Filter
 
