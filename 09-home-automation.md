@@ -1,10 +1,9 @@
-# 9. Home Automation & Integration
-
 ## Home Assistant
 
 Thingino has native Home Assistant integration via MQTT auto-discovery. No YAML required.
 
 **Setup:**
+
 ```sh
 jct /etc/thingino.json set ha.enabled true
 /etc/init.d/S93ha restart
@@ -29,6 +28,7 @@ jct /etc/thingino.json set ha.enabled true
 | PTZ | Buttons | Up/Down/Left/Right/Home |
 
 Disable individual entities:
+
 ```sh
 jct /etc/thingino.json set ha.enable_reboot false
 ```
@@ -37,7 +37,7 @@ All MQTT topics use the prefix `cameras/<mac_address>/`.
 
 ## MQTT
 
-Thingino includes `mosquitto_pub` and `mosquitto_sub` clients. Configure broker settings under **Services → MQTT Subscriptions** in the Web UI.
+Thingino includes `mosquitto_pub` and `mosquitto_sub` clients. Configure broker settings under **Services -> MQTT Subscriptions** in the Web UI.
 
 Motion publish script: `/usr/sbin/send2mqtt`
 
@@ -47,13 +47,12 @@ Thingino works with most NVR/VMS software via ONVIF or direct RTSP:
 
 | Software | Method |
 |----------|--------|
-| **UniFi Protect** | ONVIF |
-| **Frigate** | ONVIF |
-| **Blue Iris** | ONVIF |
-| **Synology Surveillance Station** | ONVIF |
-| **iSpy / Agent DVR** | ONVIF |
+| UniFi Protect | ONVIF |
+| Frigate | ONVIF |
+| Blue Iris | ONVIF |
+| Synology Surveillance Station | ONVIF |
+| iSpy / Agent DVR | ONVIF |
 
 ---
 
-← [Previous: Motion Detection & Alerts](08-motion-alerts.md) | [Next: PTZ (Pan-Tilt-Zoom)](10-ptz.md) →
-
+<- [Previous: Motion Detection and Alerts](08-motion-alerts.md) | [Next: PTZ (Pan-Tilt-Zoom)](10-ptz.md) ->

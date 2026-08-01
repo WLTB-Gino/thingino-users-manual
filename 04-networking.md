@@ -1,11 +1,9 @@
-# 4. Networking
-
 ## WiFi
 
-WiFi credentials are stored in `/etc/wpa_supplicant.conf` (not in JSON config). To reconfigure:
+WiFi credentials are stored in `/etc/wpa_supplicant.conf`, not in JSON config. To reconfigure:
 
 ```sh
-# Non-interactively
+# Non-interactively (positional args, no flags)
 wlan configure "YourNetwork" "YourPassword"
 
 # Interactive wizard
@@ -16,6 +14,17 @@ wlan reset
 ```
 
 A reboot is required after changing WiFi credentials.
+
+### Pre-configuring WiFi via SD Card
+
+Place a `runonce.sh` script on the SD card root:
+
+```sh
+#!/bin/sh
+wlan configure "YourNetwork" "YourPassword"
+```
+
+The camera runs it once on boot, then deletes it.
 
 ### WiFi Disconnect Reason Codes
 
@@ -32,28 +41,27 @@ Full reference: [WiFi Reason Codes](https://github.com/themactep/thingino-firmwa
 
 ## Ethernet (Wired)
 
-Wired Ethernet is plug-and-play on devices with an Ethernet port. The MAC address is automatically derived from the SoC serial number (via the `S03mac` init script on recent firmware).
+Wired Ethernet is plug-and-play on devices with an Ethernet port. The MAC address is automatically derived from the SoC serial number.
 
 ## USB Ethernet
 
 Thingino supports USB Ethernet adapters out of the box:
 
-- **ASIX AX88772** — Best compatibility (supported in both U-Boot and Linux)
-- **CDC-Ethernet** — Supported in Linux only
-- **CDC-NCM** — Modern adapters, higher throughput
+- **ASIX AX88772** -- Best compatibility (supported in both U-Boot and Linux)
+- **CDC-Ethernet** -- Supported in Linux only
+- **CDC-NCM** -- Modern adapters, higher throughput
 
-Simply plug in the adapter; it should be recognized automatically.
+Plug in the adapter and it should be recognized automatically.
 
 ## VPNs
 
 Thingino supports VPN solutions for remote access:
 
-- **Wireguard** — Included by default in all releases
-- **ZeroTier** — Available in custom builds for cameras with 16MB flash. See the [ZeroTier wiki page](https://github.com/themactep/thingino-firmware/wiki/VPN:-Zerotier)
+- **WireGuard** -- Included by default in all releases
+- **ZeroTier** -- Available in custom builds for cameras with 16MB flash. See the [ZeroTier wiki page](https://github.com/themactep/thingino-firmware/wiki/VPN:-Zerotier)
 
-> **Note:** OpenVPN is not tested or promoted. Use Wireguard for VPN access.
+> **Note:** OpenVPN is not tested or promoted. Use WireGuard for VPN access.
 
 ---
 
-← [Previous: Web UI](03-web-ui.md) | [Next: Streaming & Video](05-streaming.md) →
-
+<- [Previous: Web UI](03-web-ui.md) | [Next: Streaming and Video](05-streaming.md) ->

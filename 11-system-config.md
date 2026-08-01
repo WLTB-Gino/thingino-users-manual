@@ -1,5 +1,3 @@
-# 11. System Configuration
-
 ## Configuration Files
 
 | File | Purpose |
@@ -39,9 +37,9 @@ GPIO pins for SD card power and WiFi modules are configured in `/etc/thingino.js
 
 ## OverlayFS Layers
 
-- **`overlay/`** (build-time) — Replaces files in the read-only rootfs
-- **`user/common/overlay/`** — Writable partition, persists user changes
-- **`user/<camera>/overlay/`** — Camera-specific user overlay
+- **`overlay/`** (build-time) -- Replaces files in the read-only rootfs
+- **`user/common/overlay/`** -- Writable partition, persists user changes
+- **`user/<camera>/overlay/`** -- Camera-specific user overlay
 
 ## DHCP Timezone
 
@@ -49,5 +47,4 @@ Thingino automatically receives timezone from DHCP Option 101 and NTP server fro
 
 ---
 
-← [Previous: PTZ (Pan-Tilt-Zoom)](10-ptz.md) | [Next: Firmware Updates](12-firmware-updates.md) →
-
+<- [Previous: PTZ (Pan-Tilt-Zoom)](10-ptz.md) | [Next: Firmware Updates](12-firmware-updates.md) ->

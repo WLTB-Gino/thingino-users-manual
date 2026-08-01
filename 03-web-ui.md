@@ -1,24 +1,38 @@
-# 3. Web UI
+The Web UI gives you a browser-based interface for managing your camera. Open it at `http://hostname.local` or `http://<camera-ip>`.
 
-The Web UI provides a browser-based interface for managing your camera.
+## Live Preview
 
-## Key Features
+Real-time video feed with low-latency preview. Hover over the preview to reveal PTZ controls.
 
-- **Live Preview** — Real-time video feed with low-latency preview. On stable (Prudynt) builds, the OSD overlay is rendered as an SVG overlay in the Web UI only (not burned into video — see [Streaming & Video](05-streaming.md) for details).
-- **PTZ Controls** — Hover over the preview to reveal pan/tilt controls. Choose between "Step move" (click/double-click, default) or "Continuous move" (press and hold) via **Settings → Pan/Tilt Motors → Behavior → Preview PTZ controls**.
-- **Streamer** — OSD editor, main stream, sub-stream, image, and sensor configuration
-- **Settings** — Network, video, motion, OSD, and system configuration
-- **Tools** — MQTT, email, telegram, webhook, ntfy, gotify, FTP, storage, diagnostics, and more
+On stable (Prudynt) builds, the OSD overlay is rendered as an SVG overlay in the Web UI only -- it is not burned into video. See [Streaming and Video](05-streaming.md) for the full OSD story.
 
-## OSD Overlay in Web UI
+## PTZ Controls
 
-On stable builds using Prudynt, the Web UI renders the OSD as an SVG overlay on top of the live preview. This is the only place where OSD is visible — it is not embedded in RTSP streams or recordings. The OSD editor at **Streamer → OSD** lets you add, remove, and configure elements (timestamp, hostname, IP address, uptime, gain, static text).
+Two control modes are available under **Settings -> Pan/Tilt Motors -> Behavior -> Preview PTZ controls**:
 
-## Configuration Editor
+- **Step move** (default) -- Click or double-click directional buttons to move in steps
+- **Continuous move** -- Press and hold directional buttons for smooth continuous movement
 
-Advanced settings are available through the Web UI's configuration editor, which directly edits `/etc/thingino.json`. You can also use the `jct` CLI tool from the shell.
+## Streamer
+
+The Streamer section contains OSD editor, main stream, sub-stream, image, and sensor configuration.
+
+On stable builds using Prudynt, the Web UI talks directly to the streamer's API on port 8080 using an API key stored at `/etc/thingino-api.key`. If settings fail to load or save, the API key may be missing or the streamer may not be running.
+
+### OSD Editor
+
+The OSD editor at **Streamer -> OSD** lets you add, remove, and configure elements (timestamp, hostname, IP address, uptime, gain, static text, logo). Each element has position, font, color, and format settings.
+
+Recent ciao builds support both SEI metadata mode (default) and an optional **burn-in** mode that renders the OSD directly into video pixels, making it visible in RTSP players and recordings.
+
+## Settings
+
+Network, video, motion, OSD, and system configuration. Advanced settings are available through the configuration editor, which directly edits `/etc/thingino.json`. You can also use the `jct` CLI tool from the shell.
+
+## Tools
+
+MQTT, email, Telegram, webhook, ntfy, gotify, FTP, storage, diagnostics, and more.
 
 ---
 
-← [Previous: First Boot & Initial Setup](02-first-boot.md) | [Next: Networking](04-networking.md) →
-
+<- [Previous: First Boot & Initial Setup](02-first-boot.md) | [Next: Networking](04-networking.md) ->

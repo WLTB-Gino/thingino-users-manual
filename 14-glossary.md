@@ -1,5 +1,3 @@
-# 14. Glossary
-
 | Term | Definition |
 |------|------------|
 | **3A** | Auto Exposure, Auto White Balance, Auto Focus |
@@ -31,5 +29,4 @@
 
 ---
 
-← [Previous: Troubleshooting](13-troubleshooting.md)
-
+<- [Previous: Troubleshooting](13-troubleshooting.md)

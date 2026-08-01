@@ -1,48 +1,56 @@
-# 12. Firmware Updates
+## sysupgrade (OTA)
 
-## OTA (Over-the-Air)
+If your camera has internet access, the fastest way to update is `sysupgrade`. It downloads and flashes a full firmware image directly from GitHub.
 
-If your camera has internet access, firmware updates are available directly from GitHub.
-
-**Prerequisite:** OTA updates must be explicitly enabled first:
+**Full upgrade from GitHub:**
 
 ```sh
-fw_setenv enable_updates true
+sysupgrade -f
 ```
 
-Reboot the camera after enabling. Then update via:
+> **Warning:** `sysupgrade -f` performs a **full flash** -- it overwrites the data partition and **resets the U-Boot environment** (WiFi credentials, root password). You will need to reconfigure the camera after upgrading.
 
-1. Web UI → **System → Firmware Update**
-2. Or via Home Assistant firmware update entity
+**Flashing a local file:**
 
-## Manual Update via SD Card
+```sh
+sysupgrade /mnt/mmcblk0p1/autoupdate-full.bin
+```
 
-1. Download the firmware `.bin` for your camera from [thingino.com](https://thingino.com)
-2. Copy to a FAT32 SD card as `autoupdate-full.bin`
-3. Insert into the camera and reboot
+**Flashing from a URL:**
+
+```sh
+sysupgrade http://example.com/firmware.bin
+```
+
+Recent ciao builds add selective partition flashing and config backup/restore to sysupgrade, but a full upgrade still resets the environment.
+
+## SD Card Update
+
+The most reliable update method, especially for cameras with unreliable WiFi:
+
+1. Download the firmware `.bin` for your camera from [thingino.com](https://thingino.com) or build it with the [Image Builder](https://image-builder.thingino.com/)
+2. Copy it to a FAT32 SD card as `autoupdate-full.bin`
+3. Insert the SD card and reboot the camera
 4. The camera flashes automatically on boot
 
-> **Important:** The `autoupdate-full.bin` method only works when **Thingino is already installed** — it is processed by Thingino's U-Boot. It will not work on factory/stock firmware.
->
-> **SD card tip:** Use a 2GB–8GB SD card. Some 16GB and 32GB cards may not be recognized in U-Boot's 1-bit MMC mode, particularly on T23N cameras.
+> **Important:** The `autoupdate-full.bin` method only works when **Thingino is already installed** -- it is processed by Thingino's U-Boot. It will not work on factory/stock firmware.
 
-## What's Not Available
+> **SD card tip:** Use a 2GB--8GB card. Some 16GB and 32GB cards may not be recognized in U-Boot's 1-bit MMC mode, particularly on T23N cameras.
 
-- **Partial upgrades** (`sysupgrade -p`) have been removed — only full upgrades are supported
-- **WebUI Flash Operations** have been removed (temporarily, until upgrade-related issues are resolved)
-- **`sysupgrade`** may be unreliable due to GitHub CI build issues
+## Web UI OTA
 
-Use SD card with `autoupdate-full.bin` as the recommended upgrade method.
+The Web UI upgrade page (tool-upgrade) is **not available** in standard production builds. It only appears when developer packages are enabled at build time (`BR2_THINGINO_DEV_PACKAGES=y`). For normal users, use `sysupgrade` or the SD card method.
 
-## Checking Current Version
+## Checking Your Current Version
 
 ```sh
 cat /etc/os-release
 ```
 
-Thingino releases are tagged as `firmware-YYYY-MM-DD` on GitHub.
+## Can't Find OTA in the Web UI?
+
+OTA is not in the Tools menu for production builds. If you need to upgrade and do not have SSH access, use the SD card method above.
 
 ---
 
-← [Previous: System Configuration](11-system-config.md) | [Next: Troubleshooting](13-troubleshooting.md) →
-
+<- [Previous: System Configuration](11-system-config.md) | [Next: Troubleshooting](13-troubleshooting.md) ->

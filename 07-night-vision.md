@@ -1,12 +1,8 @@
-# 7. Night Vision & Lighting
-
 ## Day/Night Mode
 
-Thingino automatically switches between day (color) and night (IR) modes based on ambient light. The switching is handled by a unified `daynight` system that coordinates the IR-CUT filter, IR LEDs, white LEDs, and ISP color mode.
+Thingino automatically switches between day (color) and night (IR) modes based on ambient light. A dedicated **daynightd** daemon coordinates the IR-CUT filter, IR LEDs, white LEDs, and ISP color mode.
 
 ### Manual Control
-
-Use the `daynight` command to switch modes manually:
 
 ```sh
 daynight day     # Switch to day mode (IR-CUT in, IR LEDs off, color)
@@ -17,7 +13,7 @@ daynight status  # Show current mode
 
 ### Individual Component Commands
 
-Individual components can still be controlled directly:
+You can also control components individually:
 
 ```sh
 ircut on|off|toggle|status   # IR-CUT filter
@@ -51,17 +47,16 @@ jct /etc/thingino.json set daynight.sun.enabled true
 
 When enabled, cron entries are automatically generated for your location's sunrise and sunset times.
 
-### Threshold & Tolerance
+### Threshold and Tolerance
 
-Day/night switching is now handled by **daynightd**, a dedicated daemon that uses EV log2 as the primary brightness metric (T31/T23/T21/T30) or gain log2 (T20). The thresholds are configurable:
+The daynightd daemon uses EV log2 as the primary brightness metric (T31/T23/T21/T30) or gain log2 (T20). The thresholds are configurable:
 
-- **Night threshold** — EV log2 value at which the camera switches to night mode (default: 550000)
-- **Day threshold** — EV log2 value at which the camera switches back to day mode (default: 350000)
-- **Brightness percentage thresholds** — Optional overrides (`night_threshold_pct`, `day_threshold_pct`) that use a 0–100 brightness metric instead of raw EV values
+- **Night threshold** -- EV log2 value at which the camera switches to night mode (default: `550000`)
+- **Day threshold** -- EV log2 value at which the camera switches back to day mode (default: `350000`)
+- **Brightness percentage thresholds** -- Optional overrides (`night_threshold_pct`, `day_threshold_pct`) that use a 0--100 brightness metric instead of raw EV values
 
 The daemon also includes configurable sample counts (how many consecutive samples must exceed the threshold before switching) and a hysteresis factor to prevent flapping.
 
-Configure via `jct`:
 ```sh
 jct /etc/thingino.json set daynight.ev_night_threshold 550000
 jct /etc/thingino.json set daynight.ev_day_threshold 350000
@@ -77,20 +72,19 @@ The IR-CUT filter blocks infrared light during the day for accurate colors and r
 
 Most cameras have integrated IR LED arrays (850nm or 940nm). Some use an LDR (light-dependent resistor) to auto-switch LEDs independently of the camera.
 
-IR LED beam angle should match the lens:
+Match IR LED beam angle to your lens:
 
 | Lens | Beam Angle |
 |------|------------|
-| 8mm | 45° |
-| 6mm | 60° |
-| 4mm | 80° |
-| 3.6mm | 90° |
+| 8mm | 45 degrees |
+| 6mm | 60 degrees |
+| 4mm | 80 degrees |
+| 3.6mm | 90 degrees |
 
 ## White Light LEDs
 
-Some cameras include white light LEDs for full-color night vision. These can be controlled via the Web UI, `jct`, or Home Assistant.
+Some cameras include white light LEDs for full-color night vision. Control them via the Web UI, `jct`, or Home Assistant.
 
 ---
 
-← [Previous: Storage & Recording](06-storage.md) | [Next: Motion Detection & Alerts](08-motion-alerts.md) →
-
+<- [Previous: Storage and Recording](06-storage.md) | [Next: Motion Detection and Alerts](08-motion-alerts.md) ->

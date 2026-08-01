@@ -4,9 +4,9 @@
 
 > Open source firmware for IP cameras powered by Ingenic SoCs.
 
-Welcome to the community-maintained user's manual for [Thingino](https://github.com/themactep/thingino-firmware). This guide covers everything you need to use your Thingino-powered camera — from first boot to advanced configuration, home automation, and troubleshooting.
+Welcome to the community-maintained user's manual for [Thingino](https://github.com/themactep/thingino-firmware). This guide covers everything you need to use your Thingino-powered camera -- from first boot to advanced configuration, home automation, and troubleshooting.
 
-## 📖 Contents
+## Contents
 
 | # | Chapter | Description |
 |---|---------|-------------|
@@ -25,19 +25,21 @@ Welcome to the community-maintained user's manual for [Thingino](https://github.
 | 13 | [Troubleshooting](13-troubleshooting.md) | Diagnostics, common issues, unbricking |
 | 14 | [Glossary](14-glossary.md) | Terms and abbreviations |
 
-## 🎯 What is Thingino?
+## What is Thingino?
 
-Thingino replaces the stock firmware on IP cameras powered by Ingenic T-series SoCs (T10–T31). It provides a clean web UI, RTSP/WebRTC streaming, ONVIF support, motion detection, night vision, and home automation integration — **without cloud dependencies or vendor lock-in**.
+Thingino replaces the stock firmware on IP cameras powered by Ingenic T-series SoCs (T10--T31). It provides a clean web UI, RTSP/WebRTC streaming, ONVIF support, motion detection, night vision, and home automation integration -- without cloud dependencies or vendor lock-in.
 
-## 🔗 Useful Links
+## Useful Links
 
-- **[Thingino Firmware Repo](https://github.com/themactep/thingino-firmware)**
-- **[Wiki](https://github.com/themactep/thingino-firmware/wiki)**
-- **[Telegram](https://t.me/thingino)** · **[Discord](https://discord.gg/gFc9jR2eXV)**
-- **[WLTechBlog YouTube](https://www.youtube.com/@wltechblog)** — setup guides & reviews
-- **[Universal Unbricker](https://unbricker.wltechblog.com/)**
+- [Thingino Firmware Repo](https://github.com/themactep/thingino-firmware)
+- [Wiki](https://github.com/themactep/thingino-firmware/wiki)
+- [Telegram](https://t.me/thingino) / [Discord](https://discord.gg/gFc9jR2eXV)
+- [WLTechBlog YouTube](https://www.youtube.com/@wltechblog) -- setup guides and reviews
+- [Universal Unbricker](https://unbricker.wltechblog.com/)
+- [Image Builder](https://image-builder.thingino.com/) -- build firmware in your browser
+- [Scriba Web Flasher](https://scriba.thingino.com/) -- flash with a CH341A, no drivers needed
 
-## 📌 About This Manual
+## About This Manual
 
 This manual is validated against actual source code where possible and reflects the **ciao** (stable user release) branch. Development builds (master) may differ.
 
