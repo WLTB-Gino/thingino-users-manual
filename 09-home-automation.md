@@ -33,7 +33,9 @@ Disable individual entities:
 jct /etc/thingino.json set ha.enable_reboot false
 ```
 
-All MQTT topics use the prefix `cameras/<mac_address>/`.
+All MQTT topics use the prefix `cameras/<hostname>/`. Recent builds use the camera **hostname** as its identity (instead of MAC address or SoC serial), making it easier to identify cameras in your HA dashboard.
+
+The HA integration also auto-discovers the camera's **sensor model** and **device model** from `/etc/os-release`, so the correct hardware name appears in HA automatically.
 
 ## MQTT
 

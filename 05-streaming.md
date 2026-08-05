@@ -88,6 +88,41 @@ Create a transparent PNG, then convert to BGRA:
 convert logo-100x30-alpha.png -depth 8 bgra:logo.bgra
 ```
 
+## TIMPS (Alternative Streamer)
+
+TIMPS (Tiny IMP Streamer) is a lightweight streamer available as an alternative to Prudynt/Raptor. When using TIMPS, these features are available:
+
+### Live Control API
+
+TIMPS exposes a live control API at `http://<camera-ip>:8880/control` (GET to read, POST to change):
+
+- Adjust bitrate, FPS, GOP, and resolution on the fly
+- Toggle audio, backchannel, privacy mode
+- Control motion sensitivity in real time (IMP_IVS)
+- Take snapshots
+
+Example -- change main stream bitrate:
+
+```sh
+curl -X POST http://192.168.1.10:8880/control -d '{"stream0.bitrate": 2000000}'
+```
+
+### Day/Night Detection
+
+TIMPS has built-in adaptive day/night detection with configurable boot-settle period and periodic night reconfirmation. This prevents false day/night flapping from temporary light changes.
+
+### Optional Opus Audio
+
+TIMPS can optionally stream audio using the Opus codec in addition to AAC.
+
+### SSE Events
+
+Server-Sent Events at `/events` provide real-time push notifications for motion, day/night changes, and other events.
+
+### Browser Preview
+
+TIMPS includes a built-in browser preview at `http://<camera-ip>:8880/` with snapshot, MJPEG, and MP4 streaming options.
+
 ## Video Privacy Mode
 
 Privacy mode blacks out all video streams (RTSP, recordings, JPEG) while keeping the ISP running:

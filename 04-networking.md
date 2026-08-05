@@ -53,6 +53,10 @@ Thingino supports USB Ethernet adapters out of the box:
 
 Plug in the adapter and it should be recognized automatically.
 
+## SNMP
+
+Thingino includes an optional **thingino-snmpd** package (mini-snmpd 2.0) for SNMP monitoring. When enabled at build time, it provides a WebUI plugin for configuration and exposes system metrics to SNMP managers.
+
 ## VPNs
 
 Thingino supports VPN solutions for remote access:

@@ -24,6 +24,8 @@ sysupgrade http://example.com/firmware.bin
 
 Recent ciao builds add selective partition flashing and config backup/restore to sysupgrade, but a full upgrade still resets the environment.
 
+Recent builds also improve sysupgrade reliability: it now takes over the watchdog (instead of just disarming it) to ensure the camera reboots cleanly after flashing, and suppresses noisy `dd` stderr output during the flash process for cleaner logs.
+
 ## SD Card Update
 
 The most reliable update method, especially for cameras with unreliable WiFi:

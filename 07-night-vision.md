@@ -68,6 +68,16 @@ Day/night thresholds and behavior are also adjustable from the Web UI configurat
 
 The IR-CUT filter blocks infrared light during the day for accurate colors and removes it at night to allow IR illumination. GPIO pins are configured under `gpio.ircut` in `/etc/thingino.json`.
 
+### IRCUT Pulse Duration
+
+Recent builds add a configurable `pulse_ms` option for the IR-CUT filter actuation pulse. This controls how long the GPIO pulse lasts when switching the filter. If your camera's IR-CUT filter is unreliable or switches too slowly/fast, adjust this:
+
+```sh
+jct /etc/thingino.json set gpio.pulse_ms 10
+```
+
+This is available on both master (Raptor) and ciao (Prudynt) branches.
+
 ## IR LEDs
 
 Most cameras have integrated IR LED arrays (850nm or 940nm). Some use an LDR (light-dependent resistor) to auto-switch LEDs independently of the camera.
