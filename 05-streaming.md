@@ -46,6 +46,8 @@ Thingino provides ONVIF Profile S compliance, enabling compatibility with NVRs, 
 
 ONVIF motion events work with UniFi Protect and other NVRs that support third-party ONVIF cameras.
 
+Recent builds fix a crash in ONVIF `GetProfiles` when audio output is disabled -- some NVRs would fail to add the camera if it reported audio capabilities it could not deliver.
+
 ## OSD (On-Screen Display)
 
 Thingino supports customizable OSD overlays with the following element types:
@@ -110,6 +112,10 @@ curl -X POST http://192.168.1.10:8880/control -d '{"stream0.bitrate": 2000000}'
 ### Day/Night Detection
 
 TIMPS has built-in adaptive day/night detection with configurable boot-settle period and periodic night reconfirmation. This prevents false day/night flapping from temporary light changes.
+
+### Data Race Hardening (v1.7.8)
+
+TIMPS v1.7.8 adds C11 data race protections on live-mutable config. If you adjust stream parameters via the control API while streaming, changes are now atomic and cannot corrupt internal state.
 
 ### Optional Opus Audio
 

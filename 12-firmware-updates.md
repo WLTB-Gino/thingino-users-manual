@@ -22,6 +22,8 @@ sysupgrade /mnt/mmcblk0p1/autoupdate-full.bin
 sysupgrade http://example.com/firmware.bin
 ```
 
+On the ciao (stable) branch, `sysupgrade -f` now pulls from the ciao branch directly, so you stay on stable when updating.
+
 Recent ciao builds add selective partition flashing and config backup/restore to sysupgrade, but a full upgrade still resets the environment.
 
 Recent builds also improve sysupgrade reliability: it now takes over the watchdog (instead of just disarming it) to ensure the camera reboots cleanly after flashing, and suppresses noisy `dd` stderr output during the flash process for cleaner logs.

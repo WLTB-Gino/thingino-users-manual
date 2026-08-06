@@ -51,7 +51,7 @@ When enabled, cron entries are automatically generated for your location's sunri
 
 The daynightd daemon uses EV log2 as the primary brightness metric (T31/T23/T21/T30) or gain log2 (T20). The thresholds are configurable:
 
-- **Night threshold** -- EV log2 value at which the camera switches to night mode (default: `550000`)
+- **Night threshold** -- EV log2 value at which the camera switches to night mode (default: `550000`). The percentage-based `night_threshold` default was raised from 20 to 25 in recent ciao builds for less flapping at dusk.
 - **Day threshold** -- EV log2 value at which the camera switches back to day mode (default: `350000`)
 - **Brightness percentage thresholds** -- Optional overrides (`night_threshold_pct`, `day_threshold_pct`) that use a 0--100 brightness metric instead of raw EV values
 
@@ -63,6 +63,10 @@ jct /etc/thingino.json set daynight.ev_day_threshold 350000
 ```
 
 Day/night thresholds and behavior are also adjustable from the Web UI configuration page.
+
+### Night-Mode FPS Reduction
+
+On ciao (Prudynt) builds, night-mode FPS halving is now handled directly by Prudynt rather than a separate script. This produces smoother transitions and avoids brief stream interruptions when switching modes.
 
 ## IR-CUT Filter
 

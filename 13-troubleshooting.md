@@ -22,6 +22,8 @@ thingino-diag -f
 thingino-diag -o -
 ```
 
+Recent builds redact your WiFi SSID and encryption key from diagnostics output for privacy. This means your credentials are safe to share when posting diagnostics in support channels.
+
 Or via SD card: create a `.diag` file on a blank SD card and insert it into the running camera.
 
 ## No Image / Wrong Sensor

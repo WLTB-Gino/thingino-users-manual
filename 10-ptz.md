@@ -21,6 +21,16 @@ PTZ motor configuration lives in `/etc/thingino.json` under the `motors` key. Al
 
 VCM (Voice Coil Motor) focus control uses the `dw9714-ctrl` script.
 
+### Motor Direction Inversion
+
+Recent builds fix a long-standing bug where `invert_x` and `invert_y` in `/etc/thingino.json` were silently ignored. If your camera's pan or tilt moved the wrong direction, these settings now work correctly:
+
+```sh
+jct /etc/thingino.json set motors.invert_y true
+```
+
+A double-inversion issue that caused position counter overshoot (blocking all further movement in that axis) has also been fixed.
+
 ---
 
 <- [Previous: Home Automation and Integration](09-home-automation.md) | [Next: System Configuration](11-system-config.md) ->
