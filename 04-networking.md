@@ -53,6 +53,17 @@ Thingino supports USB Ethernet adapters out of the box:
 
 Plug in the adapter and it should be recognized automatically.
 
+## mDNS / Bonjour Discovery
+
+Thingino cameras advertise themselves on the local network via mDNS (Bonjour/Avahi). The service type is `_thingino._tcp`, broadcast on the camera's HTTP port.
+
+This means you can discover cameras without knowing their IP address:
+- **Linux**: `avahi-browse -rt _thingino._tcp`
+- **macOS**: Use Bonjour Browser or Safari's Bonjour bookmarks
+- **Home Assistant**: mDNS devices appear automatically in discovery
+
+The camera's hostname (e.g., `ing-t31x-1234.local`) is also resolvable via mDNS.
+
 ## SNMP
 
 Thingino includes an optional **thingino-snmpd** package (mini-snmpd 2.0) for SNMP monitoring. When enabled at build time, it provides a WebUI plugin for configuration and exposes system metrics to SNMP managers.

@@ -24,6 +24,14 @@ Thingino currently runs on **Ingenic** T-series SoCs (T10, T20, T21, T23, T30, T
 
 Thingino includes an optional **thingino-snmpd** package (mini-snmpd 2.0) for network monitoring via SNMP. When enabled, it integrates with the Web UI as a plugin and exposes camera system metrics to SNMP managers like PRTG, Zabbix, or LibreNMS.
 
+## Recently Added Cameras
+
+- **Wyze Floodlight V2** (T41NQ) -- ciao branch
+- **Hugolog E5P** (T41LQ) -- ciao branch
+- **Kiwibit BC111** (T23ZN) -- ciao branch
+
+Check [thingino.com](https://thingino.com) for the full list of supported cameras.
+
 ## Unsupported Camera Types
 
 **Solar and battery-powered cameras are not supported.** They use the Zeratul platform with a separate MCU that controls power -- Thingino cannot keep the main SoC powered on.
