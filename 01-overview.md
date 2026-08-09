@@ -26,9 +26,11 @@ Thingino includes an optional **thingino-snmpd** package (mini-snmpd 2.0) for ne
 
 ## Recently Added Cameras
 
+- **Wyze Cam Pan V1** (JXF23 sensor + RTL8189FTV WiFi variant) -- master and ciao
 - **Wyze Floodlight V2** (T41NQ) -- ciao branch
 - **Hugolog E5P** (T41LQ) -- ciao branch
 - **Kiwibit BC111** (T23ZN) -- ciao branch
+- **Cinnado B6** (T23ZN) -- ciao branch
 
 Check [thingino.com](https://thingino.com) for the full list of supported cameras.
 

@@ -25,13 +25,29 @@ The OSD editor at **Streamer -> OSD** lets you add, remove, and configure elemen
 
 Recent ciao builds support both SEI metadata mode (default) and an optional **burn-in** mode that renders the OSD directly into video pixels, making it visible in RTSP players and recordings.
 
+## Web UI Plugin Architecture
+
+Thingino's Web UI uses a modular plugin system. Optional packages ship their own configuration pages as plugins that are automatically integrated into the navigation menu at build time. If a package is not installed, its Web UI pages simply don't appear -- no stale menus or dead links.
+
+Currently migrated to the plugin system:
+- **Motors** (PTZ configuration)
+- **Day/Night** (IR-CUT, IR LEDs, scheduling)
+- **GPIO** (pin configuration)
+- **MQTT** (broker subscriptions)
+- **Telegram Bot** (notification configuration)
+- **WireGuard** (VPN setup)
+- **ZeroTier** (network overlay)
+- **Privacy** (privacy mask configuration)
+- **SNMP** (monitoring)
+- **Doorbell** (chime and button configuration)
+
 ## Settings
 
 Network, video, motion, OSD, and system configuration. Advanced settings are available through the configuration editor, which directly edits `/etc/thingino.json`. You can also use the `jct` CLI tool from the shell.
 
 ## Tools
 
-MQTT, email, Telegram, webhook, ntfy, gotify, FTP, storage, diagnostics, and more.
+Email, webhook, ntfy, gotify, FTP, storage, diagnostics, and more. (MQTT, Telegram, and VPN tools have migrated to the plugin-based Settings pages.)
 
 ---
 
