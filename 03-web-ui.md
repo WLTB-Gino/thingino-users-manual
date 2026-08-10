@@ -47,7 +47,7 @@ Network, video, motion, OSD, and system configuration. Advanced settings are ava
 
 ## Tools
 
-Email, webhook, ntfy, gotify, FTP, storage, diagnostics, and more. (MQTT, Telegram, and VPN tools have migrated to the plugin-based Settings pages.)
+Email, webhook, ntfy, gotify, FTP, storage, diagnostics, and more. Speaker configuration is available under **Motion Guard** when a speaker is present. (MQTT, Telegram, and VPN tools have migrated to the plugin-based Settings pages.)
 
 ---
 

@@ -25,8 +25,20 @@ When motion is detected, Thingino can send alerts via:
 | FTP | `send2ftp` | Upload snapshots/clips to an FTP server |
 | Storage | `send2storage` | Save recordings to SD card or NFS |
 | XMPP | `send2xmpp` | Send message via Jabber/XMPP |
+| Speaker | `playonspeaker` | Play an audio alert through the camera's speaker |
 
 Enable via the Web UI under **Tools** or through `jct /etc/prudynt.json`.
+
+## Audio Alerts (Speaker)
+
+Cameras with a built-in speaker can play audio alerts when motion is detected. Configure this from the Web UI under **Motion Guard**:
+
+- **Speaker file** -- Audio file to play (must be Opus format on 8 MB flash cameras; MP3 requires 16 MB+ flash)
+- **Volume** -- Speaker volume (0--120)
+- **Gain** -- Audio gain (0--31)
+- **Repeat** -- Number of times to play (0 = forever)
+
+The speaker settings share a save button with motion detection settings in recent builds. Use the **Test** button to preview the sound without triggering motion.
 
 ---
 
