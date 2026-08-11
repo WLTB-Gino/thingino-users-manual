@@ -35,6 +35,10 @@ GPIO pins for SD card power and WiFi modules are configured in `/etc/thingino.js
 }
 ```
 
+Changes to configuration files persist across reboots. The overlay partition is limited in size -- use SD card or NFS for large files.
+
+Recent builds display overlay usage statistics in the SSH shell banner, so you can see at a glance how much overlay space is consumed.
+
 ## OverlayFS Layers
 
 - **`overlay/`** (build-time) -- Replaces files in the read-only rootfs

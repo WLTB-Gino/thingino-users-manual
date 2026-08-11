@@ -71,6 +71,15 @@ On stable release builds, OSD data is **embedded as SEI metadata** within the H.
 
 Recent ciao builds add an optional **burn-in** mode (`BR2_PACKAGE_PRUDYNT_T_OSD_BURNIN`) that renders OSD directly into video pixels at build time. This makes OSD visible in all RTSP players and recordings.
 
+### Prudynt Reliability Improvements
+
+Recent Prudynt updates (b8d94db) include:
+
+- **UDP burst handling** -- Initial frame bursts are now paced to prevent jitter buffer overflow in RTSP clients
+- **RTCP SR reliability** -- Sender reports use a fresh clock sample for accurate NTP-to-RTP timestamp pairing
+- **JPEG encoder FPS** -- Uses configured FPS instead of a hardcoded 24 fps
+- **Shutdown stability** -- Prevents hang in video/JPEG worker threads during shutdown
+
 ### Restoring OSD in RTSP and Recordings (SEI Mode)
 
 Two scripts on the firmware repo's `ciao` branch handle post-processing:
