@@ -30,6 +30,8 @@ Recent ciao builds add selective partition flashing and config backup/restore to
 
 Recent builds also improve sysupgrade reliability: it now takes over the watchdog (instead of just disarming it) to ensure the camera reboots cleanly after flashing, and suppresses noisy `dd` stderr output during the flash process for cleaner logs.
 
+Recent ciao builds fix a segfault in sysupgrade that occurred when flashing the data partition after the rootfs during a full upgrade. The U-Boot autoupdate-full.bin SD card flashing path also received a reliability fix.
+
 ## SD Card Update
 
 The most reliable update method, especially for cameras with unreliable WiFi:

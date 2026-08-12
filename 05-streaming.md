@@ -122,6 +122,8 @@ curl -X POST http://192.168.1.10:8880/control -d '{"stream0.bitrate": 2000000}'
 
 TIMPS has built-in adaptive day/night detection with configurable boot-settle period and periodic night reconfirmation. This prevents false day/night flapping from temporary light changes.
 
+Recent TIMPS releases (v1.8.x) fix three compounding defects that caused a perpetual day/night flip loop, route the adaptive night-to-day transition through the brightening probe only (preventing oscillation), and warn on persistent running mode divergence. The GOP setting on new-API SoCs (T23+) is also fixed -- it was running at double the configured value.
+
 ### Data Race Hardening (v1.7.8)
 
 TIMPS v1.7.8 adds C11 data race protections on live-mutable config. If you adjust stream parameters via the control API while streaming, changes are now atomic and cannot corrupt internal state.
