@@ -79,6 +79,7 @@ Recent Prudynt updates (b8d94db) include:
 - **RTCP SR reliability** -- Sender reports use a fresh clock sample for accurate NTP-to-RTP timestamp pairing
 - **JPEG encoder FPS** -- Uses configured FPS instead of a hardcoded 24 fps
 - **Shutdown stability** -- Prevents hang in video/JPEG worker threads during shutdown
+- **RTSP audio-only fix** -- Audio-only RTSP sessions no longer crash or hang (Prudynt 6afc440)
 
 ### Restoring OSD in RTSP and Recordings (SEI Mode)
 
@@ -122,7 +123,7 @@ curl -X POST http://192.168.1.10:8880/control -d '{"stream0.bitrate": 2000000}'
 
 TIMPS has built-in adaptive day/night detection with configurable boot-settle period and periodic night reconfirmation. This prevents false day/night flapping from temporary light changes.
 
-Recent TIMPS releases (v1.8.x) fix three compounding defects that caused a perpetual day/night flip loop, route the adaptive night-to-day transition through the brightening probe only (preventing oscillation), and warn on persistent running mode divergence. The GOP setting on new-API SoCs (T23+) is also fixed -- it was running at double the configured value.
+Recent TIMPS releases (v1.8.x) fix three compounding defects that caused a perpetual day/night flip loop, route the adaptive night-to-day transition through the brightening probe only (preventing oscillation), and warn on persistent running mode divergence. The GOP setting on new-API SoCs (T23+) is also fixed -- it was running at double the configured value. Additional fixes halve the sustained-brightening confirm period (60s to 30s) for faster day recovery, close an ambiguous-probe loophole that could cause a spurious day trigger, and guard the periodic reconfirm against baseline drift.
 
 ### Data Race Hardening (v1.7.8)
 
