@@ -28,6 +28,7 @@ Thingino includes an optional **thingino-snmpd** package (mini-snmpd 2.0) for ne
 
 ## Recently Added Cameras
 
+- **Vanhua S62I** (T40XP, SPI-NAND, IMX307, Ethernet) -- master and ciao (experimental)
 - **Wyze Cam Pan V1** (JXF23 sensor + RTL8189FTV WiFi variant) -- master and ciao
 - **Wyze Floodlight V2** (T41NQ) -- ciao branch
 - **Hugolog E5P** (T41LQ) -- ciao branch

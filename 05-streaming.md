@@ -141,6 +141,10 @@ Server-Sent Events at `/events` provide real-time push notifications for motion,
 
 TIMPS includes a built-in browser preview at `http://<camera-ip>:8880/` with snapshot, MJPEG, and MP4 streaming options.
 
+## UDP Push (Raptor)
+
+Raptor's RSP can push ring video to a raw UDP target (`udp://host:port` in the `[rsp]` section of `/etc/raptor.conf`). This sends RTP datagrams with no session or handshake -- ideal for WFB-NG and similar video links. SPS/PPS are sent in-band on every keyframe, and the sender waits for a keyframe before starting. Video only (audio still requires RTMP). Changing the scheme requires a restart.
+
 ## Video Privacy Mode
 
 Privacy mode blacks out all video streams (RTSP, recordings, JPEG) while keeping the ISP running:

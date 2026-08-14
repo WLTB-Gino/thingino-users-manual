@@ -43,6 +43,18 @@ Full reference: [WiFi Reason Codes](https://github.com/themactep/thingino-firmwa
 
 Wired Ethernet is plug-and-play on devices with an Ethernet port. The MAC address is automatically derived from the SoC serial number.
 
+## Time and Timezone
+
+Recent ciao builds introduce **timectl**, the single entry point for clock, timezone, and NTP configuration:
+
+```sh
+timectl set-timezone "Europe/Berlin"
+timectl pin-timezone        # disable automatic timezone from DHCP
+timectl unpin-timezone      # re-enable automatic timezone
+```
+
+All time-related paths (Web UI, WiFi portal, `tzselect`, and the DHCP client scripts) now route through `timectl`. The old `dhcp.ignore_timezone` setting is migrated automatically. Docs: `docs/timezone.md` in the firmware repo.
+
 ## USB Ethernet
 
 Thingino supports USB Ethernet adapters out of the box:
