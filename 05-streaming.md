@@ -71,6 +71,17 @@ On stable release builds, OSD data is **embedded as SEI metadata** within the H.
 
 Recent ciao builds add an optional **burn-in** mode (`BR2_PACKAGE_PRUDYNT_T_OSD_BURNIN`) that renders OSD directly into video pixels at build time. This makes OSD visible in all RTSP players and recordings.
 
+### Sub-Stream OSD Burn-In Control
+
+With Prudynt 0881124 (now in ciao), you can keep OSD burned into the main stream while disabling the burned-in timestamp on the sub-stream:
+
+```sh
+jct /etc/prudynt.json set osd.burnin.substream_disabled true
+service restart prudynt
+```
+
+This is a config-only flag -- the Web UI SVG overlay (SEI) continues to work on all streams regardless.
+
 ### Prudynt Reliability Improvements
 
 Recent Prudynt updates (b8d94db) include:
