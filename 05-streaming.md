@@ -89,6 +89,7 @@ Recent Prudynt updates (b8d94db) include:
 - **UDP burst handling** -- Initial frame bursts are now paced to prevent jitter buffer overflow in RTSP clients
 - **RTCP SR reliability** -- Sender reports use a fresh clock sample for accurate NTP-to-RTP timestamp pairing
 - **JPEG encoder FPS** -- Uses configured FPS instead of a hardcoded 24 fps
+- **Night FPS** (Raptor, master) -- `night_fps` knob in the stream config lowers the frame rate in night mode to save bandwidth and reduce noise (e.g. `jct /etc/raptor.conf set stream0.night_fps 10`)
 - **Shutdown stability** -- Prevents hang in video/JPEG worker threads during shutdown
 - **RTSP audio-only fix** -- Audio-only RTSP sessions no longer crash or hang (Prudynt 6afc440)
 
