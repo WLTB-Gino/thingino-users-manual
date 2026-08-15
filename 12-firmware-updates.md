@@ -32,6 +32,8 @@ Recent builds also improve sysupgrade reliability: it now takes over the watchdo
 
 Recent ciao builds fix a segfault in sysupgrade that occurred when flashing the data partition after the rootfs during a full upgrade. The U-Boot autoupdate-full.bin SD card flashing path also received a reliability fix.
 
+Another ciao fix prevents partition corruption on **old flash layouts**: the 'upgrade' partition is a virtual partition that overlaps kernel/rootfs/extras, and the full-flash loop used to erase and re-flash over the partitions it had just written. The virtual partition is now skipped, matching the other layout calculations.
+
 ## SD Card Update
 
 The most reliable update method, especially for cameras with unreliable WiFi:
