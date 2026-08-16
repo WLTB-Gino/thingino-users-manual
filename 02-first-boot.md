@@ -13,6 +13,8 @@ wlan configure "YourNetwork" "YourPassword"
 
 The camera runs this script once on boot, configures WiFi, then deletes it.
 
+During provisioning, the setup portal pre-scans for WiFi networks before bringing up its own access point, so the network list you see is a real scan of your environment (not a stale cache). If the scan times out, the portal falls back to a manual SSID entry.
+
 ## Accessing the Camera
 
 After provisioning, access the camera via:
