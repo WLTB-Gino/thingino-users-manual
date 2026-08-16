@@ -82,6 +82,8 @@ service restart prudynt
 
 This is a config-only flag -- the Web UI SVG overlay (SEI) continues to work on all streams regardless.
 
+On Raptor (master), per-stream OSD control is a native config key: set `osd_enabled = false` under any `[streamN]` section in `raptor.conf` to drop the OSD from that stream while keeping it on others.
+
 ### Prudynt Reliability Improvements
 
 Recent Prudynt updates (b8d94db) include:
