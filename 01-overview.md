@@ -31,6 +31,7 @@ Thingino includes an optional **thingino-snmpd** package (mini-snmpd 2.0) for ne
 - **Vanhua S62I** (T40XP, SPI-NAND, IMX307, Ethernet) -- master and ciao (experimental)
 - **Wyze Cam Pan V1** (JXF23 sensor + RTL8189FTV WiFi variant) -- master and ciao
 - **Wyze Floodlight V2** (T41NQ) -- ciao branch
+  - The Floodlight v1 light (via Wyze Cam Floodlight v1 accessory) now has a `floodlight_ctl` CLI for brightness control: `floodlight_ctl on <1-100>` / `floodlight_ctl off` (verbose with `-v`)
 - **Hugolog E5P** (T41LQ) -- ciao branch
 - **Kiwibit BC111** (T23ZN) -- ciao branch
 - **Cinnado B6** (T23ZN) -- ciao branch
