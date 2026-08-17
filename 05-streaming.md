@@ -139,6 +139,8 @@ TIMPS has built-in adaptive day/night detection with configurable boot-settle pe
 
 Recent TIMPS releases (v1.8.x) fix three compounding defects that caused a perpetual day/night flip loop, route the adaptive night-to-day transition through the brightening probe only (preventing oscillation), and warn on persistent running mode divergence. The GOP setting on new-API SoCs (T23+) is also fixed -- it was running at double the configured value. Additional fixes halve the sustained-brightening confirm period (60s to 30s) for faster day recovery, close an ambiguous-probe loophole that could cause a spurious day trigger, and guard the periodic reconfirm against baseline drift.
 
+TIMPS images now also install the shared board day/night hardware scripts (`daynight`, `ircut`, `light`); previously only Prudynt builds got them, so a TIMPS camera could correctly detect night but fail to actually move the IR-cut filter or light the IR LEDs (image turns purple/IR-tinted). If you run a TIMPS build from before this fix (2026-08), update the firmware.
+
 ### Data Race Hardening (v1.7.8)
 
 TIMPS v1.7.8 adds C11 data race protections on live-mutable config. If you adjust stream parameters via the control API while streaming, changes are now atomic and cannot corrupt internal state.
