@@ -50,10 +50,12 @@ Thingino works with most NVR/VMS software via ONVIF or direct RTSP:
 | Software | Method |
 |----------|--------|
 | UniFi Protect | ONVIF |
-| Frigate | ONVIF |
+| Frigate | ONVIF (see note) |
 | Blue Iris | ONVIF |
 | Synology Surveillance Station | ONVIF |
 | iSpy / Agent DVR | ONVIF |
+
+Note for Frigate + PTZ cameras: an ONVIF GetStatus bug (fixed in thingino-onvif `6f299f3`, included in builds from 2026-08-16) caused Frigate to crash with `AttributeError: 'NoneType' object has no attribute 'Position'` on cameras without zoom. Update your firmware if you hit this; old firmware pins also accept a manual workaround (upload the `GetStatus_nozoom.xml` template to `/var/www/onvif/ptz_service_files/`).
 
 ---
 

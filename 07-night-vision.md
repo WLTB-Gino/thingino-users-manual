@@ -64,6 +64,19 @@ jct /etc/thingino.json set daynight.ev_day_threshold 350000
 
 Day/night thresholds and behavior are also adjustable from the Web UI configuration page.
 
+### Live Day/Night Tuning (Raptor, master)
+
+On master (Raptor), the whole day/night policy is runtime-tunable through `raptorctl ric` -- no reboot needed:
+
+```sh
+raptorctl ric set-threshold adc_night 200   # ADC below this = night
+raptorctl ric set-threshold adc_day 600     # ADC above this = day
+raptorctl ric get-thresholds                # show every tunable + trigger mode
+raptorctl ric config save                   # persist the tune
+```
+
+Everything is live except the IR-CUT wiring and `enabled` (re-pinning a live ircut coil is a hardware hazard, not a tuning knob). Tunables include the ADC pair (`adc_night` must stay below `adc_day`), photo EV thresholds (`photo_ev_night`/`photo_ev_day`), the LED probe trio (`probe_gain_pct`, `probe_recheck_sec`), bank policies for `ir850`/`ir940` (apply immediately, even mid-night -- e.g. dropping the 850nm bank to kill a window reflection), `pulse_ms`, and trigger choice via `set-trigger`. Changes apply at runtime; `config save` persists them.
+
 ### Night-Mode FPS Reduction
 
 On ciao (Prudynt) builds, night-mode FPS halving is now handled directly by Prudynt rather than a separate script. This produces smoother transitions and avoids brief stream interruptions when switching modes.
