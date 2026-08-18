@@ -35,6 +35,12 @@ GPIO pins for SD card power and WiFi modules are configured in `/etc/thingino.js
 }
 ```
 
+`gpio.speaker` sets the speaker amp enable pin (pin number or object form) and is read at build time -- it feeds the gpio-userkeys module config and the U-Boot device tree, so changing it requires a rebuild rather than a runtime `jct` edit.
+
+## Hostname
+
+The hostname suffix is derived at boot from the SoC serial number (same function that generates the MAC), and it is never regenerated from a later MAC change. A custom hostname set via `conf s hostname` is stored in the provisioning key/value store and applied on boot.
+
 Changes to configuration files persist across reboots. The overlay partition is limited in size -- use SD card or NFS for large files.
 
 Recent builds display overlay usage statistics in the SSH shell banner, so you can see at a glance how much overlay space is consumed.
