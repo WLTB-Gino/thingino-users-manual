@@ -36,6 +36,8 @@ Another ciao fix prevents partition corruption on **old flash layouts**: the 'up
 
 Latest builds fix full upgrades **across partition layout changes**: the flash loop now writes each running MTD device the image bytes at the same absolute offsets (32K blocks, byte-addressing fallback), so the image is copied byte-for-byte regardless of how the image itself is partitioned. Previously, non-64K-aligned layouts (e.g. a 32K env partition) were silently mis-sliced, which could leave U-Boot with no valid environment and a dead boot after reboot.
 
+Latest builds also make **config backup on upgrade actually work**. `sysupgrade -B` (and full upgrades generally) referenced a `cfg-backup` tool that was never installed, so config backups silently never happened. The tool now ships with thingino-sysupgrade: full upgrades snapshot your selected config files to the backup partition *before* flashing and skip that partition during the full-chip flash, so the snapshot survives. Run `cfg-backup restore` after the reboot to put the files back.
+
 ## SD Card Update
 
 The most reliable update method, especially for cameras with unreliable WiFi:
