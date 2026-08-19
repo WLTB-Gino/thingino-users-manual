@@ -5,6 +5,10 @@ Hover over the live preview to access PTZ controls. Two control modes are availa
 - **Step move** (default) -- Click or double-click directional buttons to move in steps
 - **Continuous move** -- Press and hold directional buttons for smooth continuous movement
 
+## Presets
+
+The Web UI includes a **PTZ Presets** card on **Settings -> Pan/Tilt Motors**: move the camera to a position, give it a name, and save it. Saved presets are listed on the same card with one-click **Move** and **Delete** buttons. Presets are stored in `/etc/ptz_presets.conf` and can also be managed from the shell with the `ptz_presets` command.
+
 ## MQTT / Home Assistant
 
 Enable PTZ buttons in HA:

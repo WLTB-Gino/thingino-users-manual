@@ -24,7 +24,7 @@ jct /etc/thingino.json set ha.enabled true
 | White Light | Switch | White LEDs |
 | WiFi RSSI | Sensor | Signal strength |
 | Snapshot | Button | Take snapshot |
-| Firmware Update | Update | OTA from GitHub |
+| Firmware Update | Update | OTA from GitHub -- press Install in HA Settings -> Updates to run a config-preserving partial upgrade (`sysupgrade -p`); the camera reboots when done |
 | PTZ | Buttons | Up/Down/Left/Right/Home |
 
 Disable individual entities:
