@@ -22,6 +22,8 @@ When motion is detected, Thingino can send alerts via:
 | Webhook | `send2webhook` | HTTP callback to a custom endpoint |
 | ntfy | `send2ntfy` | Push notifications via ntfy.sh |
 | Gotify | `send2gotify` | Self-hosted push notifications |
+
+Recent ciao builds fix both ntfy and webhook notifications: `send2ntfy` now honors the configured scheme/SSL, sends the title and priority headers correctly, and forces HTTP/1.1 (HTTP/2 uploads to ntfy.sh stalled around 84%); `send2webhook` now sends a raw JSON POST body instead of a broken multipart payload.
 | FTP | `send2ftp` | Upload snapshots/clips to an FTP server |
 | Storage | `send2storage` | Save recordings to SD card or NFS |
 | XMPP | `send2xmpp` | Send message via Jabber/XMPP |

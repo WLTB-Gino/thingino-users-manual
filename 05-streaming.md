@@ -137,9 +137,23 @@ curl -X POST http://192.168.1.10:8880/control -d '{"stream0.bitrate": 2000000}'
 
 TIMPS has built-in adaptive day/night detection with configurable boot-settle period and periodic night reconfirmation. This prevents false day/night flapping from temporary light changes.
 
-Recent TIMPS releases (v1.8.x) fix three compounding defects that caused a perpetual day/night flip loop, route the adaptive night-to-day transition through the brightening probe only (preventing oscillation), and warn on persistent running mode divergence. The GOP setting on new-API SoCs (T23+) is also fixed -- it was running at double the configured value. Additional fixes halve the sustained-brightening confirm period (60s to 30s) for faster day recovery, close an ambiguous-probe loophole that could cause a spurious day trigger, and guard the periodic reconfirm against baseline drift.
+**v1.9.0 (2026-08-19) rebuilt the day/night automaton** around four independent decision paths with an IR-ratio verdict, a trend trigger (gradual light changes now trigger transitions without waiting for a sudden jump), and IR-ratio thresholds re-derived from a full night of data rather than estimates. The dusk-switch cost earlier testing suggested was withdrawn -- it turned out to be the test camera itself being tested.
+
+You can now ask for a day/night probe on demand via the control API:
+
+```sh
+curl -X POST http://192.168.1.10:8880/control -d '{"daynight":{"probe":1}}'
+```
+
+This arms a silent IR probe for the next automaton tick -- useful to verify a camera can actually see daylight instead of waiting up to half an hour for the heartbeat. Cameras without `daynight.irprobe_cmd` configured cannot probe silently and report that refusal instead of silently doing nothing.
+
+**v1.9.0 API grading changes:** `/control` now advertises what this build can do (capabilities) instead of overloading HTTP 422 for every refusal. Value rejection moved from 422 to 409, and an empty string clears a text field instead of being refused. API clients should treat these codes accordingly.
+
+Earlier v1.8.x releases fix three compounding defects that caused a perpetual day/night flip loop, route the adaptive night-to-day transition through the brightening probe only (preventing oscillation), and warn on persistent running mode divergence. The GOP setting on new-API SoCs (T23+) is also fixed -- it was running at double the configured value. Additional fixes halve the sustained-brightening confirm period (60s to 30s) for faster day recovery, close an ambiguous-probe loophole that could cause a spurious day trigger, and guard the periodic reconfirm against baseline drift.
 
 TIMPS images now also install the shared board day/night hardware scripts (`daynight`, `ircut`, `light`); previously only Prudynt builds got them, so a TIMPS camera could correctly detect night but fail to actually move the IR-cut filter or light the IR LEDs (image turns purple/IR-tinted). If you run a TIMPS build from before this fix (2026-08), update the firmware.
+
+**v1.9.0 reliability fixes:** shutdown no longer leaves stream threads running while tearing down their state (teardown with a client attached went from 20.5 s to 26-30 ms), SRT client sockets close before the shutdown drain, an fMP4 init segment can no longer ship with an empty codec configuration box, and software-rotation now enforces the configured FPS (measured on hardware).
 
 ### Data Race Hardening (v1.7.8)
 
