@@ -80,7 +80,7 @@ jct /etc/prudynt.json set osd.burnin.substream_disabled true
 service restart prudynt
 ```
 
-This is a config-only flag -- the Web UI SVG overlay (SEI) continues to work on all streams regardless.
+This is a config-only flag -- the Web UI SVG overlay (SEI) works on all streams when `osd.sei.enabled` is set to `true` (it is off by default and must be explicitly enabled).
 
 On Raptor (master), per-stream OSD control is a native config key: set `osd_enabled = false` under any `[streamN]` section in `raptor.conf` to drop the OSD from that stream while keeping it on others.
 
