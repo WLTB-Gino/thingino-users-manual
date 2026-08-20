@@ -79,6 +79,14 @@ scp -O file.txt root@hostname.local:/tmp/
 
 Without `-O`, OpenSSH defaults to the SFTP protocol and the transfer will fail.
 
+## Remote Logging to a Syslog Server
+
+The camera can send its logs to a central syslog server (configurable in the Web UI under **Settings**). Two ready-made receiver setups are documented in the firmware docs (`docs/thingino/services/rsyslog.md`):
+
+**Debian/Ubuntu:** install `rsyslog`, enable `imudp` on port 514, restart the service.
+
+**Alpine Linux:** replace the default busybox syslogd with `rsyslog` (`apk add rsyslog logrotate`), keep the shipped OpenRC init script as-is (a custom script that pre-creates the pidfile makes rsyslogd exit silently), and use the `dynafile` parameter for per-camera log files named by source IP -- on rsyslog 8.2604+, `file=` with placeholders is treated literally. Apply changes with `rc-service rsyslog restart` (reload may not take effect).
+
 ---
 
 <- [Previous: Firmware Updates](12-firmware-updates.md) | [Next: Glossary](14-glossary.md) ->
