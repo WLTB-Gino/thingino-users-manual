@@ -35,6 +35,17 @@ jct /etc/thingino.json set motors.invert_y true
 
 A double-inversion issue that caused position counter overshoot (blocking all further movement in that axis) has also been fixed.
 
+### Upside-Down Mounts
+
+If the camera is mounted upside-down and you compensate with **Image Flip** (hflip/vflip) in the streamer, the motor directions now follow the on-screen picture automatically. The streamer's `image.hflip` / `image.vflip` are combined with `invert_x` / `invert_y`, so a flipped mount needs no hand-tuned motor inversion:
+
+```
+net_x = invert_x XOR hflip
+net_y = invert_y XOR vflip
+```
+
+Flip changes are picked up when the motor daemon reloads its config (`S59motor reload` / IPC 'R'), without a reboot.
+
 ---
 
 <- [Previous: Home Automation and Integration](09-home-automation.md) | [Next: System Configuration](11-system-config.md) ->
