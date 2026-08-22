@@ -38,6 +38,8 @@ Latest builds fix full upgrades **across partition layout changes**: the flash l
 
 Latest builds also make **config backup on upgrade actually work**. `sysupgrade -B` (and full upgrades generally) referenced a `cfg-backup` tool that was never installed, so config backups silently never happened. The tool now ships with thingino-sysupgrade: full upgrades snapshot your selected config files to the backup partition *before* flashing and skip that partition during the full-chip flash, so the snapshot survives. Run `cfg-backup restore` after the reboot to put the files back.
 
+**And the restore is now automatic** (thingino firmware from 2026-08-22): a one-time `S37cfg-autorestore` init script runs at first boot after an upgrade. If a valid backup snapshot is present it restores your files and reboots once into the restored config; on a fresh install (no backup) it quietly removes itself. If the restore fails, the script stays and retries on the next boot. Note the chicken-and-egg on WiFi-only cameras: the restore runs before the network comes up, but that is fine -- it only touches local files, no network needed.
+
 ## SD Card Update
 
 The most reliable update method, especially for cameras with unreliable WiFi:
