@@ -126,6 +126,8 @@ TIMPS exposes a live control API at `http://<camera-ip>:8880/control` (GET to re
 - Toggle audio, backchannel, privacy mode
 - Control motion sensitivity in real time (IMP_IVS)
 - Take snapshots
+- Encoder rate-control knobs (qp, min/max QP, quality_lvl, i_bias_lvl, fluc_lvl) -- applied live where the SoC allows, with `deferred_keys` in the reply naming anything that waits for a restart
+- `encoder.<n>.rc` readback showing what the encoder actually holds right now
 
 Example -- change main stream bitrate:
 
@@ -133,9 +135,17 @@ Example -- change main stream bitrate:
 curl -X POST http://192.168.1.10:8880/control -d '{"stream0.bitrate": 2000000}'
 ```
 
+The reply names any request fields it ignored, so a typo in a mixed request no longer looks like a clean success.
+
 ### Day/Night Detection
 
 TIMPS has built-in adaptive day/night detection with configurable boot-settle period and periodic night reconfirmation. This prevents false day/night flapping from temporary light changes.
+
+**v1.9.3 (2026-08-23) makes boot measure before it decides, and made the daemon survive bad restarts.** Three fleet-incident fixes:
+
+- **Boot no longer trusts the saved day/night state.** The old path restored the persisted mode immediately and never physically asserted it on the board -- five fleet cameras that rebooted after dark spent the night with the IR LEDs off because the runtime state file resets to `day` on every reboot and nothing re-drove it. Boot now waits for the AE to settle, runs one ordinary probe, and asserts the measured answer on the board once. `daynight.boot_probe=0` opts out of the *measurement* only -- the persisted value is still asserted physically.
+- **A service restart can no longer strand the daemon dead.** After `S95timps restart`, the old instance's rmem is not always released when the new one starts, and a single encoder-start failure used to exit the process permanently (5 of 12 cameras died this way on 2026-08-22). Start failures now retry with backoff, are capped at 10 attempts, and escalate to exactly one real reboot before giving up -- a persistent marker file guarantees it cannot become a boot loop.
+- **The rate-control keys became real config keys and apply live where the SoC allows.** `videoN.quality_lvl`, `change_pos`, `i_bias_lvl`, `fluc_lvl` were hardcoded literals; `qualityLvl` in particular imposed an invisible 60% bitrate floor (measured: 2091 kbit/s where the scene needed 278). Live application per platform is advertised honestly via `caps.video_live`, and POST replies carry `deferred_keys` listing anything that waits for a restart. `GET /control` gains `encoder.<n>.rc` -- a live readback of what the encoder actually holds, so writes can be verified against reality. The `daynight` config surface shrank by ten keys (`learn`/`state_path` removed, eight tuning constants hardcoded -- old configs still parse with a grace-period warning).
 
 **v1.9.2 (2026-08-21) closed the day/night trust loop against the hardware.** A camera could switch itself to day, log success on every layer, and have the ISP keep rendering night for half an hour -- the automaton trusted its own commanded state and only WARNed on divergence, never the actual readback. The ISP's reported running mode is now a first-class sample, and every mode switch arms a verification 18 s later: agreement closes quietly, disagreement warns and forces exactly one transition through the opposite mode (measured to be the only repair: a stuck exposure fell 131072 -> 5720). Persistent standing disagreement is reported but never enforced, so manual ISP overrides are not fought; `daynight.isp_desync` appears on `/control` and `/events` for dashboards.
 
