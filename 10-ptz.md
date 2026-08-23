@@ -7,7 +7,7 @@ Hover over the live preview to access PTZ controls. Two control modes are availa
 
 ## Presets
 
-The Web UI includes a **PTZ Presets** card on **Settings -> Pan/Tilt Motors**: move the camera to a position, give it a name, and save it. Saved presets are listed on the same card with one-click **Move** and **Delete** buttons. Presets are stored in `/etc/ptz_presets.conf` and can also be managed from the shell with the `ptz_presets` command.
+The Web UI includes a **PTZ Presets** card on **Settings -> Pan/Tilt Motors**: move the camera to a position, give it a description, and save it. Presets are stored in the `motors.presets` array of `/etc/thingino.json` (each entry has a stable numeric `id`, a free-form `description`, and `x`/`y` coordinates) and can be edited and reordered in a **PTZ settings modal**. The id never changes on reorder or rename, and ONVIF clients see a derived machine name (`Preset_<id>`) so NVR labels can't get mangled. The **first preset doubles as the initial point** -- the motor daemon parks the camera at presets[0] on boot. `ptz_presets` CLI management still works (`-g`/`-a`/`-r`/`-o` reorder), and upgraded cameras import an existing `/etc/ptz_presets.conf` once, automatically.
 
 ## MQTT / Home Assistant
 

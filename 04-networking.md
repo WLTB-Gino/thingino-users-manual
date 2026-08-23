@@ -65,6 +65,10 @@ Thingino supports USB Ethernet adapters out of the box:
 
 Plug in the adapter and it should be recognized automatically.
 
+## USB WiFi Dongles
+
+**Ralink RT5370** USB WiFi dongles are supported on master builds from 2026-08-23 (`242d92daf`). Useful as a replacement radio for cams with damaged internal WiFi or where you want to reposition the antenna.
+
 ## mDNS / Bonjour Discovery
 
 Thingino cameras advertise themselves on the local network via mDNS (Bonjour/Avahi). The service type is `_thingino._tcp`, broadcast on the camera's HTTP port.

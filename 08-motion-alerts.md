@@ -31,6 +31,8 @@ Recent ciao builds fix both ntfy and webhook notifications: `send2ntfy` now hono
 
 Enable via the Web UI under **Tools** or through `jct /etc/prudynt.json`.
 
+**Note on master builds**: `send2xmpp` is a master-branch addition; on ciao/stable only the methods listed above it are available.
+
 ## send2 Toolkit Architecture (master)
 
 On the master branch the send2 notification scripts live in a standalone `thingino-send2` package shared by all three streamers (Prudynt, Raptor, TIMPS), with per-streamer adapter helpers:

@@ -26,6 +26,8 @@ After provisioning, access the camera via:
 
 The default `thingino`/`thingino` credentials are used for **streamer and ONVIF connections** (RTSP, ONVIF). The username and password you set during **provisioning** are used for the **Web UI and SSH**.
 
+Note: builds from 2026-08-23 (`0240c30be`) restrict Web UI login to the root account only -- the `thingino` service account can no longer open a web session, even with correct credentials.
+
 You can change both the root (SSH) password and the streaming user password from the Web UI **Settings** page.
 
 ## Time and Date
