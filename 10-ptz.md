@@ -27,13 +27,16 @@ VCM (Voice Coil Motor) focus control uses the `dw9714-ctrl` script.
 
 ### Motor Direction Inversion
 
-Recent builds fix a long-standing bug where `invert_x` and `invert_y` in `/etc/thingino.json` were silently ignored. If your camera's pan or tilt moved the wrong direction, these settings now work correctly:
+**Ciao builds (Aug 24, 2026+) and current master:** the long-standing direction bugs are fixed, but the fix changed how inversion is expressed on GPIO/TCU cameras (commit `419eb8667`):
+
+- **SPI motor cameras** (Tapo C200 class): `invert_x` / `invert_y` remain kernel module params in `/etc/thingino.json` and work as documented.
+- **GPIO/TCU stepper cameras** (Cinnado D1 class): tilt direction is now defined by the *pin order* of `gpio_tilt` in the camera profile -- `invert_y` is ignored entirely. If your tilt moves the wrong way, swap the two pins in `motors.gpio_tilt` instead. Profiles that previously used `invert_y:true` as a wiring fixup were migrated in the same commit.
 
 ```sh
-jct /etc/thingino.json set motors.invert_y true
+jct /etc/thingino.json get motors.gpio_tilt
 ```
 
-A double-inversion issue that caused position counter overshoot (blocking all further movement in that axis) has also been fixed.
+The earlier double-inversion bug (init script re-applying the daemon's inversion, making the setting a no-op) and the position-counter overshoot are fixed on all motor types; the runtime `motors -I x/y` block for non-SPI cameras was removed from `S59motor`.
 
 ### Upside-Down Mounts
 
