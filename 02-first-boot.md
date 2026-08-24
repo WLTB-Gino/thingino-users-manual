@@ -15,6 +15,8 @@ The camera runs this script once on boot, configures WiFi, then deletes it.
 
 During provisioning, the setup portal pre-scans for WiFi networks before bringing up its own access point, so the network list you see is a real scan of your environment (not a stale cache). If the scan times out, the portal falls back to a manual SSID entry.
 
+If the camera never broadcasts its setup hotspot on first boot, a stale `wpa_supplicant.conf` may be the culprit. Older builds (before 2026-08-24, `06cf8c284`) wrote the portal's AP settings into the persistent WiFi config on mt7601u cameras, so the camera skipped provisioning entirely. Re-flash or factory-reset to get the portal back.
+
 ## Accessing the Camera
 
 After provisioning, access the camera via:
