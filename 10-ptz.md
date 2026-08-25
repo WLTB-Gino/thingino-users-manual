@@ -5,6 +5,8 @@ Hover over the live preview to access PTZ controls. Two control modes are availa
 - **Step move** (default) -- Click or double-click directional buttons to move in steps
 - **Continuous move** -- Press and hold directional buttons for smooth continuous movement
 
+Keyboard jog on the preview page uses **Shift + arrow keys** -- one discrete step per press, browser auto-repeat ignored. Plain arrow keys (and other modifiers) are left to the browser for normal page scrolling.
+
 ## Presets
 
 The Web UI includes a **PTZ Presets** card on **Settings -> Pan/Tilt Motors**: move the camera to a position, give it a description, and save it. Presets are stored in the `motors.presets` array of `/etc/thingino.json` (each entry has a stable numeric `id`, a free-form `description`, and `x`/`y` coordinates) and can be edited and reordered in a **PTZ settings modal**. The id never changes on reorder or rename, and ONVIF clients see a derived machine name (`Preset_<id>`) so NVR labels can't get mangled. The **first preset doubles as the initial point** -- the motor daemon parks the camera at presets[0] on boot. `ptz_presets` CLI management still works (`-g`/`-a`/`-r`/`-o` reorder), and upgraded cameras import an existing `/etc/ptz_presets.conf` once, automatically.
