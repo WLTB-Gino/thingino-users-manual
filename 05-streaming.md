@@ -97,7 +97,7 @@ Recent Prudynt updates (b8d94db) include:
 
 ### Colour Fidelity (full-range luma + colour matrix in SPS VUI)
 
-If video from a Prudynt camera looked washed out or had slightly wrong colours in some players, firmware from 2026-08-25 (prudynt-t `b609f30`) fixes it. The encoder now declares full-range luma and an explicit colour matrix (BT.709 for 720p and up, BT.601 for smaller resolutions) in the H.264/H.265 SPS VUI. Previously the stream could be signalled as limited range or even an invalid `gbr` matrix, which some decoders honoured literally. The signal now matches the actual pixels; no configuration needed.
+If video from a Prudynt camera looked washed out or had slightly wrong colours in some players, firmware from 2026-08-25 (prudynt-t `b609f30`) fixes it. The encoder now declares full-range luma and an explicit BT.709 colour matrix in the H.264/H.265 SPS VUI, at every resolution -- the pipeline is BT.709 end to end, so a low-resolution substream publishes the same matrix as the main stream and the JPEG snapshot. Previously the stream could be signalled as limited range or even an invalid `gbr` matrix, which some decoders honoured literally. (An earlier revision of the fix wrongly labelled sub-720p streams BT.601; that was a mistake, corrected.) The signal now matches the actual pixels; no configuration needed.
 
 ### Automatic Bitrate Scaling
 
