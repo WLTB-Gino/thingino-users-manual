@@ -93,6 +93,10 @@ Thingino supports VPN solutions for remote access:
 
 > **Note:** OpenVPN is not tested or promoted. Use WireGuard for VPN access.
 
+### WiFi Roaming
+
+Builds from 2026-08-25 fix a bug where the *disable-roaming* patches on Realtek USB drivers (8188/8189/8192/8733/8812 families) never actually took effect -- layer-2 roaming was always compiled in. If you disable roaming in your build config, these builds honor it; roaming clients that hop between APs should behave more predictably.
+
 ---
 
 <- [Previous: Web UI](03-web-ui.md) | [Next: Streaming and Video](05-streaming.md) ->

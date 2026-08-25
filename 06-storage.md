@@ -1,6 +1,8 @@
 ## SD Card
 
-SD cards are mounted automatically at `/mnt/mmcblk0p1`. Format as FAT32 for best compatibility. Note that ext4 support is **not enabled by default** -- it requires enabling `BR2_PACKAGE_THINGINO_KOPT_EXTFS` in the build config. exFAT may also require additional kernel options.
+SD cards are mounted automatically at `/mnt/mmcblk0p1`, **async** since ciao 2026-08-25 (master still mounts `sync` unless you pass your own options). Sustained recording no longer stalls on every write to slow cards -- a long-standing source of periodic freezes and UI sluggishness on single-core cameras. Reliability is unaffected: diagnostics and recorder flows sync explicitly. A power cut can lose the last seconds of buffered writes (as with any async removable-media mount), but the filesystem itself is safe.
+
+Format as FAT32 for best compatibility. Note that ext4 support is **not enabled by default** -- it requires enabling `BR2_PACKAGE_THINGINO_KOPT_EXTFS` in the build config. exFAT may also require additional kernel options.
 
 ### SD Card Tips
 
@@ -20,6 +22,8 @@ jct /etc/thingino.json set nfs_share "server:/path/to/share"
 ```
 
 The share will be mounted at `/mnt/nfs` on boot (using `-o nolock`). Verify with `mount | grep nfs`.
+
+Since ciao 2026-08-25, NFS shares are mounted **soft** with bounded retries (`soft,timeo=30,retrans=2`) instead of hard. If the NFS server stalls or disappears, processes get an I/O error instead of hanging the whole camera in D-state. Access is also noticeably more responsive when the server is slow.
 
 ## Filesystem Overlay
 
