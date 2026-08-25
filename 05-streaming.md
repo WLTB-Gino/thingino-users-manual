@@ -95,6 +95,14 @@ Recent Prudynt updates (b8d94db) include:
 - **Shutdown stability** -- Prevents hang in video/JPEG worker threads during shutdown
 - **RTSP audio-only fix** -- Audio-only RTSP sessions no longer crash or hang (Prudynt 6afc440)
 
+### Colour Fidelity (full-range luma + colour matrix in SPS VUI)
+
+If video from a Prudynt camera looked washed out or had slightly wrong colours in some players, firmware from 2026-08-25 (prudynt-t `b609f30`) fixes it. The encoder now declares full-range luma and an explicit colour matrix (BT.709 for 720p and up, BT.601 for smaller resolutions) in the H.264/H.265 SPS VUI. Previously the stream could be signalled as limited range or even an invalid `gbr` matrix, which some decoders honoured literally. The signal now matches the actual pixels; no configuration needed.
+
+### Automatic Bitrate Scaling
+
+Prudynt (since `3188189`) derives each stream's default bitrate from its encoded resolution -- roughly 1 Mbps per megapixel -- instead of a fixed value. Users who set an explicit bitrate keep their setting; this only affects streams left at the default.
+
 ### Restoring OSD in RTSP and Recordings (SEI Mode)
 
 Two scripts on the firmware repo's `ciao` branch handle post-processing:
