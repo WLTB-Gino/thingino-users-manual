@@ -42,6 +42,10 @@ Check [thingino.com](https://thingino.com) for the full list of supported camera
 
 **Solar and battery-powered cameras are not supported.** They use the Zeratul platform with a separate MCU that controls power -- Thingino cannot keep the main SoC powered on.
 
+## Secure Boot (eFuse-Locked) Cameras
+
+Some cameras ship with eFuse secure boot locked: Wyze Cam V4, Wyze Doorbell V2, Wyze Cam Pan 3/4, and select Galayou, Xiaomi, and Camsoy models. Thingino `master` builds patch the U-Boot SPL at build time (the `secureboop` package) so firmware images boot on these SoCs. Models on T23/T32/T40/T41 need no extra data; T31-based locked models additionally require the vendor RSA modulus extracted from a stock flash dump.
+
 ## Community
 
 - **Telegram**: https://t.me/thingino
