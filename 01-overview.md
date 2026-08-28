@@ -31,7 +31,7 @@ Thingino includes an optional **thingino-snmpd** package (mini-snmpd 2.0) for ne
 - **Shelly S1** (T23N, MIS20C1 sensor, ATBM6132CU WiFi) -- master and ciao (experimental)
 - **Wyze Cam v3 + RT5370 USB dongle** (T31X, GC2053 -- for units with unsupported internal WiFi; uses an external RT5370 USB dongle) -- ciao (experimental)
 - **Vanhua S62I** (T40XP, SPI-NAND, IMX307, Ethernet) -- master and ciao (experimental)
-- **Vanhua Z55** (T31X, GC4653 4MP, Ethernet) -- master and ciao. Builds from 2026-08-28 repin the AVPU hardware encoder clock to a reachable 600 MHz, so it sustains H.265 2560x1440 at 30 fps with lower CPU use (previously the encoder silently ran at 400 MHz and dropped frames at 25 fps)
+- **Vanhua Z55** (T31X, GC4653 4MP, Ethernet) -- master. Builds from 2026-08-28 repin the AVPU hardware encoder clock to a reachable 600 MHz, so it sustains H.265 2560x1440 at 30 fps with lower CPU use (previously the encoder silently ran at 400 MHz and dropped frames at 25 fps)
 - **Wyze Cam Pan V1** (JXF23 sensor + RTL8189FTV WiFi variant) -- master and ciao
 - **Wyze Floodlight V2** (T41NQ) -- ciao branch
   - The Floodlight v1 light (via Wyze Cam Floodlight v1 accessory) now has a `floodlight_ctl` CLI for brightness control: `floodlight_ctl on <1-100>` / `floodlight_ctl off` (verbose with `-v`)
