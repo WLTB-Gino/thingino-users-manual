@@ -28,6 +28,8 @@ Thingino includes an optional **thingino-snmpd** package (mini-snmpd 2.0) for ne
 
 ## Recently Added Cameras
 
+- **Shelly S1** (T23N, MIS20C1 sensor, ATBM6132CU WiFi) -- master and ciao (experimental)
+- **Wyze Cam v3 + RT5370 USB dongle** (T31X, GC2053 -- for units with unsupported internal WiFi; uses an external RT5370 USB dongle) -- ciao (experimental)
 - **Vanhua S62I** (T40XP, SPI-NAND, IMX307, Ethernet) -- master and ciao (experimental)
 - **Wyze Cam Pan V1** (JXF23 sensor + RTL8189FTV WiFi variant) -- master and ciao
 - **Wyze Floodlight V2** (T41NQ) -- ciao branch
