@@ -149,7 +149,7 @@ The reply names any request fields it ignored, so a typo in a mixed request no l
 
 TIMPS has built-in adaptive day/night detection with configurable boot-settle period and periodic night reconfirmation. This prevents false day/night flapping from temporary light changes.
 
-**v1.9.5 (2026-08-29, released upstream, not yet pinned in firmware) fixes fMP4 lip-sync after WiFi stalls, shares the web UI's TLS certificate, and cuts OSD CPU cost.** Highlights a camera owner would notice:
+**v1.9.5 (2026-08-29, released upstream; now pinned on both firmware branches) fixes fMP4 lip-sync after WiFi stalls, shares the web UI's TLS certificate, and cuts OSD CPU cost.** Highlights a camera owner would notice:
 
 - **A/V sync after a network stall (browser/MP4 playback).** If a weak-WiFi client stalled for more than 10 seconds, the video track silently fell behind audio by the length of the stall and stayed offset for the rest of the session (a real 24-second skew was captured in QA). The video timeline now re-anchors to true media time, so lip-sync survives delivery gaps. RTSP playback was never affected; this hits the MP4/preview path and the SD recorder.
 - **HTTPS preview on iOS Safari.** The preview at port 8880 now presents the *same* TLS certificate as the web UI on port 443 (via a symlink resolved at boot). Previously the second self-signed cert could not earn browser trust from JavaScript -- Safari shows no click-through for a failed fetch, so enabling HTTPS produced a silent "Load failed" error. One trust decision now covers both ports.
@@ -158,7 +158,7 @@ TIMPS has built-in adaptive day/night detection with configurable boot-settle pe
 - Numerous internal performance wins (batched TCP RTSP sends, single-walk SD prune, hourly timelapse retention, one clock read per frame) that reduce CPU load and SD-card churn on long-running cameras.
 - Day/night board hooks (`daynight.switch_cmd`/`irprobe_cmd`) that hang can no longer freeze day/night switching or daemon shutdown -- they are killed after a timeout.
 
-> **Note:** firmware master builds now pin TIMPS v1.9.5 (bumped 2026-08-30); ciao still ships v1.8.5 (Prudynt). All improvements listed above are live on master images from that bump onward.
+> **Note:** firmware builds pin TIMPS v1.9.5 on both branches as of 2026-08-30: master (93fef537c) and ciao (e93b9b10e, the streamer-only branch). All improvements listed above ship on new images from either branch.
 
 **v1.9.3 (2026-08-23) makes boot measure before it decides, and made the daemon survive bad restarts.** Three fleet-incident fixes:
 
