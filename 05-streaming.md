@@ -158,7 +158,7 @@ TIMPS has built-in adaptive day/night detection with configurable boot-settle pe
 - Numerous internal performance wins (batched TCP RTSP sends, single-walk SD prune, hourly timelapse retention, one clock read per frame) that reduce CPU load and SD-card churn on long-running cameras.
 - Day/night board hooks (`daynight.switch_cmd`/`irprobe_cmd`) that hang can no longer freeze day/night switching or daemon shutdown -- they are killed after a timeout.
 
-> **Note:** firmware builds still pin TIMPS v1.9.3 (master) / v1.8.5 (ciao) as of 2026-08-30. The v1.9.5 improvements reach firmware images when the package pin is bumped.
+> **Note:** firmware master builds now pin TIMPS v1.9.5 (bumped 2026-08-30); ciao still ships v1.8.5 (Prudynt). All improvements listed above are live on master images from that bump onward.
 
 **v1.9.3 (2026-08-23) makes boot measure before it decides, and made the daemon survive bad restarts.** Three fleet-incident fixes:
 
