@@ -22,7 +22,7 @@ thingino-diag -f
 thingino-diag -o -
 ```
 
-Recent builds redact your WiFi SSID and encryption key from diagnostics output for privacy. This means your credentials are safe to share when posting diagnostics in support channels.
+Recent builds redact sensitive fields (WiFi credentials, MAC addresses, and other identifying details) from diagnostics output for privacy. This means your credentials are safe to share when posting diagnostics in support channels.
 
 Diagnostics uploads to tb.thingino.com now use HTTPS for secure transfer. If the upload fails, the Web UI reports the error instead of redirecting to an empty page.
 
