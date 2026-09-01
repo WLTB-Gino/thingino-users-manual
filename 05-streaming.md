@@ -149,7 +149,14 @@ The reply names any request fields it ignored, so a typo in a mixed request no l
 
 TIMPS has built-in adaptive day/night detection with configurable boot-settle period and periodic night reconfirmation. This prevents false day/night flapping from temporary light changes.
 
-**v1.9.5 (2026-08-29, released upstream; now pinned on both firmware branches) fixes fMP4 lip-sync after WiFi stalls, shares the web UI's TLS certificate, and cuts OSD CPU cost.** Highlights a camera owner would notice:
+**v1.9.6 (2026-09-01) adds browser push-to-talk and fixes day/night on cameras that rest fully dark.** Highlights:
+
+- **Talk through the camera from the browser.** The preview gains a talk button: the page captures your microphone and streams it to the camera's speaker over a WebSocket (`/talk` endpoint), alongside the existing RTSP/ONVIF talk paths. Multiple simultaneous talkers are arbitrated the same way as RTSP talkers, and a stalled WiFi connection drops its audio backlog instead of playing it seconds late. Opt-in twice: build-time `BR2_PACKAGE_TIMPS_BC_WS` (requires TLS -- browsers only grant microphone access over HTTPS) and runtime `audio.talk_ws` in `/etc/timps.conf` (default off, restart to apply).
+- **Day/night fix for boards whose dark rest state is a fully-clipped meter** (zero exposure headroom, e.g. the T20 in Wyze Pan): the night reference and the trend detector could both get permanently stuck on such cameras, leaving only the 12-hour reconfirmation heartbeat. A clipped reading that has held stable now counts as valid data for both paths.
+
+> **Note on pins:** the ciao branch pins TIMPS v1.9.6 (2026-09-01); master still pins v1.9.5 (2026-08-30). Everything below ships on new images from either branch; the v1.9.6 items arrive on master with its next pin bump.
+
+**v1.9.5 (2026-08-29) fixes fMP4 lip-sync after WiFi stalls, shares the web UI's TLS certificate, and cuts OSD CPU cost.** Highlights a camera owner would notice:
 
 - **A/V sync after a network stall (browser/MP4 playback).** If a weak-WiFi client stalled for more than 10 seconds, the video track silently fell behind audio by the length of the stall and stayed offset for the rest of the session (a real 24-second skew was captured in QA). The video timeline now re-anchors to true media time, so lip-sync survives delivery gaps. RTSP playback was never affected; this hits the MP4/preview path and the SD recorder.
 - **HTTPS preview on iOS Safari.** The preview at port 8880 now presents the *same* TLS certificate as the web UI on port 443 (via a symlink resolved at boot). Previously the second self-signed cert could not earn browser trust from JavaScript -- Safari shows no click-through for a failed fetch, so enabling HTTPS produced a silent "Load failed" error. One trust decision now covers both ports.

@@ -5,6 +5,8 @@ Hover over the live preview to access PTZ controls. Two control modes are availa
 - **Step move** (default) -- Click or double-click directional buttons to move in steps
 - **Continuous move** -- Press and hold directional buttons for smooth continuous movement
 
+On ciao builds with TIMPS as the streamer, a low-latency **WebSocket control path** is used for preview PTZ (`BR2_PACKAGE_THINGINO_MOTORS_WS`, on by default when TIMPS is selected), with the CGI path kept as an automatic fallback. The preview also gains an on-screen **joystick** and motor sensitivity sliders in the motors settings, plus a motors daemon version badge.
+
 Keyboard jog on the preview page uses **Shift + arrow keys** -- one discrete step per press, browser auto-repeat ignored. Plain arrow keys (and other modifiers) are left to the browser for normal page scrolling.
 
 ## Presets
