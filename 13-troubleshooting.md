@@ -69,6 +69,28 @@ For flashing with a CH341A programmer, use the [Scriba Web Flasher](https://scri
 
 Unbricker video walkthrough: https://www.youtube.com/watch?v=qDzM3QEmY6Q
 
+## U-Boot NetConsole (No Serial Port Needed)
+
+NetConsole gives you an interactive U-Boot prompt over UDP -- useful on cameras with no serial header (for example Wyze Cam v3) to inspect the boot environment or interrupt a bad boot without opening the case.
+
+> **Availability:** opt-in and currently on the `ciao` branch only (enable `BR2_PACKAGE_THINGINO_UBOOT_NETCONSOLE=y` in the camera defconfig; off by default, byte-identical bootloader otherwise). Not yet on `master`.
+
+On a camera already carrying the shipped defaults, build the client once and reboot the board:
+
+```sh
+U=output/ciao/<camera>-<kernel>-<libc>/build/uboot-2013.07
+gcc -o $U/tools/ncb $U/tools/ncb.c
+$U/tools/netconsole 192.168.1.10 6666   # the board's ipaddr
+```
+
+Hold Ctrl-C until the prompt appears; `boot` resumes, `reset` reboots, Ctrl-T exits the client. If keystrokes never arrive, switch to broadcast (`255.255.255.255` instead of the board IP) -- it needs no ARP entry.
+
+**WiFi-only cameras:** since 2026-08-31 NetConsole also runs over a USB-Ethernet dongle plugged into the USB OTG data port (ASIX AX88772 works out of the box; for an AX88179 run `fw_setenv nc_ethact axg0` on the board). The dongle must be on the same network segment as the client.
+
+**Security:** NetConsole has no authentication. In broadcast mode any host on the subnet can interrupt autoboot and get a U-Boot prompt -- enable it only on trusted networks. To pin a single client: `fw_setenv ncip <your-host-ip>`.
+
+Covers the U-Boot phase only; kernel messages still need a serial console or Linux-side netconsole.
+
 ## Copying Files via SCP
 
 Thingino uses Dropbear SSH, which does **not** support SFTP. Always use the `-O` flag with OpenSSH 9.0+:
