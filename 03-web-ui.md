@@ -56,6 +56,8 @@ Network, video, motion, OSD, and system configuration. Advanced settings are ava
 
 Email, webhook, ntfy, gotify, FTP, storage, diagnostics, and more. Speaker configuration is available under **Motion Guard** when a speaker is present. (MQTT, Telegram, and VPN tools have migrated to the plugin-based Settings pages.)
 
+The **Cameras on LAN** page lists other Thingino cameras discovered via mDNS. Since ciao 2026-09-03 it shows model, firmware build, and streamer for each camera, sorts by column, caches results between visits, and highlights the local camera's row.
+
 ---
 
 <- [Previous: First Boot & Initial Setup](02-first-boot.md) | [Next: Networking](04-networking.md) ->
