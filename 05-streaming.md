@@ -154,7 +154,9 @@ TIMPS has built-in adaptive day/night detection with configurable boot-settle pe
 - **Talk through the camera from the browser.** The preview gains a talk button: the page captures your microphone and streams it to the camera's speaker over a WebSocket (`/talk` endpoint), alongside the existing RTSP/ONVIF talk paths. Multiple simultaneous talkers are arbitrated the same way as RTSP talkers, and a stalled WiFi connection drops its audio backlog instead of playing it seconds late. Runtime `audio.talk_ws` in `/etc/timps.conf` (default off, restart to apply): `0` = disabled, `1` = on but TLS-only, `2` = on and accepts plain `ws://` too (for a camera without HTTPS where you grant the origin a secure context by hand in the browser -- mic audio then crosses the network unencrypted). Since firmware v1.9.7 the feature is compiled in by default (`BR2_PACKAGE_TIMPS_BC_WS`, no longer requires TLS at build time) and `audio.backchannel`/`audio.talk_ws` auto-enable when built in.
 - **Day/night fix for boards whose dark rest state is a fully-clipped meter** (zero exposure headroom, e.g. the T20 in Wyze Pan): the night reference and the trend detector could both get permanently stuck on such cameras, leaving only the 12-hour reconfirmation heartbeat. A clipped reading that has held stable now counts as valid data for both paths.
 
-> **Note on pins:** the ciao branch pins TIMPS v1.9.6 (2026-09-01); master still pins v1.9.5 (2026-08-30). Everything below ships on new images from either branch; the v1.9.6 items arrive on master with its next pin bump.
+**v1.9.8 (2026-09-03) hardens recording and transport edges.** Recording now prunes with a sanity-capped `record.min_free_mb` -- absurd values are refused and surfaced via `/control` status instead of wedging the SD loop, and the recorder backs off gracefully while the free-space target stays unreachable. Pre-roll re-anchors to the oldest available keyframe in the ring, so clips start on complete frames. RTSP-over-UDP clients that reconnect from a new source port (NAT rebinding) keep receiving video without a client restart. Day/night gets an illuminator relight when an abandoned silent probe would otherwise leave the IR light in the wrong state.
+
+> **Note on pins:** the ciao branch pins TIMPS v1.9.8 (2026-09-03); master still pins v1.9.5 (2026-08-30). Everything below ships on new images from either branch; the v1.9.6+ items arrive on master with its next pin bump.
 
 **v1.9.5 (2026-08-29) fixes fMP4 lip-sync after WiFi stalls, shares the web UI's TLS certificate, and cuts OSD CPU cost.** Highlights a camera owner would notice:
 
@@ -162,10 +164,8 @@ TIMPS has built-in adaptive day/night detection with configurable boot-settle pe
 - **HTTPS preview on iOS Safari.** The preview at port 8880 now presents the *same* TLS certificate as the web UI on port 443 (via a symlink resolved at boot). Previously the second self-signed cert could not earn browser trust from JavaScript -- Safari shows no click-through for a failed fetch, so enabling HTTPS produced a silent "Load failed" error. One trust decision now covers both ports.
 - **TLS session resumption** (RFC 5077 tickets) -- repeat HTTPS/RTSPS connections skip the expensive full handshake.
 - **OSD rendering is ~39% cheaper on the CPU** (measured on T31), from a rewritten TrueType glyph rasterizer. Visually identical output.
-- Numerous internal performance wins (batched TCP RTSP sends, single-walk SD prune, hourly timelapse retention, one clock read per frame) that reduce CPU load and SD-card churn on long-running cameras.
+- **Numerous internal performance wins** (batched TCP RTSP sends, hourly timelapse retention, one clock read per frame) that reduce CPU load and SD-card churn on long-running cameras. The recording prune is now a single SD walk; if you tune `record.min_free_mb` upward, note it lives (default 200 MB, applies live on the next record cycle, documented range 0-1048576).
 - Day/night board hooks (`daynight.switch_cmd`/`irprobe_cmd`) that hang can no longer freeze day/night switching or daemon shutdown -- they are killed after a timeout.
-
-> **Note:** firmware builds pin TIMPS v1.9.5 on both branches as of 2026-08-30: master (93fef537c) and ciao (e93b9b10e, the streamer-only branch). All improvements listed above ship on new images from either branch.
 
 **v1.9.3 (2026-08-23) makes boot measure before it decides, and made the daemon survive bad restarts.** Three fleet-incident fixes:
 
