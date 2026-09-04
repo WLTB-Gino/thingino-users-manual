@@ -80,6 +80,8 @@ This means you can discover cameras without knowing their IP address:
 
 The camera's hostname (e.g., `ing-t31x-1234.local`) is also resolvable via mDNS.
 
+Since ciao 2026-09-03, the mDNS daemon watches **all** network interfaces in client mode instead of pinning to the first up non-loopback one. Previously a camera with a disconnected Ethernet port and an active WiFi connection could bind mDNS to the dead `eth0` and vanish from LAN discovery scans entirely; interfaces that come up later are now picked up automatically too. In AP/captive-portal mode the daemon still pins to a single interface so phones connecting to the camera's hotspot don't get a captive-portal login prompt pushed at them.
+
 ## SNMP
 
 Thingino includes an optional **thingino-snmpd** package (mini-snmpd 2.0) for SNMP monitoring. When enabled at build time, it provides a WebUI plugin for configuration and exposes system metrics to SNMP managers.
