@@ -124,7 +124,7 @@ convert logo-100x30-alpha.png -depth 8 bgra:logo.bgra
 
 ## TIMPS (Alternative Streamer)
 
-TIMPS (Tiny IMP Streamer) is a lightweight streamer available as an alternative to Prudynt/Raptor. When using TIMPS, these features are available:
+TIMPS (Tiny IMP Streamer) is a lightweight streamer available as an alternative to Prudynt/Raptor. On recent builds it installs its own Web UI plugin (preview page, motors controls, SSE position fallback -- 2026-09-04, firmware commits `39523b778`/`7b4e81dc3`). When using TIMPS, these features are available:
 
 ### Live Control API
 
@@ -156,7 +156,7 @@ TIMPS has built-in adaptive day/night detection with configurable boot-settle pe
 
 **v1.9.8 (2026-09-03) hardens recording and transport edges.** Recording now prunes with a sanity-capped `record.min_free_mb` -- absurd values are refused and surfaced via `/control` status instead of wedging the SD loop, and the recorder backs off gracefully while the free-space target stays unreachable. Pre-roll re-anchors to the oldest available keyframe in the ring, so clips start on complete frames. RTSP-over-UDP clients that reconnect from a new source port (NAT rebinding) keep receiving video without a client restart. Day/night gets an illuminator relight when an abandoned silent probe would otherwise leave the IR light in the wrong state.
 
-> **Note on pins:** the ciao branch pins TIMPS v1.9.8 (2026-09-03); master still pins v1.9.5 (2026-08-30). Everything below ships on new images from either branch; the v1.9.6+ items arrive on master with its next pin bump.
+> **Note on pins:** both ciao and master pin TIMPS v1.9.8 (master caught up on 2026-09-04, together with the WebUI plugin migration below). Everything below ships on new images from either branch.
 
 **v1.9.5 (2026-08-29) fixes fMP4 lip-sync after WiFi stalls, shares the web UI's TLS certificate, and cuts OSD CPU cost.** Highlights a camera owner would notice:
 
@@ -192,6 +192,8 @@ This arms a silent IR probe for the next automaton tick -- useful to verify a ca
 Earlier v1.8.x releases fix three compounding defects that caused a perpetual day/night flip loop, route the adaptive night-to-day transition through the brightening probe only (preventing oscillation), and warn on persistent running mode divergence. The GOP setting on new-API SoCs (T23+) is also fixed -- it was running at double the configured value. Additional fixes halve the sustained-brightening confirm period (60s to 30s) for faster day recovery, close an ambiguous-probe loophole that could cause a spurious day trigger, and guard the periodic reconfirm against baseline drift.
 
 TIMPS images now also install the shared board day/night hardware scripts (`daynight`, `ircut`, `light`); previously only Prudynt builds got them, so a TIMPS camera could correctly detect night but fail to actually move the IR-cut filter or light the IR LEDs (image turns purple/IR-tinted). If you run a TIMPS build from before this fix (2026-08), update the firmware.
+
+On master builds from 2026-09-04 (firmware commits `39523b778`/`7b4e81dc3`), the TIMPS package also brings its own Web UI preview page and motors controls, replacing the earlier thingino-webui fork approach. The motors page gains an SSE position fallback for builds without the WS transport, and the motors-UI reapply hook is applied via a global finalize hook so it wins its config merge deterministically.
 
 **v1.9.0 reliability fixes:** shutdown no longer leaves stream threads running while tearing down their state (teardown with a client attached went from 20.5 s to 26-30 ms), SRT client sockets close before the shutdown drain, an fMP4 init segment can no longer ship with an empty codec configuration box, and software-rotation now enforces the configured FPS (measured on hardware).
 
