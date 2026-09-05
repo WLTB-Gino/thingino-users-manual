@@ -44,9 +44,9 @@ Currently migrated to the plugin system:
 - **Privacy** (privacy mask configuration)
 - **SNMP** (monitoring)
 - **Doorbell** (chime and button configuration)
-- **Streamer pages** (OSD, streams, image, sensor, audio) -- per-streamer plugins; Prudynt pages ship with the prudynt-t package, Raptor pages with the thingino-raptor package
+- **Streamer pages** (OSD, streams, image, sensor, audio) -- per-streamer plugins; Prudynt pages ship with the prudynt-t package, Raptor pages with the thingino-raptor package, and TIMPS pages with the timps package
 
-Note: Master builds using Raptor have no streamer config API. Stream settings must be edited directly in `/etc/raptor.conf` (see [Streaming and Video](05-streaming.md)). From builds of 2026-08-28 (`cdb3b8f26`) the Image page controls (white balance, gain, AE compensation, flips) are wired to the agent API and work in the Web UI; only stream parameters still require editing `raptor.conf`.
+Note: On master builds using Raptor there is no streamer config API. Stream settings must be edited directly in `/etc/raptor.conf` (see [Streaming and Video](05-streaming.md)). From builds of 2026-08-28 (`cdb3b8f26`) the Image page controls (white balance, gain, AE compensation, flips) are wired to the agent API and work in the Web UI; only stream parameters still require editing `raptor.conf`. On master builds using **TIMPS** instead, the full set of streamer pages is available in the Web UI (streams, OSD, image, sensor, audio, motion, privacy, recordings, timelapse) via the timps plugin; the raw config stays at `/etc/timps.conf` under **Info -> File: timps.conf**.
 
 ## Settings
 
