@@ -56,7 +56,7 @@ Network, video, motion, OSD, and system configuration. Advanced settings are ava
 
 Email, webhook, ntfy, gotify, FTP, storage, diagnostics, and more. Speaker configuration is available under **Motion Guard** when a speaker is present. (MQTT, Telegram, and VPN tools have migrated to the plugin-based Settings pages.)
 
-The **Cameras on LAN** page lists other Thingino cameras discovered via mDNS. Since ciao 2026-09-03 it shows model, firmware build, and streamer for each camera, sorts by column, caches results between visits, and highlights the local camera's row. On cameras running Prudynt, the build ID for each camera links directly to its exact commit on GitHub.
+The **Cameras on LAN** page lists other Thingino cameras discovered via mDNS. Since ciao 2026-09-03 / master 2026-09-05 it shows model, firmware build, and streamer for each camera, sorts by column, caches results between visits, and highlights the local camera's row (the streamer name is plain text, not a link). Discovery is bounded and complete, so large networks don't truncate the list. On cameras running Prudynt, the build ID for each camera links directly to its exact commit on GitHub.
 
 Discovery is also tuned for busy networks: the browse runs two short passes with merged results (so a dropped multicast reply on congested Wi-Fi doesn't make a camera vanish), and per-camera detail queries are batched to avoid flooding the network.
 
