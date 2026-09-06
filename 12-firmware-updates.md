@@ -40,6 +40,8 @@ Latest builds also make **config backup on upgrade actually work**. `sysupgrade 
 
 **And the restore is now automatic** (thingino firmware from 2026-08-22): a one-time `S37cfg-autorestore` init script runs at first boot after an upgrade. If a valid backup snapshot is present it restores your files and reboots once into the restored config; on a fresh install (no backup) it quietly removes itself. If the restore fails, the script stays and retries on the next boot. Note the chicken-and-egg on WiFi-only cameras: the restore runs before the network comes up, but that is fine -- it only touches local files, no network needed.
 
+The default backup list keeps growing: TIMPS streamer settings (`/etc/timps.conf`) and ONVIF settings (`/etc/onvif.json`) are included since 2026-09-06, alongside `/etc/thingino.json`. See `/etc/cfg-backup.list` for the full list and the "You can add more paths" section at the bottom for adding your own.
+
 ## SD Card Update
 
 The most reliable update method, especially for cameras with unreliable WiFi:

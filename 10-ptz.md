@@ -27,6 +27,8 @@ Commands: `cameras/<id>/ptz/{up,down,left,right,home}/set`
 
 PTZ motor configuration lives in `/etc/thingino.json` under the `motors` key. All motor settings -- GPIO pins, step modes, speed, range -- are unified into this single config file. There is no separate `motors.json`.
 
+**Reload without restart** (`motors -R`): asks the running motor daemon to re-read `/etc/thingino.json` so config changes -- direction inversion, flips, sensitivity -- apply live. Prefer `motors -R` over `/etc/init.d/S59motor restart`: a full restart cycles the kernel module (`modprobe -r` / `modprobe`), which has caused kernel panics on live cameras.
+
 VCM (Voice Coil Motor) focus control uses the `dw9714-ctrl` script.
 
 ### Motor Direction Inversion
