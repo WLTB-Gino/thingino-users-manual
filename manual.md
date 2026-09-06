@@ -604,6 +604,8 @@ Since ciao 2026-08-25, NFS shares were mounted **soft** with bounded retries (`s
 
 **Reversed on ciao 2026-09-03:** the mount is **hard** again (`hard,timeo=30,retrans=2`). In practice the soft mount turned a stalled server into silent data loss -- the recorder's write returns an error after ~9 seconds, and with no error checking in place the recording kept going with a hole in it (typically exactly where the MP4 init segment lives), producing unplayable files. A hard mount blocks instead of losing data. Check `mount | grep nfs` if a stuck write ever freezes the camera -- that is the trade-off.
 
+Already have unplayable files from the soft-mount era? Since ciao 2026-09-06 the firmware tree ships `scripts/recover-nfs-recordings.py`, which repairs exactly this failure: it detects prudynt-t recordings that lost their MP4 init segment (the `ftyp`+`moov` bytes the lost writes swallowed), copies the init segment from a healthy recording of the same camera and stream settings (auto-detected, or `--donor FILE`), and writes `<name>.recovered.mp4` beside each damaged file. Originals are never modified, so it is safe to re-run. Stop the recording first -- the segment currently being written gets recovered half-finished.
+
 ## Filesystem Overlay
 
 Thingino uses OverlayFS to provide a writable layer over the read-only root filesystem:
