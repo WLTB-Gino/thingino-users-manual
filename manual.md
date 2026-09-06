@@ -1,3 +1,7 @@
+# Thingino User Manual
+
+Combined from the chapter files in thingino-users-manual-repo. Generated 2026-09-06.
+
 ## What is Thingino?
 
 Thingino is open source firmware that replaces the stock firmware on IP cameras powered by Ingenic T-series SoCs (T10, T20, T21, T23, T30, T31, T32, T33, T40, T41). You get a full-featured camera system with RTSP streaming, ONVIF support, motion detection, night vision, and home automation integration -- without cloud dependencies or vendor lock-in.
@@ -65,6 +69,7 @@ Two browser-based tools make Thingino more accessible:
 ---
 
 [Next: First Boot & Initial Setup](02-first-boot.md) ->
+
 
 ## Provisioning
 
@@ -150,6 +155,7 @@ Without `-O`, OpenSSH defaults to the SFTP protocol and the transfer will fail.
 
 <- [Previous: Overview](01-overview.md) | [Next: Web UI](03-web-ui.md) ->
 
+
 The Web UI gives you a browser-based interface for managing your camera. Open it at `http://hostname.local` or `http://<camera-ip>`.
 
 ## Live Preview
@@ -215,6 +221,7 @@ Discovery is also tuned for busy networks: the browse runs two short passes with
 ---
 
 <- [Previous: First Boot & Initial Setup](02-first-boot.md) | [Next: Networking](04-networking.md) ->
+
 
 ## WiFi
 
@@ -320,6 +327,7 @@ Builds from 2026-08-25 fix a bug where the *disable-roaming* patches on Realtek 
 ---
 
 <- [Previous: Web UI](03-web-ui.md) | [Next: Streaming and Video](05-streaming.md) ->
+
 
 ## RTSP
 
@@ -575,6 +583,7 @@ Advanced encoders support custom quantizer and bitrate limits via the streamer c
 
 <- [Previous: Networking](04-networking.md) | [Next: Storage and Recording](06-storage.md) ->
 
+
 ## SD Card
 
 SD cards are mounted automatically at `/mnt/mmcblk0p1`, **async** on both ciao (since 2026-08-25) and master (since 2026-09-03, PR #1535), with a global dirty-page writeback bound. Sustained recording no longer stalls on every write to slow cards -- a long-standing source of periodic freezes and UI sluggishness on single-core cameras. Reliability is unaffected: diagnostics and recorder flows sync explicitly. A power cut can lose the last seconds of buffered writes (as with any async removable-media mount), but the filesystem itself is safe.
@@ -618,6 +627,7 @@ Changes to configuration files persist across reboots. The overlay partition is 
 ---
 
 <- [Previous: Streaming and Video](05-streaming.md) | [Next: Night Vision and Lighting](07-night-vision.md) ->
+
 
 ## Day/Night Mode
 
@@ -737,6 +747,7 @@ Some cameras include white light LEDs for full-color night vision. Control them 
 
 <- [Previous: Storage and Recording](06-storage.md) | [Next: Motion Detection and Alerts](08-motion-alerts.md) ->
 
+
 ## Motion Guard
 
 Motion detection uses the SoC's hardware IVS (Intelligent Video System). Enable it from the Web UI under **Motion Guard**.
@@ -799,6 +810,7 @@ The speaker settings share a save button with motion detection settings in recen
 
 <- [Previous: Night Vision and Lighting](07-night-vision.md) | [Next: Home Automation and Integration](09-home-automation.md) ->
 
+
 ## Home Assistant
 
 Thingino has native Home Assistant integration via MQTT auto-discovery. No YAML required.
@@ -825,7 +837,7 @@ jct /etc/thingino.json set ha.enabled true
 | White Light | Switch | White LEDs |
 | WiFi RSSI | Sensor | Signal strength |
 | Snapshot | Button | Take snapshot |
-| Firmware Update | Update | OTA from GitHub -- press Install in HA Settings -> Updates to run a config-preserving partial upgrade (`sysupgrade -p`); the camera reboots when done |
+| Firmware Update | Update | OTA from GitHub -- currently broken: the button still calls the retired `sysupgrade -p`, which modern builds reject. Update from the Web UI (System -> Upgrade) or with `sysupgrade -f` instead |
 | PTZ | Buttons | Up/Down/Left/Right/Home |
 
 Disable individual entities:
@@ -843,6 +855,8 @@ The HA integration also auto-discovers the camera's **sensor model** and **devic
 Thingino includes `mosquitto_pub` and `mosquitto_sub` clients. Configure broker settings under **Services -> MQTT Subscriptions** in the Web UI.
 
 Motion publish script: `/usr/sbin/send2mqtt`
+
+**Encrypted brokers (MQTTS, port 8883):** builds from 2026-09-06 use the OS certificate store for TLS (`--tls-use-os-certs`), so brokers with valid certificates -- a Let's Encrypt-secured Home Assistant broker, for example -- connect without extra setup. Earlier builds passed `--capath`, which the camera's mbedTLS mosquitto backend does not implement, so TLS connections failed certificate verification.
 
 ## NVR / VMS Compatibility
 
@@ -863,6 +877,7 @@ Note for Frigate + PTZ cameras: an ONVIF GetStatus bug (fixed in thingino-onvif 
 ---
 
 <- [Previous: Motion Detection and Alerts](08-motion-alerts.md) | [Next: PTZ (Pan-Tilt-Zoom)](10-ptz.md) ->
+
 
 ## Web UI
 
@@ -925,6 +940,7 @@ Flip changes are picked up when the motor daemon reloads its config (`S59motor r
 
 <- [Previous: Home Automation and Integration](09-home-automation.md) | [Next: System Configuration](11-system-config.md) ->
 
+
 ## Configuration Files
 
 | File | Purpose |
@@ -985,6 +1001,7 @@ Thingino automatically receives timezone from DHCP Option 101 and NTP server fro
 ---
 
 <- [Previous: PTZ (Pan-Tilt-Zoom)](10-ptz.md) | [Next: Firmware Updates](12-firmware-updates.md) ->
+
 
 ## sysupgrade (OTA)
 
@@ -1060,6 +1077,7 @@ OTA is not in the Tools menu for production builds. If you need to upgrade and d
 ---
 
 <- [Previous: System Configuration](11-system-config.md) | [Next: Troubleshooting](13-troubleshooting.md) ->
+
 
 ## Diagnostics
 
@@ -1176,6 +1194,7 @@ The camera can send its logs to a central syslog server (configurable in the Web
 
 <- [Previous: Firmware Updates](12-firmware-updates.md) | [Next: Glossary](14-glossary.md) ->
 
+
 | Term | Definition |
 |------|------------|
 | **3A** | Auto Exposure, Auto White Balance, Auto Focus |
@@ -1208,3 +1227,5 @@ The camera can send its logs to a central syslog server (configurable in the Web
 ---
 
 <- [Previous: Troubleshooting](13-troubleshooting.md)
+
+
