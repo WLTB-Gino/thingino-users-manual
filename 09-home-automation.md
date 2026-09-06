@@ -24,7 +24,7 @@ jct /etc/thingino.json set ha.enabled true
 | White Light | Switch | White LEDs |
 | WiFi RSSI | Sensor | Signal strength |
 | Snapshot | Button | Take snapshot |
-| Firmware Update | Update | OTA from GitHub -- press Install in HA Settings -> Updates to run a config-preserving partial upgrade (`sysupgrade -p`); the camera reboots when done |
+| Firmware Update | Update | OTA from GitHub -- currently broken: the button still calls the retired `sysupgrade -p`, which modern builds reject. Update from the Web UI (System -> Upgrade) or with `sysupgrade -f` instead |
 | PTZ | Buttons | Up/Down/Left/Right/Home |
 
 Disable individual entities:
@@ -42,6 +42,8 @@ The HA integration also auto-discovers the camera's **sensor model** and **devic
 Thingino includes `mosquitto_pub` and `mosquitto_sub` clients. Configure broker settings under **Services -> MQTT Subscriptions** in the Web UI.
 
 Motion publish script: `/usr/sbin/send2mqtt`
+
+**Encrypted brokers (MQTTS, port 8883):** builds from 2026-09-06 use the OS certificate store for TLS (`--tls-use-os-certs`), so brokers with valid certificates -- a Let's Encrypt-secured Home Assistant broker, for example -- connect without extra setup. Earlier builds passed `--capath`, which the camera's mbedTLS mosquitto backend does not implement, so TLS connections failed certificate verification.
 
 ## NVR / VMS Compatibility
 
