@@ -9,6 +9,8 @@ On ciao and master builds with TIMPS as the streamer, a low-latency **WebSocket 
 
 Keyboard jog on the preview page uses **Shift + arrow keys** -- one discrete step per press, browser auto-repeat ignored. Plain arrow keys (and other modifiers) are left to the browser for normal page scrolling.
 
+On ciao builds (2026-09-08+), the preview also shows a **preset quick-bar** under the video: ten slots -- click to move, long-press to save the current position. The bar initially went missing from reflashed cameras because its script was never committed; firmware commit `10bd51d53` fixed the packaging.
+
 ## Presets
 
 The Web UI includes a **PTZ Presets** card on **Settings -> Pan/Tilt Motors**: move the camera to a position, give it a description, and save it. Presets are stored in the `motors.presets` array of `/etc/thingino.json` (each entry has a stable numeric `id`, a free-form `description`, and `x`/`y` coordinates) and can be edited and reordered in a **PTZ settings modal**. The id never changes on reorder or rename, and ONVIF clients see a derived machine name (`Preset_<id>`) so NVR labels can't get mangled. The **first preset doubles as the initial point** -- the motor daemon parks the camera at presets[0] on boot. `ptz_presets` CLI management still works (`-g`/`-a`/`-r`/`-o` reorder), and upgraded cameras import an existing `/etc/ptz_presets.conf` once, automatically.
