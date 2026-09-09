@@ -156,7 +156,9 @@ TIMPS has built-in adaptive day/night detection with configurable boot-settle pe
 
 **v1.9.8 (2026-09-03) hardens recording and transport edges.** Recording now prunes with a sanity-capped `record.min_free_mb` -- absurd values are refused and surfaced via `/control` status instead of wedging the SD loop, and the recorder backs off gracefully while the free-space target stays unreachable. Pre-roll re-anchors to the oldest available keyframe in the ring, so clips start on complete frames. RTSP-over-UDP clients that reconnect from a new source port (NAT rebinding) keep receiving video without a client restart. Day/night gets an illuminator relight when an abandoned silent probe would otherwise leave the IR light in the wrong state.
 
-> **Note on pins:** both ciao and master pin TIMPS v1.9.8 (master caught up on 2026-09-04, together with the WebUI plugin migration below). Everything below ships on new images from either branch.
+**v1.9.9 (2026-09-07) tames night exposure and hardens the audio path.** Two day/night wins for night footage: a new opt-in `ae_it_max_us` key caps the AE integration time, so a dark scene can no longer stretch exposure far enough to smear motion across frames -- set it in `/etc/timps.conf` (e.g. `ae_it_max_us 20000` for a 20 ms ceiling); leaving it unset keeps the old uncapped behaviour. Day/night now reads the real AE exposure from IMP as its primary signal (with an estimate-based fallback when the scrape only has an estimate), so the dark/light decision tracks actual sensor exposure. On the audio side, the talk-back channel elects its owner only on real audio packets, so non-audio traffic can no longer claim the speaker. The built-in preview/control HTTP server accepts 16 concurrent clients (previously 8).
+
+> **Note on pins:** ciao bumped to TIMPS v1.9.9 on 2026-09-08 (firmware commit `9939d58bf`); master still pins v1.9.8. Everything above ships on new ciao images; master follows when its pin moves.
 
 **v1.9.5 (2026-08-29) fixes fMP4 lip-sync after WiFi stalls, shares the web UI's TLS certificate, and cuts OSD CPU cost.** Highlights a camera owner would notice:
 
