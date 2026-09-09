@@ -158,7 +158,9 @@ TIMPS has built-in adaptive day/night detection with configurable boot-settle pe
 
 **v1.9.9 (2026-09-07) tames night exposure and hardens the audio path.** Two day/night wins for night footage: a new opt-in `ae_it_max_us` key caps the AE integration time, so a dark scene can no longer stretch exposure far enough to smear motion across frames -- set it in `/etc/timps.conf` (e.g. `ae_it_max_us 20000` for a 20 ms ceiling); leaving it unset keeps the old uncapped behaviour. Day/night now reads the real AE exposure from IMP as its primary signal (with an estimate-based fallback when the scrape only has an estimate), so the dark/light decision tracks actual sensor exposure. On the audio side, the talk-back channel elects its owner only on real audio packets, so non-audio traffic can no longer claim the speaker. The built-in preview/control HTTP server accepts 16 concurrent clients (previously 8).
 
-> **Note on pins:** ciao bumped to TIMPS v1.9.9 on 2026-09-08 (firmware commit `9939d58bf`); master still pins v1.9.8. Everything above ships on new ciao images; master follows when its pin moves.
+**v1.9.10 (2026-09-09) makes motion sensitivity changes stick.** Setting `motion.sensitivity` through `/control` or the Web UI now updates the running detector *and* survives a restart -- previously the new value could be reverted by a stale read-back and the change never reached `/etc/timps.conf`. Also along for the ride: the motion helper now spawns via `posix_spawn` (kinder to memory-tight cameras) and QA coverage for the encoder read-back path.
+
+> **Note on pins:** ciao bumped to TIMPS v1.9.10 on 2026-09-09 (PR `#1616`); master still pins v1.9.8. Everything above ships on new ciao images; master follows when its pin moves.
 
 **v1.9.5 (2026-08-29) fixes fMP4 lip-sync after WiFi stalls, shares the web UI's TLS certificate, and cuts OSD CPU cost.** Highlights a camera owner would notice:
 
