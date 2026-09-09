@@ -20,7 +20,7 @@ Recent master and ciao builds also integrate the **open-isp** package -- a compl
 
 ## SoC Support
 
-Thingino currently runs on **Ingenic** T-series SoCs (T10, T20, T21, T23, T30, T31, T32, T33, T40, T41). Early groundwork for **SigmaStar** (Infinity6e/SSC30KQ) support has been merged, but no usable SigmaStar camera builds exist yet.
+Thingino currently runs on **Ingenic** T-series SoCs (T10, T20, T21, T23, T30, T31, T32, T33, T40, T41). The first T32 camera profile landed on master in September 2026 (Cinnado D1 T32LQ) -- builds for T32 are new and experimental. Early groundwork for **SigmaStar** (Infinity6e/SSC30KQ) support has been merged, but no usable SigmaStar camera builds exist yet.
 
 ## SNMP Monitoring
 
@@ -38,6 +38,7 @@ Thingino includes an optional **thingino-snmpd** package (mini-snmpd 2.0) for ne
 - **Hugolog E5P** (T41LQ) -- ciao branch
 - **Kiwibit BC111** (T23ZN) -- ciao branch
 - **Cinnado B6** (T23ZN) -- ciao branch
+- **Cinnado D1, T32 variant** (T32LQ, SC4336P sensor, ATBM6132U WiFi) -- master (experimental). First camera profile on the Ingenic T32 family -- T32 support is now real hardware, not just a name on the SoC list. Motors are wired in the profile but pan/tilt behavior is unverified on this variant. Caution: the D1 ships with several different SoCs (T23N, T31L, T41NQ, T32) -- identify your hardware before flashing any D1 image
 
 Check [thingino.com](https://thingino.com) for the full list of supported cameras.
 
