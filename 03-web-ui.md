@@ -6,6 +6,10 @@ Since ciao 2026-09-04 (`052f13613`), the preview player recovers on its own when
 
 On stable (Prudynt) builds, the OSD overlay is rendered as an SVG overlay in the Web UI only -- it is not burned into video. See [Streaming and Video](05-streaming.md) for the full OSD story.
 
+### Live View (fMP4)
+
+Since ciao 2026-09-09, Prudynt builds ship a native low-latency live view alongside the MJPEG preview: the **Live View (fMP4)** page under the Streamer menu plays the camera's H.264 stream directly in the browser. No re-encoding -- it reuses the existing encode, so image quality matches what RTSP viewers get, with audio playback (volume slider + mute) and zoom controls. Switching main/sub streams is race-free, and streamer plugin preview pages integrate on it like on the classic preview.
+
 ## PTZ Controls
 
 Two control modes are available under **Settings -> Pan/Tilt Motors -> Behavior -> Preview PTZ controls**:
