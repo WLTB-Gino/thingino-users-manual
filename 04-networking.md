@@ -39,6 +39,19 @@ If WiFi drops, check the log for WPA-supplicant reason codes. Common ones:
 
 Full reference: [WiFi Reason Codes](https://github.com/themactep/thingino-firmware/blob/master/docs/wifi.md)
 
+## Network Watchdog (netwatch)
+
+Since ciao 2026-09-10, builds include a **network watchdog** that reboots the camera when it loses connectivity. Every 30 seconds it pings the network gateway; 3 consecutive failures trigger an automatic reboot. A hardware watchdog backs the mechanism up, so even a completely wedged network stack cannot block the recovery reboot.
+
+The watchdog is **enabled by default**. If your camera sits behind a gateway that blocks or rate-limits ICMP pings, lower sensitivity or disable the feature under **Settings -> Network**, or in the config:
+
+```sh
+jct /etc/thingino.json set netwatch.enabled false
+jct /etc/thingino.json set netwatch.fail_count 10
+```
+
+Keys: `netwatch.enabled` (default `true`), `netwatch.fail_count` (default `3`), `netwatch.interval` (default `30` seconds).
+
 ## Ethernet (Wired)
 
 Wired Ethernet is plug-and-play on devices with an Ethernet port. The MAC address is automatically derived from the SoC serial number.

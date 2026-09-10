@@ -29,6 +29,8 @@ Since ciao 2026-08-25, NFS shares were mounted **soft** with bounded retries (`s
 
 Already have unplayable files from the soft-mount era? Since ciao 2026-09-06 the firmware tree ships `scripts/recover-nfs-recordings.py`, which repairs exactly this failure: it detects prudynt-t recordings that lost their MP4 init segment (the `ftyp`+`moov` bytes the lost writes swallowed), copies the init segment from a healthy recording of the same camera and stream settings (auto-detected, or `--donor FILE`), and writes `<name>.recovered.mp4` beside each damaged file. Originals are never modified, so it is safe to re-run. Stop the recording first -- the segment currently being written gets recovered half-finished.
 
+Since ciao 2026-09-10 (`d836336d2`), the boot-time NFS mount works reliably even when the NFS server is specified by **hostname**: the mount helper now passes the bare hostname (not `server:/path`) to the kernel's route lookup, which previously failed and left the share unmounted after every boot until mounted by hand.
+
 ## Filesystem Overlay
 
 Thingino uses OverlayFS to provide a writable layer over the read-only root filesystem:
