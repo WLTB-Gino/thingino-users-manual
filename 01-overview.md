@@ -28,7 +28,7 @@ Thingino includes an optional **thingino-snmpd** package (mini-snmpd 2.0) for ne
 
 ## Recently Added Cameras
 
-- **Shelly S1** (T23N, MIS20C1 sensor, ATBM6132CU WiFi) -- ciao (stable). Recently graduated from experimental; still labeled experimental on master
+- **Shelly S1** (T23N, MIS20C1 sensor, ATBM6132CU WiFi) -- supported on both branches (ciao 2026-09-09, master 2026-09-10)
 - **Wyze Cam v3 + RT5370 USB dongle** (T31X, GC2053 -- for units with unsupported internal WiFi; uses an external RT5370 USB dongle) -- ciao (experimental)
 - **Vanhua S62I** (T40XP, SPI-NAND, IMX307, Ethernet) -- master and ciao (experimental)
 - **Vanhua Z55** (T31X, GC4653 4MP, Ethernet) -- master. Builds from 2026-08-28 repin the AVPU hardware encoder clock to a reachable 600 MHz, so it sustains H.265 2560x1440 at 30 fps with lower CPU use (previously the encoder silently ran at 400 MHz and dropped frames at 25 fps)
