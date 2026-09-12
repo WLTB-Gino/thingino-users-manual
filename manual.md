@@ -1,7 +1,3 @@
-# Thingino User Manual
-
-Combined from the chapter files in thingino-users-manual-repo. Generated 2026-09-06.
-
 ## What is Thingino?
 
 Thingino is open source firmware that replaces the stock firmware on IP cameras powered by Ingenic T-series SoCs (T10, T20, T21, T23, T30, T31, T32, T33, T40, T41). You get a full-featured camera system with RTSP streaming, ONVIF support, motion detection, night vision, and home automation integration -- without cloud dependencies or vendor lock-in.
@@ -24,7 +20,7 @@ Recent master and ciao builds also integrate the **open-isp** package -- a compl
 
 ## SoC Support
 
-Thingino currently runs on **Ingenic** T-series SoCs (T10, T20, T21, T23, T30, T31, T32, T33, T40, T41). Early groundwork for **SigmaStar** (Infinity6e/SSC30KQ) support has been merged, but no usable SigmaStar camera builds exist yet.
+Thingino currently runs on **Ingenic** T-series SoCs (T10, T20, T21, T23, T30, T31, T32, T33, T40, T41). The first T32 camera profile landed on master in September 2026 (Cinnado D1 T32LQ) -- builds for T32 are new and experimental. Early groundwork for **SigmaStar** (Infinity6e/SSC30KQ) support has been merged, but no usable SigmaStar camera builds exist yet.
 
 ## SNMP Monitoring
 
@@ -32,7 +28,8 @@ Thingino includes an optional **thingino-snmpd** package (mini-snmpd 2.0) for ne
 
 ## Recently Added Cameras
 
-- **Shelly S1** (T23N, MIS20C1 sensor, ATBM6132CU WiFi) -- master and ciao (experimental)
+- **Infiya K1** (T31L, SC231HAI sensor, ATBM6132CU WiFi) -- ciao branch (experimental, added 2026-09-11)
+- **Shelly S1** (T23N, MIS20C1 sensor, ATBM6132CU WiFi) -- supported on both branches (ciao 2026-09-09, master 2026-09-10)
 - **Wyze Cam v3 + RT5370 USB dongle** (T31X, GC2053 -- for units with unsupported internal WiFi; uses an external RT5370 USB dongle) -- ciao (experimental)
 - **Vanhua S62I** (T40XP, SPI-NAND, IMX307, Ethernet) -- master and ciao (experimental)
 - **Vanhua Z55** (T31X, GC4653 4MP, Ethernet) -- master. Builds from 2026-08-28 repin the AVPU hardware encoder clock to a reachable 600 MHz, so it sustains H.265 2560x1440 at 30 fps with lower CPU use (previously the encoder silently ran at 400 MHz and dropped frames at 25 fps)
@@ -42,6 +39,7 @@ Thingino includes an optional **thingino-snmpd** package (mini-snmpd 2.0) for ne
 - **Hugolog E5P** (T41LQ) -- ciao branch
 - **Kiwibit BC111** (T23ZN) -- ciao branch
 - **Cinnado B6** (T23ZN) -- ciao branch
+- **Cinnado D1, T32 variant** (T32LQ, SC4336P sensor, ATBM6132U WiFi) -- master (experimental). First camera profile on the Ingenic T32 family -- T32 support is now real hardware, not just a name on the SoC list. Motors are wired in the profile but pan/tilt behavior is unverified on this variant. Caution: the D1 ships with several different SoCs (T23N, T31L, T41NQ, T32) -- identify your hardware before flashing any D1 image
 
 Check [thingino.com](https://thingino.com) for the full list of supported cameras.
 
@@ -69,7 +67,6 @@ Two browser-based tools make Thingino more accessible:
 ---
 
 [Next: First Boot & Initial Setup](02-first-boot.md) ->
-
 
 ## Provisioning
 
@@ -155,7 +152,6 @@ Without `-O`, OpenSSH defaults to the SFTP protocol and the transfer will fail.
 
 <- [Previous: Overview](01-overview.md) | [Next: Web UI](03-web-ui.md) ->
 
-
 The Web UI gives you a browser-based interface for managing your camera. Open it at `http://hostname.local` or `http://<camera-ip>`.
 
 ## Live Preview
@@ -163,6 +159,12 @@ The Web UI gives you a browser-based interface for managing your camera. Open it
 Since ciao 2026-09-04 (`052f13613`), the preview player recovers on its own when the browser backgrounded or throttled the tab: a watchdog monitors frame progress and force-reconnects after ~20 seconds without video while the tab is visible, and reconnect/retry budgets reset whenever you press Connect. Hover over the preview to reveal PTZ controls. On raptor-streamer builds (from 2026-08-24, `785447b84`) the live preview is proxied through rhd's native MJPEG stream, keeping the JPEG encoder warm and delivering frames at the configured JPEG FPS instead of the previous 3-4 second cadence.
 
 On stable (Prudynt) builds, the OSD overlay is rendered as an SVG overlay in the Web UI only -- it is not burned into video. See [Streaming and Video](05-streaming.md) for the full OSD story.
+
+### Live View (fMP4)
+
+Since ciao 2026-09-09, Prudynt builds ship a native low-latency live view: the **Live View (fMP4)** page plays the camera's H.264 stream directly in the browser. No re-encoding -- it reuses the existing encode, so image quality matches what RTSP viewers get, with audio playback (volume slider + mute) and zoom controls. Switching main/sub streams is race-free, and streamer plugin preview pages integrate on it like on the classic preview.
+
+Since ciao 2026-09-10 (`a3c1847e8`), Live View (fMP4) is the **default** preview that loads with the camera's page; the classic MJPEG preview remains available alongside it. Both preview styles, plus direct MJPEG stream URLs, are authenticated with the camera's API key (`/etc/thingino-api.key`, passed as `?token=...`) -- direct stream URLs embedded in other tools must include the token parameter.
 
 ## PTZ Controls
 
@@ -222,7 +224,6 @@ Discovery is also tuned for busy networks: the browse runs two short passes with
 
 <- [Previous: First Boot & Initial Setup](02-first-boot.md) | [Next: Networking](04-networking.md) ->
 
-
 ## WiFi
 
 WiFi credentials are stored in `/etc/wpa_supplicant.conf`, not in JSON config. To reconfigure:
@@ -263,6 +264,19 @@ If WiFi drops, check the log for WPA-supplicant reason codes. Common ones:
 | 71 | Disassociated due to poor RSSI |
 
 Full reference: [WiFi Reason Codes](https://github.com/themactep/thingino-firmware/blob/master/docs/wifi.md)
+
+## Network Watchdog (netwatch)
+
+Since ciao 2026-09-10, builds include a **network watchdog** that reboots the camera when it loses connectivity. Every 30 seconds it pings the network gateway; 3 consecutive failures trigger an automatic reboot. A hardware watchdog backs the mechanism up, so even a completely wedged network stack cannot block the recovery reboot.
+
+The watchdog is **enabled by default**. If your camera sits behind a gateway that blocks or rate-limits ICMP pings, lower sensitivity or disable the feature under **Settings -> Network**, or in the config:
+
+```sh
+jct /etc/thingino.json set netwatch.enabled false
+jct /etc/thingino.json set netwatch.fail_count 10
+```
+
+Keys: `netwatch.enabled` (default `true`), `netwatch.fail_count` (default `3`), `netwatch.interval` (default `30` seconds).
 
 ## Ethernet (Wired)
 
@@ -327,7 +341,6 @@ Builds from 2026-08-25 fix a bug where the *disable-roaming* patches on Realtek 
 ---
 
 <- [Previous: Web UI](03-web-ui.md) | [Next: Streaming and Video](05-streaming.md) ->
-
 
 ## RTSP
 
@@ -487,7 +500,13 @@ TIMPS has built-in adaptive day/night detection with configurable boot-settle pe
 
 **v1.9.8 (2026-09-03) hardens recording and transport edges.** Recording now prunes with a sanity-capped `record.min_free_mb` -- absurd values are refused and surfaced via `/control` status instead of wedging the SD loop, and the recorder backs off gracefully while the free-space target stays unreachable. Pre-roll re-anchors to the oldest available keyframe in the ring, so clips start on complete frames. RTSP-over-UDP clients that reconnect from a new source port (NAT rebinding) keep receiving video without a client restart. Day/night gets an illuminator relight when an abandoned silent probe would otherwise leave the IR light in the wrong state.
 
-> **Note on pins:** both ciao and master pin TIMPS v1.9.8 (master caught up on 2026-09-04, together with the WebUI plugin migration below). Everything below ships on new images from either branch.
+**v1.9.9 (2026-09-07) tames night exposure and hardens the audio path.** Two day/night wins for night footage: a new opt-in `ae_it_max_us` key caps the AE integration time, so a dark scene can no longer stretch exposure far enough to smear motion across frames -- set it in `/etc/timps.conf` (e.g. `ae_it_max_us 20000` for a 20 ms ceiling); leaving it unset keeps the old uncapped behaviour. Day/night now reads the real AE exposure from IMP as its primary signal (with an estimate-based fallback when the scrape only has an estimate), so the dark/light decision tracks actual sensor exposure. On the audio side, the talk-back channel elects its owner only on real audio packets, so non-audio traffic can no longer claim the speaker. The built-in preview/control HTTP server accepts 16 concurrent clients (previously 8).
+
+**v1.9.10 (2026-09-09) makes motion sensitivity changes stick.** Setting `motion.sensitivity` through `/control` or the Web UI now updates the running detector *and* survives a restart -- previously the new value could be reverted by a stale read-back and the change never reached `/etc/timps.conf`. Also along for the ride: the motion helper now spawns via `posix_spawn` (kinder to memory-tight cameras) and QA coverage for the encoder read-back path.
+
+**v1.9.11 (2026-09-11) adds a proper HTTP/HTTPS mode switch and same-port HTTPS.** The new `http.https` setting in `/etc/timps.conf` is a tri-state: `0` = plain HTTP (was the only behaviour of the setting before), `1` = the web UI port serves HTTP and HTTPS together (the server peeks at each connection's first byte and answers HTTP or TLS accordingly), `2` = HTTPS only, plain-HTTP requests are rejected. Self-signed TLS certificates are generated for you when strict mode (`2`) is enabled. Practical effect: a camera without a trusted certificate no longer has to choose between a broken HTTPS preview and an unencrypted port -- mode `1` lets normal browsers keep using `http://` while apps that require a secure context (camera-add flows, PWA installs, some mobile clients) get a real `https://` endpoint on the same port. Firmware-side (ciao PR `#1626`/`#1627`), the setting is only auto-written when the uhttpd redirect prerequisite is present, and the web UI's preview links follow the page scheme. This ships with the v1.9.11 binary -- older v1.9.10 builds misread the `2` as plain HTTP, so the firmware pin bump matters.
+
+> **Note on pins:** ciao bumped to TIMPS v1.9.11 on 2026-09-12 (PRs `#1626`/`#1627`); master caught up the same day with the v1.9.8 -> v1.9.11 bump (PR `#1635`). Everything above ships on new images of both branches.
 
 **v1.9.5 (2026-08-29) fixes fMP4 lip-sync after WiFi stalls, shares the web UI's TLS certificate, and cuts OSD CPU cost.** Highlights a camera owner would notice:
 
@@ -583,7 +602,6 @@ Advanced encoders support custom quantizer and bitrate limits via the streamer c
 
 <- [Previous: Networking](04-networking.md) | [Next: Storage and Recording](06-storage.md) ->
 
-
 ## SD Card
 
 SD cards are mounted automatically at `/mnt/mmcblk0p1`, **async** on both ciao (since 2026-08-25) and master (since 2026-09-03, PR #1535), with a global dirty-page writeback bound. Sustained recording no longer stalls on every write to slow cards -- a long-standing source of periodic freezes and UI sluggishness on single-core cameras. Reliability is unaffected: diagnostics and recorder flows sync explicitly. A power cut can lose the last seconds of buffered writes (as with any async removable-media mount), but the filesystem itself is safe.
@@ -615,6 +633,8 @@ Since ciao 2026-08-25, NFS shares were mounted **soft** with bounded retries (`s
 
 Already have unplayable files from the soft-mount era? Since ciao 2026-09-06 the firmware tree ships `scripts/recover-nfs-recordings.py`, which repairs exactly this failure: it detects prudynt-t recordings that lost their MP4 init segment (the `ftyp`+`moov` bytes the lost writes swallowed), copies the init segment from a healthy recording of the same camera and stream settings (auto-detected, or `--donor FILE`), and writes `<name>.recovered.mp4` beside each damaged file. Originals are never modified, so it is safe to re-run. Stop the recording first -- the segment currently being written gets recovered half-finished.
 
+Since ciao 2026-09-10 (`d836336d2`), the boot-time NFS mount works reliably even when the NFS server is specified by **hostname**: the mount helper now passes the bare hostname (not `server:/path`) to the kernel's route lookup, which previously failed and left the share unmounted after every boot until mounted by hand.
+
 ## Filesystem Overlay
 
 Thingino uses OverlayFS to provide a writable layer over the read-only root filesystem:
@@ -627,7 +647,6 @@ Changes to configuration files persist across reboots. The overlay partition is 
 ---
 
 <- [Previous: Streaming and Video](05-streaming.md) | [Next: Night Vision and Lighting](07-night-vision.md) ->
-
 
 ## Day/Night Mode
 
@@ -747,7 +766,6 @@ Some cameras include white light LEDs for full-color night vision. Control them 
 
 <- [Previous: Storage and Recording](06-storage.md) | [Next: Motion Detection and Alerts](08-motion-alerts.md) ->
 
-
 ## Motion Guard
 
 Motion detection uses the SoC's hardware IVS (Intelligent Video System). Enable it from the Web UI under **Motion Guard**.
@@ -809,7 +827,6 @@ The speaker settings share a save button with motion detection settings in recen
 ---
 
 <- [Previous: Night Vision and Lighting](07-night-vision.md) | [Next: Home Automation and Integration](09-home-automation.md) ->
-
 
 ## Home Assistant
 
@@ -878,7 +895,6 @@ Note for Frigate + PTZ cameras: an ONVIF GetStatus bug (fixed in thingino-onvif 
 
 <- [Previous: Motion Detection and Alerts](08-motion-alerts.md) | [Next: PTZ (Pan-Tilt-Zoom)](10-ptz.md) ->
 
-
 ## Web UI
 
 Hover over the live preview to access PTZ controls. Two control modes are available in **Settings -> Pan/Tilt Motors -> Behavior -> Preview PTZ controls**:
@@ -889,6 +905,8 @@ Hover over the live preview to access PTZ controls. Two control modes are availa
 On ciao and master builds with TIMPS as the streamer, a low-latency **WebSocket control path** is used for preview PTZ (`BR2_PACKAGE_THINGINO_MOTORS_WS`, on by default when TIMPS is selected), with the CGI path kept as an automatic fallback. The preview also gains an on-screen **joystick** and motor sensitivity sliders in the motors settings, plus a motors daemon version badge.
 
 Keyboard jog on the preview page uses **Shift + arrow keys** -- one discrete step per press, browser auto-repeat ignored. Plain arrow keys (and other modifiers) are left to the browser for normal page scrolling.
+
+On ciao builds (2026-09-08+), the preview also shows a **preset quick-bar** under the video: ten slots -- click to move, long-press to save the current position. The bar initially went missing from reflashed cameras because its script was never committed; firmware commit `10bd51d53` fixed the packaging.
 
 ## Presets
 
@@ -939,7 +957,6 @@ Flip changes are picked up when the motor daemon reloads its config (`S59motor r
 ---
 
 <- [Previous: Home Automation and Integration](09-home-automation.md) | [Next: System Configuration](11-system-config.md) ->
-
 
 ## Configuration Files
 
@@ -1001,7 +1018,6 @@ Thingino automatically receives timezone from DHCP Option 101 and NTP server fro
 ---
 
 <- [Previous: PTZ (Pan-Tilt-Zoom)](10-ptz.md) | [Next: Firmware Updates](12-firmware-updates.md) ->
-
 
 ## sysupgrade (OTA)
 
@@ -1077,7 +1093,6 @@ OTA is not in the Tools menu for production builds. If you need to upgrade and d
 ---
 
 <- [Previous: System Configuration](11-system-config.md) | [Next: Troubleshooting](13-troubleshooting.md) ->
-
 
 ## Diagnostics
 
@@ -1194,7 +1209,6 @@ The camera can send its logs to a central syslog server (configurable in the Web
 
 <- [Previous: Firmware Updates](12-firmware-updates.md) | [Next: Glossary](14-glossary.md) ->
 
-
 | Term | Definition |
 |------|------------|
 | **3A** | Auto Exposure, Auto White Balance, Auto Focus |
@@ -1227,5 +1241,3 @@ The camera can send its logs to a central syslog server (configurable in the Web
 ---
 
 <- [Previous: Troubleshooting](13-troubleshooting.md)
-
-
