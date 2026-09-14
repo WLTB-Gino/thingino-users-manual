@@ -33,6 +33,31 @@ mpv rtsp://thingino:thingino@192.168.1.10:554/ch0 \
 
 When available, WebRTC provides ultra-low-latency live view in the Web UI. The camera's streaming daemon handles WebRTC negotiation automatically.
 
+### WebRTC / WHEP on TIMPS (v1.9.13+)
+
+TIMPS gained its own WebRTC implementation in v1.9.13, refined through v1.9.14. It serves a standard **WHEP** endpoint (WebRTC-HTTP Egress Protocol): a player POSTs an SDP offer to the camera and receives H.264 video (plus audio) over ICE-lite/DTLS-SRTP -- no plugin, and none of the MSE buffering the fMP4 preview has.
+
+```
+POST   http://<camera-ip>:8880/webrtc/whep        # send the SDP offer, get the answer
+DELETE http://<camera-ip>:8880/webrtc/whep/<id>   # tear a session down
+```
+
+A standalone test page ships with the TIMPS source (`scripts/whep-test.html`).
+
+Deliberate limitations, worth knowing before you try it:
+
+- **LAN/VPN only** -- one host candidate, no STUN/TURN, no NAT traversal, no IPv6
+- **H.264 video only** (the `webrtc.channel` stream) plus **G.711 audio** (PCMU/PCMA) only when the camera actually encodes G.711 -- on AAC cameras, turn on the second encode with `audio.codec2` (below). No Opus, AAC or H.265 over WebRTC; no transcoding
+- **No NACK/retransmission, FEC, or congestion control** -- a LAN live-view path, not a loss-recovery one
+- **Firefox usually will not decode it** (the answer's `profile-level-id` comes from the live SPS, which defaults to High profile); Chrome/Chromium is the tested target
+- **At most 4 concurrent sessions** -- a 5th offer gets `503`, and stalled sessions are reclaimed after 30 seconds
+
+The endpoint is compiled in behind a build flag and **runtime-gated by `webrtc.enabled`** in `/etc/timps.conf`: `1` = on, `2` = on and also accept plaintext WHEP POSTs on a TLS port (the default on WebRTC builds since v1.9.14), `0` = off. With a TLS-protected port (`http.https=1`), plaintext WHEP POSTs are otherwise refused with `426 Upgrade Required` -- signalling belongs on HTTPS. Note that as of the 2026-09-14 ciao package refresh, firmware's TIMPS package does **not yet** set the WebRTC build flag, so official images ship without the endpoint compiled in; building TIMPS with `USE_WEBRTC=1` is the only way to get it today.
+
+### WebRTC audio on AAC cameras (`audio.codec2`)
+
+TIMPS v1.9.13/v1.9.14 add an optional **second audio encode** whose only job is to feed WebRTC's G.711-only path: the camera encodes AAC (for RTSP/fMP4) and PCMU side by side. `audio.codec2` in `/etc/timps.conf` accepts `pcmu` or `off` and defaults to `pcmu` on WebRTC builds. The same releases polished the remaining WebRTC audio defaults: `audio.gain` returned to 25, and the inbound SRTCP replay protection is keyed per sender SSRC.
+
 > **Firefox note:** If you get a 400 Bad Request error, set `media.gmp-gmpopenh264.enabled` to `true` in Firefox's `about:config`. The camera only supports H.264 video.
 
 ## ONVIF
@@ -163,6 +188,12 @@ TIMPS has built-in adaptive day/night detection with configurable boot-settle pe
 **v1.9.11 (2026-09-11) adds a proper HTTP/HTTPS mode switch and same-port HTTPS.** The new `http.https` setting in `/etc/timps.conf` is a tri-state: `0` = plain HTTP (was the only behaviour of the setting before), `1` = the web UI port serves HTTP and HTTPS together (the server peeks at each connection's first byte and answers HTTP or TLS accordingly), `2` = HTTPS only, plain-HTTP requests are rejected. Self-signed TLS certificates are generated for you when strict mode (`2`) is enabled. Practical effect: a camera without a trusted certificate no longer has to choose between a broken HTTPS preview and an unencrypted port -- mode `1` lets normal browsers keep using `http://` while apps that require a secure context (camera-add flows, PWA installs, some mobile clients) get a real `https://` endpoint on the same port. Firmware-side (ciao PR `#1626`/`#1627`), the setting is only auto-written when the uhttpd redirect prerequisite is present, and the web UI's preview links follow the page scheme. This ships with the v1.9.11 binary -- older v1.9.10 builds misread the `2` as plain HTTP, so the firmware pin bump matters.
 
 > **Note on pins:** ciao bumped to TIMPS v1.9.11 on 2026-09-12 (PRs `#1626`/`#1627`); master caught up the same day with the v1.9.8 -> v1.9.11 bump (PR `#1635`). Everything above ships on new images of both branches.
+
+**v1.9.12 (2026-09-12) rounds out v1.9.11's HTTPS story:** with `http.https=1`, HTTPS responses now gain `Cross-Origin-Opener-Policy`/`Cross-Origin-Embedder-Policy` headers so browser camera-add and PWA flows treat the camera as a secure context, and a plaintext WHEP POST to a TLS port is refused with `426 Upgrade Required` instead of silently misbehaving.
+
+**v1.9.13 (2026-09-13) adds the WHEP WebRTC endpoint** described in the WebRTC section above -- first release to ship it.
+
+**v1.9.14 (2026-09-14) makes WebRTC the default where it exists and polishes its audio:** `webrtc.enabled` now defaults to `2` (on, plaintext-accepting) on WebRTC builds, the WebRTC audio path defaults to G.711 (`audio.codec2=pcmu`), and `audio.gain` is back at 25 after the brief 15 experiment. The endpoint distinguishes "disabled by config" (`503`) from "not built in" (`404`).
 
 **v1.9.5 (2026-08-29) fixes fMP4 lip-sync after WiFi stalls, shares the web UI's TLS certificate, and cuts OSD CPU cost.** Highlights a camera owner would notice:
 

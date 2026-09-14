@@ -12,6 +12,8 @@ Since ciao 2026-09-09, Prudynt builds ship a native low-latency live view: the *
 
 Since ciao 2026-09-10 (`a3c1847e8`), Live View (fMP4) is the **default** preview that loads with the camera's page; the classic MJPEG preview remains available alongside it. Both preview styles, plus direct MJPEG stream URLs, are authenticated with the camera's API key (`/etc/thingino-api.key`, passed as `?token=...`) -- direct stream URLs embedded in other tools must include the token parameter.
 
+**Fixed 2026-09-14 (ciao `74cf774a4`, prudynt-t `354b1b4`): memory exhaustion with multiple fMP4 preview viewers.** Under multi-client load the fMP4 preview could exhaust camera RAM and take the streamer down. Prudynt-t now releases the fMP4 worker claim after the last previewer disconnects and recycles frame buffers between sessions. If your camera has dropped its stream while the fMP4 preview was in use, flashing a ciao build from 2026-09-14 or newer resolves it.
+
 ## PTZ Controls
 
 Two control modes are available under **Settings -> Pan/Tilt Motors -> Behavior -> Preview PTZ controls**:
