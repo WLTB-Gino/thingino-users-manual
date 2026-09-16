@@ -60,6 +60,10 @@ TIMPS v1.9.13/v1.9.14 add an optional **second audio encode** whose only job is 
 
 > **Firefox note:** If you get a 400 Bad Request error, set `media.gmp-gmpopenh264.enabled` to `true` in Firefox's `about:config`. The camera only supports H.264 video.
 
+### Server-side stats (`GET /control?stats=1`, v1.9.16+)
+
+The control API gained a server-side stats endpoint, separate from the per-stream stats: `curl http://<camera-ip>:8880/control?stats=1`. It reports the streamer's own counters (session counts, encode drops) in the same JSON shape as the rest of `/control`. Note the scoped-sub-endpoint convention that also landed in v1.9.16: `?stats=1` and friends are matched as scoped queries rather than free-form config reads.
+
 ## ONVIF
 
 Thingino provides ONVIF Profile S compliance, enabling compatibility with NVRs, VMS software, and home automation platforms. ONVIF services include:

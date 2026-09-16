@@ -28,6 +28,7 @@ Thingino includes an optional **thingino-snmpd** package (mini-snmpd 2.0) for ne
 
 ## Recently Added Cameras
 
+- **Eufy T8416 (E220 family), dual-sensor mode** (T40XP, two sensors at 20 fps each) -- master. The T40 dual-sensor mode is real on master as of 2026-09-15: both lenses stream concurrently, with per-sensor Raptor configuration keys and U-Boot now parking every sensor's IR-cut pins at boot. Building a T40 dual image still needs the boosted rmem recipe (BR2_THINGINO_RMEM_MB=134, NMEM=22)
 - **Infiya K1** (T31L, SC231HAI sensor, ATBM6132CU WiFi) -- ciao branch (experimental, added 2026-09-11)
 - **Shelly S1** (T23N, MIS20C1 sensor, ATBM6132CU WiFi) -- supported on both branches (ciao 2026-09-09, master 2026-09-10)
 - **Wyze Cam v3 + RT5370 USB dongle** (T31X, GC2053 -- for units with unsupported internal WiFi; uses an external RT5370 USB dongle) -- ciao (experimental)

@@ -55,6 +55,28 @@ The daynightd daemon uses EV log2 as the primary brightness metric (T31/T23/T21/
 - **Day threshold** -- EV log2 value at which the camera switches back to day mode (default: `350000`)
 - **Brightness percentage thresholds** -- Optional overrides (`night_threshold_pct`, `day_threshold_pct`) that use a 0--100 brightness metric instead of raw EV values
 
+### Tuning day/night thresholds (v1.9.15+)
+
+Thresholds that ship with the firmware are averages. Dark-room readings vary per sensor and mounting (enclosure, IR reflection); when a camera ignores its thresholds, measure instead of guessing.
+
+TIMPS v1.9.15 added a built-in tuning loop that closes this loop entirely on the camera:
+
+- **`GET /control?dn_history=1`** serves the daemon's day/night decision history ring — per-sample brightness values and the mode at each point. Read it right after you see a wrong switch: `curl http://<camera-ip>:8880/control?dn_history=1`
+- **`daynight.diagnose_thresholds`** is reported in `GET /control` status JSON (v1.9.15+), so scripts can detect misconfiguration.
+
+**Measure first, then bracket:** read your actual brightness values (daylight, dusk, fully dark), then set percentage thresholds that bracket them. The percentage keys (`day_threshold`/`night_threshold`, 0-100 scale) map logarithmically to the daemon's raw brightness metric — intermediate readings land in the hysteresis zone and hold the current mode, which is the point of the two thresholds.
+
+**Real-world example (WUUK Y0510 / SC4336P, ciao 2488702):** the shipped raw-EV defaults (night >550000, day <350000) were miscalibrated for that sensor: daylight read ~737k (misread as night), a hand-covered lens read ~1114k — below the computed 1125k night line, so night mode could never engage in the dark. First fix attempt (raw `ev_*` thresholds 800000/1200000) booted to day but still never reached night: the daemon's percentage keys (`daynight.day_threshold`/`night_threshold`, default 50/25) silently override the raw `ev_*` keys whenever they are set — set the percentage keys, don't mix scales. Working calibration:
+
+```sh
+jct /etc/thingino.json set daynight.day_threshold 38
+jct /etc/thingino.json set daynight.night_threshold 30
+service restart daynightd
+logread | grep "Initial mode"   # verify thresholds took effect
+```
+
+Two extra practical rules from that case: brightness under a covered lens is bounded by the sensor's max gain (don't chase ever-higher values), and give the daemon ~20 seconds of sustained samples before expecting a mode flip. When a schedule-based mode is preferable, `daynight.schedule` with start/stop times is the stable fallback.
+
 The daemon also includes configurable sample counts (how many consecutive samples must exceed the threshold before switching) and a hysteresis factor to prevent flapping.
 
 ```sh
