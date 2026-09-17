@@ -124,6 +124,15 @@ Recent Prudynt updates (b8d94db) include:
 - **Shutdown stability** -- Prevents hang in video/JPEG worker threads during shutdown
 - **RTSP audio-only fix** -- Audio-only RTSP sessions no longer crash or hang (Prudynt 6afc440)
 
+### Stream watchdog (Prudynt builds, September 2026)
+
+Prudynt now ships with a supervisor: if the streamer dies (crash, OOM kill), the `S32prudyntwd` watchdog detects it within about a minute and restarts it automatically — previously a dead streamer stayed dead until a manual reboot. How it behaves:
+
+- Liveness is probed via the local HTTP API (with an RTSP probe as fallback), so it works regardless of RTSP authentication settings.
+- After 3 failed restarts in a row it backs off for 10 minutes between rounds, letting transient faults clear instead of restart-looping.
+- If the streamer still has not recovered after 9 failed restarts (~34 minutes), the camera **reboots itself** (with a hardware-watchdog fallback in case the normal reboot path is wedged).
+- To disable the self-reboot and only log/back off, edit `REBOOT_AFTER=0` in `/etc/init.d/S32prudyntwd`.
+
 ### Colour Fidelity (full-range luma + colour matrix in SPS VUI)
 
 If video from a Prudynt camera looked washed out or had slightly wrong colours in some players, firmware from 2026-08-25 (prudynt-t `b609f30`) fixes it. The encoder now declares full-range luma and an explicit BT.709 colour matrix in the H.264/H.265 SPS VUI, at every resolution -- the pipeline is BT.709 end to end, so a low-resolution substream publishes the same matrix as the main stream and the JPEG snapshot. Previously the stream could be signalled as limited range or even an invalid `gbr` matrix, which some decoders honoured literally. (An earlier revision of the fix wrongly labelled sub-720p streams BT.601; that was a mistake, corrected.) The signal now matches the actual pixels; no configuration needed.
