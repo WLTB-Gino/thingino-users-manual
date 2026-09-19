@@ -7,6 +7,7 @@ Format as FAT32 for best compatibility. Note that ext4 support is **not enabled 
 ### SD Card Tips
 
 - Use a 2GB--8GB card for best compatibility. Some 16GB and 32GB cards may not be recognized in U-Boot's 1-bit MMC mode, particularly on T23N cameras.
+- Card detected but never shows up as `/dev/mmcblk0`? On T31 cameras the advertised microSD/SDIO voltage window was too narrow (3.2--3.4 V), so some cards failed voltage negotiation during enumeration and never appeared. Master builds since 2026-09-18 advertise the full 2.7--3.6 V range and affected cards initialize normally. If a card works in other devices but never mounts on a T31 camera, update the firmware first.
 - To trigger a diagnostics report via SD card, create a file named `.diag` in the root of a blank SD card and insert it into the running camera.
 
 ### SD Card on T40/T41 (XBurst2)

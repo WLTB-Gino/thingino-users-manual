@@ -91,6 +91,10 @@ Hold Ctrl-C until the prompt appears; `boot` resumes, `reset` reboots, Ctrl-T ex
 
 Covers the U-Boot phase only; kernel messages still need a serial console or Linux-side netconsole.
 
+## Reboot Hangs (older master builds)
+
+`reboot` could hang forever on master builds: the kernel shutdown path disarmed the hardware watchdog, so when shutdown or the low-level restart routine stalled, nothing reset the SoC and the camera sat there until power-cycled. Master builds since 2026-09-18 (`c4d3bcc01`, ported from the ciao branch) keep the watchdog armed across shutdown as a fallback -- a wedged reboot now self-resets after the configured watchdog timeout. If your camera hangs on `reboot`, power-cycle it and update the firmware.
+
 ## Copying Files via SCP
 
 Thingino uses Dropbear SSH, which does **not** support SFTP. Always use the `-O` flag with OpenSSH 9.0+:
