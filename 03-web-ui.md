@@ -37,6 +37,8 @@ Recent ciao builds support both SEI metadata mode (default) and an optional **bu
 
 The Timelapse tool is now part of the streamer packages instead of a shared Tools page. On Prudynt (stable) it works via a cron schedule invoking the streamer's `timelapse` command; on Raptor (master) it drives the `[timelapse]` section of `raptor.conf` (enabled, interval, playback\_fps, file\_frames, max\_mb) through `raptorctl`, with native capture and rotation -- no cron needed. Find it under the Services menu on both streamers.
 
+On TIMPS cameras the built-in timelapse **player** (in the camera's web UI) got a playback-smoothness overhaul on ciao builds from 2026-09-20: frames are served without closing the connection each time and the player keeps a deeper prefetch window, so playback no longer stutters between shots.
+
 ## Web UI Plugin Architecture
 
 Thingino's Web UI uses a modular plugin system. Optional packages ship their own configuration pages as plugins that are automatically integrated into the navigation menu at build time. If a package is not installed, its Web UI pages simply don't appear -- no stale menus or dead links.

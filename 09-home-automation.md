@@ -61,6 +61,8 @@ Note for Synology Surveillance Station: cameras on builds from 2026-08-17 (thing
 
 Note for Frigate + PTZ cameras: an ONVIF GetStatus bug (fixed in thingino-onvif `6f299f3`, included in builds from 2026-08-16) caused Frigate to crash with `AttributeError: 'NoneType' object has no attribute 'Position'` on cameras without zoom. Update your firmware if you hit this; old firmware pins also accept a manual workaround (upload the `GetStatus_nozoom.xml` template to `/var/www/onvif/ptz_service_files/`).
 
+Frigate reads the camera's PTZ preset **names** from `GetPresets`, so the descriptions you set in the web UI appear in Frigate's preset menu instead of generic `preset_N` labels. This needs firmware builds from 2026-09-20 (earlier builds exposed only the raw token). Frigate keys its menu by the lowercased name and the preset token is unchanged, so existing `GotoPreset` calls keep working.
+
 ---
 
 <- [Previous: Motion Detection and Alerts](08-motion-alerts.md) | [Next: PTZ (Pan-Tilt-Zoom)](10-ptz.md) ->
