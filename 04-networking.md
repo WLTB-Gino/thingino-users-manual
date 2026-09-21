@@ -41,16 +41,17 @@ Full reference: [WiFi Reason Codes](https://github.com/themactep/thingino-firmwa
 
 ## Network Watchdog (netwatch)
 
-Since ciao 2026-09-10, builds include a **network watchdog** that reboots the camera when it loses connectivity. Every 30 seconds it pings the network gateway; 3 consecutive failures trigger an automatic reboot. A hardware watchdog backs the mechanism up, so even a completely wedged network stack cannot block the recovery reboot.
+Ciao builds from 2026-09-10 include an optional **network watchdog** that can reboot the camera when it loses connectivity: every 30 seconds it pings the network gateway, and after 3 consecutive failures it reboots the camera. A hardware watchdog backs the mechanism up, so even a completely wedged network stack cannot block the recovery reboot.
 
-The watchdog is **enabled by default**. If your camera sits behind a gateway that blocks or rate-limits ICMP pings, lower sensitivity or disable the feature under **Settings -> Network**, or in the config:
+**As of 2026-09-20 the watchdog is opt-in** -- it no longer arms by default. (Earlier ciao builds rebooted every unit after 3 failed pings, which could turn a marginal Wi-Fi link into a reboot loop.) Enable it under **Settings -> Network** or in the config:
 
 ```sh
-jct /etc/thingino.json set netwatch.enabled false
-jct /etc/thingino.json set netwatch.fail_count 10
+jct /etc/thingino.json set netwatch.enabled true
 ```
 
-Keys: `netwatch.enabled` (default `true`), `netwatch.fail_count` (default `3`), `netwatch.interval` (default `30` seconds).
+Arm/check/reboot decisions are logged -- when diagnosing a flaky link, look for the `netwatch` tag in `logread`.
+
+Keys: `netwatch.enabled` (default `false`), `netwatch.fail_count` (default `3`), `netwatch.interval` (default `30` seconds).
 
 ## Ethernet (Wired)
 

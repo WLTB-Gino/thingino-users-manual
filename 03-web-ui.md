@@ -14,6 +14,8 @@ Since ciao 2026-09-10 (`a3c1847e8`), Live View (fMP4) is the **default** preview
 
 **Fixed 2026-09-14 (ciao `74cf774a4`, prudynt-t `354b1b4`): memory exhaustion with multiple fMP4 preview viewers.** Under multi-client load the fMP4 preview could exhaust camera RAM and take the streamer down. Prudynt-t now releases the fMP4 worker claim after the last previewer disconnects and recycles frame buffers between sessions. If your camera has dropped its stream while the fMP4 preview was in use, flashing a ciao build from 2026-09-14 or newer resolves it.
 
+**Fixed 2026-09-21 (ciao `229c87945`): long-session stability.** The fMP4 preview could die after many minutes (`ERR_INCOMPLETE_CHUNKED_ENCODING` in the browser console) when the camera's send buffer backed up, and a stalled playhead -- background tab, blocked autoplay -- let the buffered video grow without bound. The preview now reads and appends independently with a byte-capped backlog, trims its buffer against the live edge, and **reconnects automatically** after a drop instead of leaving a black player. Long sessions on older builds: refresh the page, or flash a ciao build from 2026-09-21 or newer.
+
 ## PTZ Controls
 
 Two control modes are available under **Settings -> Pan/Tilt Motors -> Behavior -> Preview PTZ controls**:

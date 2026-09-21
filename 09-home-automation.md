@@ -35,6 +35,8 @@ jct /etc/thingino.json set ha.enable_reboot false
 
 All MQTT topics use the prefix `cameras/<hostname>/`. Recent builds use the camera **hostname** as its identity (instead of MAC address or SoC serial), making it easier to identify cameras in your HA dashboard.
 
+**FQDN-style hostnames:** HA silently drops discovery topics whose node id contains characters outside `a-zA-Z0-9_-`, so a hostname like `cam-hall.rdw.one` used to produce discovery messages HA discarded. Builds from 2026-09-20 derive a sanitized node id for discovery topics only -- state topics still use the full hostname -- so such cameras appear correctly in HA.
+
 The HA integration also auto-discovers the camera's **sensor model** and **device model** from `/etc/os-release`, so the correct hardware name appears in HA automatically.
 
 ## MQTT
