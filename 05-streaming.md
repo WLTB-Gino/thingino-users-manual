@@ -133,6 +133,10 @@ Prudynt now ships with a supervisor: if the streamer dies (crash, OOM kill), the
 - If the streamer still has not recovered after 9 failed restarts (~34 minutes), the camera **reboots itself** (with a hardware-watchdog fallback in case the normal reboot path is wedged).
 - To disable the self-reboot and only log/back off, edit `REBOOT_AFTER=0` in `/etc/init.d/S32prudyntwd`.
 
+### PTZ Live View (Prudynt builds, ciao 2026-09-24)
+
+Prudynt builds gain a combined live view: the H.264 stream plays in the browser with pan/tilt controls, ten preset slots and the OSD overlay on a single page. It lives at `/preview.html` and is what the **Preview** nav item opens from 2026-09-24; the plain fMP4 player remains at `/preview-fmp4.html`. Presets are managed in-page: long-press a slot to name and store the current position, right-click to delete it. On cameras without pan/tilt hardware the controls render disabled with a note, so the page serves as a universal default.
+
 ### Colour Fidelity (full-range luma + colour matrix in SPS VUI)
 
 If video from a Prudynt camera looked washed out or had slightly wrong colours in some players, firmware from 2026-08-25 (prudynt-t `b609f30`) fixes it. The encoder now declares full-range luma and an explicit BT.709 colour matrix in the H.264/H.265 SPS VUI, at every resolution -- the pipeline is BT.709 end to end, so a low-resolution substream publishes the same matrix as the main stream and the JPEG snapshot. Previously the stream could be signalled as limited range or even an invalid `gbr` matrix, which some decoders honoured literally. (An earlier revision of the fix wrongly labelled sub-720p streams BT.601; that was a mistake, corrected.) The signal now matches the actual pixels; no configuration needed.
@@ -162,7 +166,7 @@ convert logo-100x30-alpha.png -depth 8 bgra:logo.bgra
 
 ## TIMPS (Alternative Streamer)
 
-TIMPS (Tiny IMP Streamer) is a lightweight streamer available as an alternative to Prudynt/Raptor. On recent builds it installs its own Web UI plugin (preview page, motors controls, SSE position fallback -- 2026-09-04, firmware commits `39523b778`/`7b4e81dc3`). When using TIMPS, these features are available:
+TIMPS (Tiny IMP Streamer) is a lightweight streamer available as an alternative to Prudynt/Raptor. As of v1.9.19 (ciao builds from 2026-09-23), a dropped P-frame reliably triggers an instant keyframe recovery request across all transports -- RTSP, SRT, WebRTC and fMP4 -- instead of leaving a smeared picture until the next natural keyframe (per-protocol 1-second gates used to swallow some recovery requests); and ciao builds apply per-camera `timps.conf` defaults from the camera profile automatically (firmware `ccc103513`), so a profile-tuned camera needs no manual streamer config. On recent builds TIMPS installs its own Web UI plugin (preview page, motors controls, SSE position fallback -- 2026-09-04, firmware commits `39523b778`/`7b4e81dc3`). When using TIMPS, these features are available:
 
 ### Live Control API
 
