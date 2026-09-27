@@ -32,7 +32,7 @@ Thingino includes an optional **thingino-snmpd** package (mini-snmpd 2.0) for ne
 - **Infiya K1** (T31L, SC231HAI sensor, ATBM6132CU WiFi) -- ciao branch (experimental, added 2026-09-11)
 - **DEKCO DC5L** (T23N, SC3332P sensor, WS73V100 USB WiFi, 16MB flash) -- ciao branch (added 2026-09-20; promoted to the mainline camera list)
 - **Shelly S1** (T23N, MIS20C1 sensor, ATBM6132CU WiFi) -- supported on both branches (ciao 2026-09-09, master 2026-09-10). A hardware revision with USB ethernet instead of the wireless module is also supported (ciao, cameras-exp, 2026-09-17)
-- **Sonoff S3W** (T23N, SC231HAI sensor, ATBM6132CU WiFi) -- ciao branch (added 2026-09-17)
+- **Sonoff S3W** (T23N, SC231HAI or SC200AI sensor, ATBM6132CU WiFi) -- ciao branch (added 2026-09-17). Two sensor variants exist, one profile each. Recent builds also handle both USB hardware revisions of the ATBM6132CU module: units reporting USB ID `0x6162` are the Bluetooth-combo variant and need the matching driver option (`BR2_PACKAGE_WIFI_ATBM6132CU_6162`, selected automatically for the S3W profile), which ships the combo firmware, enables WiFi+BT sharing (`wifi_bt_comb=1`) and drops the driver's `p2p0` network device
 - **SecuPlug SP1** (T10L, JXH42 sensor, MT7601 USB WiFi) -- ciao branch (added 2026-09-24; motor speed/travel calibrated)
 - **Wyze Cam v3 + RT5370 USB dongle** (T31X, GC2053 -- for units with unsupported internal WiFi; uses an external RT5370 USB dongle) -- ciao (experimental)
 - **Vanhua S62I** (T40XP, SPI-NAND, IMX307, Ethernet) -- master and ciao (experimental)
