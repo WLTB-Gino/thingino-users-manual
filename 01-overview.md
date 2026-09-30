@@ -28,6 +28,7 @@ Thingino includes an optional **thingino-snmpd** package (mini-snmpd 2.0) for ne
 
 ## Recently Added Cameras
 
+- **Teacup DevBoard** (T31ZX, IMX219 sensor, Ethernet, 16MB flash) -- ciao branch (experimental, added 2026-09-29)
 - **Eufy T8416 (E220 family), dual-sensor mode** (T40XP, two sensors at 20 fps each) -- master. The T40 dual-sensor mode is real on master as of 2026-09-15: both lenses stream concurrently, with per-sensor Raptor configuration keys and U-Boot now parking every sensor's IR-cut pins at boot. Building a T40 dual image still needs the boosted rmem recipe (BR2_THINGINO_RMEM_MB=134, NMEM=22)
 - **Infiya K1** (T31L, SC231HAI sensor, ATBM6132CU WiFi) -- ciao branch (experimental, added 2026-09-11). Profile corrections landed 2026-09-27: the BT-combo `0x6162` USB revision of the WiFi module is auto-flagged for the driver, the audio/LED GPIOs switched to active-low symbols, and the ISP settings now carry per-line comments
 - **DEKCO DC5L** (T23N, SC3332P sensor, WS73V100 USB WiFi, 16MB flash) -- ciao branch (added 2026-09-20; promoted to the mainline camera list)

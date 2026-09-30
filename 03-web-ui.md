@@ -18,6 +18,8 @@ Since ciao 2026-09-10 (`a3c1847e8`), Live View (fMP4) is the **default** preview
 
 **Fixed 2026-09-21 (ciao `229c87945`): long-session stability.** The fMP4 preview could die after many minutes (`ERR_INCOMPLETE_CHUNKED_ENCODING` in the browser console) when the camera's send buffer backed up, and a stalled playhead -- background tab, blocked autoplay -- let the buffered video grow without bound. The preview now reads and appends independently with a byte-capped backlog, trims its buffer against the live edge, and **reconnects automatically** after a drop instead of leaving a black player. Long sessions on older builds: refresh the page, or flash a ciao build from 2026-09-21 or newer.
 
+**Since ciao 2026-09-29, the preview pages show a strip of direct-stream endpoint links** below the player: RTSP, fMP4, MJPEG, and snapshot URLs for both the main (ch0) and sub (ch1) streams. Click any link to copy its URL to the clipboard. The RTSP links embed your RTSP username and password (default `thingino`/`thingino`), and the browser/stream/snapshot links include your camera's API key as a `token` parameter, so a copied URL works as-is in another player or tool. The strip follows your configured RTSP endpoints, port, and credentials, and appears on both the classic MJPEG preview and the fMP4/PTZ live view.
+
 ## PTZ Controls
 
 Two control modes are available under **Settings -> Pan/Tilt Motors -> Behavior -> Preview PTZ controls**:
