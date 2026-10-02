@@ -49,12 +49,12 @@ On the master branch the send2 notification scripts live in a standalone `thingi
 
 Cameras with a built-in speaker can play audio alerts when motion is detected. Configure this from the Web UI under **Motion Guard**:
 
-- **Speaker file** -- Audio file to play (must be Opus format on 8 MB flash cameras; MP3 requires 16 MB+ flash)
+- **Speaker file** -- Optional. Audio file to play (must be Opus format on 8 MB flash cameras; MP3 requires 16 MB+ flash). Leave it empty to use a bundled sound: the test button plays `chime_1`, motion alerts play `motiondetectionactivated`.
 - **Volume** -- Speaker volume (0--120)
 - **Gain** -- Audio gain (0--31)
 - **Repeat** -- Number of times to play (0 = forever)
 
-The speaker settings share a save button with motion detection settings in recent builds. Use the **Test** button to preview the sound without triggering motion.
+The speaker settings share a save button with motion detection settings in recent builds. Use the **Test** button to preview the sound without triggering motion. In builds from before October 2026 the test button reported success even when no speaker file was configured (the alert was a silent no-op); current builds fall back to the bundled sound and report the real result.
 
 ---
 
