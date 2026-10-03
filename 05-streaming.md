@@ -131,6 +131,7 @@ Prudynt now ships with a supervisor: if the streamer dies (crash, OOM kill), the
 - Liveness is probed via the local HTTP API (with an RTSP probe as fallback), so it works regardless of RTSP authentication settings.
 - After 3 failed restarts in a row it backs off for 10 minutes between rounds, letting transient faults clear instead of restart-looping.
 - If the streamer still has not recovered after 9 failed restarts (~34 minutes), the camera **reboots itself** (with a hardware-watchdog fallback in case the normal reboot path is wedged).
+- **Fixed 2026-10-03 (ciao `2b9361fb0`): the watchdog could not clear a wedged streamer.** When Prudynt hung inside a driver call, the stop routine could not kill the process (logging "no /usr/bin/prudynt found; none killed"), so the watchdog's restart was a no-op and the camera stayed streamless until a manual reboot. Stop now captures the PID before the pidfile is removed and force-kills it directly. If one of your cameras "only a reboot fixes", a build from 2026-10-03 or newer addresses it.
 - To disable the self-reboot and only log/back off, edit `REBOOT_AFTER=0` in `/etc/init.d/S32prudyntwd`.
 
 ### PTZ Live View (Prudynt builds, ciao 2026-09-24)

@@ -48,6 +48,8 @@ jct /etc/thingino.json get motors.gpio_tilt
 
 The earlier double-inversion bug (init script re-applying the daemon's inversion, making the setting a no-op) and the position-counter overshoot are fixed on all motor types; the runtime `motors -I x/y` block for non-SPI cameras was removed from `S59motor`.
 
+**Fixed 2026-10-03 (ciao `277805e1b`): pan/tilt stopped responding until reboot.** The motor service's stop routine could not actually stop the daemon (its PID file was stale from the moment it was written, because the daemon forks itself into the background), so a restart left the old daemon running with the kernel driver removed underneath it -- PTZ then went dead until the camera was rebooted. Stop now finds the real PID and kills it before unloading the module; a stale `S59motor restart` no longer breaks motors on any camera that has panned at least once.
+
 ### Upside-Down Mounts
 
 If the camera is mounted upside-down and you compensate with **Image Flip** (hflip/vflip) in the streamer, the motor directions now follow the on-screen picture automatically. The streamer's `image.hflip` / `image.vflip` are combined with `invert_x` / `invert_y`, so a flipped mount needs no hand-tuned motor inversion:

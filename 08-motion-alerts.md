@@ -10,6 +10,10 @@ Motion is configured in `/etc/prudynt.json` under the `motion` section. Key sett
 - **Video length** -- Duration of recorded clips when motion is detected
 - **Monitor stream** -- Which stream to monitor (0 = main, 1 = sub)
 
+Since ciao 2026-10-03 (`06590c9d8`), the motion ROI coordinates are interpreted against the monitored stream's own resolution instead of the sensor's, so an ROI drawn for the substream matches the frames the motion engine actually sees. On older builds an ROI configured on the Web UI could cover a different part of the picture than intended when the monitor stream was not the main one -- if your ROI seemed offset, re-save it after updating.
+
+Alert timing also changed on ciao 2026-10-03 (`9f2222d4b`): speaker alerts and text-only notifications now fire the moment motion is detected, while snapshot/clip uploads still wait for the recording to finish. Previously every alert waited for the full clip capture (up to `video_length` + 10 s), which made speaker alerts lag noticeably behind the event on long clip settings.
+
 ## Alert Methods
 
 When motion is detected, Thingino can send alerts via:

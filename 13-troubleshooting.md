@@ -32,9 +32,13 @@ Or via SD card: create a `.diag` file on a blank SD card and insert it into the 
 
 Thingino detects the image sensor by its ID at boot. If the wrong sensor driver is configured, you see a clear error in the boot log and **no image is produced**. Check the boot log for sensor mismatch messages.
 
+**SC2336P vs SC2337P (Sonoff and similar T23 cameras, fixed in builds from 2026-10-03):** these two dies report the *same* chip ID to the driver, so older builds could not tell them apart -- a profile built for one bound the other's init timings and image tuning, giving a wrong-looking or broken picture instead of a clean error. The sensor driver now checks a revision register and selects the right die: a mismatched profile fails loudly at `AddSensor` (the usual "no image" path) instead of silently misbehaving. If your SC2336P/SC2337P camera showed odd colors or a dead image on an older build and the boot log mentions a sensor mismatch, identify the exact die and pick the matching profile on a build from 2026-10-03 or newer.
+
 Camera sensors **cannot** be identified visually. Check `/proc/device-info` or boot logs for the sensor model. GalaxyCore sensors (GC-prefixed) generally have better low-light performance.
 
 ## WiFi Won't Connect
+
+**4.4-kernel cameras (T40/T41) with a `gpio.wlan` pin sequence in the profile (fixed in builds from 2026-10-03):** some boards power or reset their WiFi module through GPIOs, and the boot script only applied that pin sequence on 3.10-kernel builds -- on T40/T41 it logged "Skipping WLAN GPIO toggling for kernel 4.4" and did nothing, so the WiFi module never powered up (`590f68bdc`). If a T40/T41 camera's WiFi was dead from first boot with no driver error, updating fixes it.
 
 - Check reason codes in the log (see [Networking](04-networking.md))
 - Ensure your WPA2 passphrase is correct

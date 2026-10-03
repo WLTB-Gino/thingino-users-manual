@@ -20,6 +20,10 @@ Since ciao 2026-09-10 (`a3c1847e8`), Live View (fMP4) is the **default** preview
 
 **Since ciao 2026-09-29, the preview pages show a strip of direct-stream endpoint links** below the player: RTSP, fMP4, MJPEG, and snapshot URLs for both the main (ch0) and sub (ch1) streams. Click any link to copy its URL to the clipboard. The RTSP links embed your RTSP username and password (default `thingino`/`thingino`), and the browser/stream/snapshot links include your camera's API key as a `token` parameter, so a copied URL works as-is in another player or tool. The strip follows your configured RTSP endpoints, port, and credentials, and appears on both the classic MJPEG preview and the fMP4/PTZ live view.
 
+**Fixed 2026-10-03 (ciao `d61abd1a2`): fMP4 preview drifting minutes behind.** After a playback stall the camera could keep feeding stale fragments at exactly realtime, so the video played smoothly at 1x while sitting tens of seconds behind the actual scene -- and never recovered until a manual refresh, because the player only compared the playhead to its own buffer (which stayed ~1 s ahead no matter how stale the content was). The player now anchors the stream position to the wall clock and silently reconnects when it detects real drift. If your preview lags the scene, refresh the page once; builds from 2026-10-03 keep themselves honest afterwards.
+
+**Fixed 2026-10-03 (ciao `95e64d6c2`): tiny 16x16 MJPEG on T23 cameras.** A query-string parsing bug in Prudynt's inter-process channel could misread the `ch=1` parameter of one viewer as a 1-pixel height for another, shrinking the shared JPEG encoder to 16x16 pixels for the rest of the stream's life on some T23 builds. The parser now matches whole parameter names only. If your MJPEG preview or stream pages showed a thumbnail-sized image, flashing a ciao build from 2026-10-03 or newer fixes it permanently.
+
 ## PTZ Controls
 
 Two control modes are available under **Settings -> Pan/Tilt Motors -> Behavior -> Preview PTZ controls**:

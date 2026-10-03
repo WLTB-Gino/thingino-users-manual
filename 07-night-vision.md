@@ -51,6 +51,8 @@ When enabled, cron entries are automatically generated for your location's sunri
 
 The daynightd daemon uses EV log2 as the primary brightness metric (T31/T23/T21/T30) or gain log2 (T20). The thresholds are configurable:
 
+**Fixed 2026-10-03 (ciao `ff431842d`): cameras stuck in night mode in bright scenes.** The ISP reports EV log2 as 0 at the brightest measurable scene, but the daemon treated a legitimate 0 as a missing reading -- so a camera whose auto-exposure bottomed out could latch in night (IR) mode and never switch back to day. The zero reading is now accepted as valid. If your camera stayed in black-and-white night mode under bright light, updating to a ciao build from 2026-10-03 or newer fixes it.
+
 - **Night threshold** -- EV log2 value at which the camera switches to night mode (default: `550000`). The percentage-based `night_threshold` default was raised from 20 to 25 in recent ciao builds for less flapping at dusk.
 - **Day threshold** -- EV log2 value at which the camera switches back to day mode (default: `350000`)
 - **Brightness percentage thresholds** -- Optional overrides (`night_threshold_pct`, `day_threshold_pct`) that use a 0--100 brightness metric instead of raw EV values

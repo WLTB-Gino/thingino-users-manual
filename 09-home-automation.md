@@ -23,9 +23,13 @@ jct /etc/thingino.json set ha.enabled true
 | IR LED 940nm | Switch | 940nm IR LEDs |
 | White Light | Switch | White LEDs |
 | WiFi RSSI | Sensor | Signal strength |
+| Brightness | Sensor | Camera brightness, 0--100 percent |
+| Day/Night State | Sensor | Current day/night mode (day or night) |
 | Snapshot | Button | Take snapshot |
-| Firmware Update | Update | OTA from GitHub -- currently broken: the button still calls the retired `sysupgrade -p`, which modern builds reject. Update from the Web UI (System -> Upgrade) or with `sysupgrade -f` instead |
+| Firmware Update | Update | Fixed in ciao builds from 2026-10-03 (`ea78f63cf`): the button now runs the supported full-upgrade path (`sysupgrade -f -B`, with a config backup) instead of the retired partial-upgrade command, so Install actually updates the camera. Requires the camera to be online with GitHub access; on older builds the button logged "starting partial firmware upgrade" and did nothing -- use System -> Upgrade or `sysupgrade -f` there |
 | PTZ | Buttons | Up/Down/Left/Right/Home |
+
+The Brightness and Day/Night State entities (from daynightd) are gated behind their own enable flags in recent ciao builds (2026-10-03, `429badb45`) -- previously they could not be enabled or disabled independently of the gain/daynight entities. Brightness is only discovered on cameras running the daynightd daemon.
 
 Disable individual entities:
 
