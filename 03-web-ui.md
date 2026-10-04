@@ -1,5 +1,7 @@
 The Web UI gives you a browser-based interface for managing your camera. Open it at `http://hostname.local` or `http://<camera-ip>`.
 
+**Since ciao 2026-10-04 (`7cafa145e`), camera pages notice an expired login.** While the tab is visible, the page re-checks the session with the camera once a minute and redirects to the login screen when the session has expired. Before this, a page left open could keep running on an already-expired session (the background heartbeat stream authenticates only once when it opens), and you would only find out when a control silently failed. If you return to a camera tab and find yourself at the login page, that is this check working as intended -- log back in and continue.
+
 ## Live Preview
 
 Since ciao 2026-09-04 (`052f13613`), the preview player recovers on its own when the browser backgrounded or throttled the tab: a watchdog monitors frame progress and force-reconnects after ~20 seconds without video while the tab is visible, and reconnect/retry budgets reset whenever you press Connect. Hover over the preview to reveal PTZ controls. On raptor-streamer builds (from 2026-08-24, `785447b84`) the live preview is proxied through rhd's native MJPEG stream, keeping the JPEG encoder warm and delivering frames at the configured JPEG FPS instead of the previous 3-4 second cadence.
