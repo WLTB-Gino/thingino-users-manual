@@ -24,6 +24,8 @@ Since ciao 2026-09-10 (`a3c1847e8`), Live View (fMP4) is the **default** preview
 
 **Fixed 2026-10-03 (ciao `95e64d6c2`): tiny 16x16 MJPEG on T23 cameras.** A query-string parsing bug in Prudynt's inter-process channel could misread the `ch=1` parameter of one viewer as a 1-pixel height for another, shrinking the shared JPEG encoder to 16x16 pixels for the rest of the stream's life on some T23 builds. The parser now matches whole parameter names only. If your MJPEG preview or stream pages showed a thumbnail-sized image, flashing a ciao build from 2026-10-03 or newer fixes it permanently.
 
+**Fixed 2026-10-04 (ciao `9ba8919c2`, prudynt-t `6e48034`): fMP4 preview frozen on the first frame when the audio encoder fails.** Prudynt advertised an audio track in the fMP4 preview even when its audio encoder had failed to start (the encoder object existed but produced no frames), so the browser waited forever for audio data that never came and never played the video either -- the preview froze on frame one until a page reload briefly recovered it. The audio track is now only advertised when the encoder is actually running: affected cameras get a video-only preview that plays normally, and cameras with healthy audio keep it. If your preview locks on the first frame, a ciao build from 2026-10-04 or newer is the fix.
+
 ## PTZ Controls
 
 Two control modes are available under **Settings -> Pan/Tilt Motors -> Behavior -> Preview PTZ controls**:
