@@ -32,6 +32,15 @@ Already have unplayable files from the soft-mount era? Since ciao 2026-09-06 the
 
 Since ciao 2026-09-10 (`d836336d2`), the boot-time NFS mount works reliably even when the NFS server is specified by **hostname**: the mount helper now passes the bare hostname (not `server:/path`) to the kernel's route lookup, which previously failed and left the share unmounted after every boot until mounted by hand.
 
+**NFS is now opt-in (ciao builds from 2026-10-05).** The mount configuration moved from the flat `nfs_share` string to a nested `nfs` object, and the share is no longer mounted at boot unless you ask for it:
+
+```sh
+jct /etc/thingino.json set nfs.enabled true
+jct /etc/thingino.json set nfs.share "server:/path/to/share"
+```
+
+With `nfs.enabled` false the boot scripts simply skip the mount (the init script logs a notice instead of failing silently). To keep the configured address but mount right now, run `S43mounts force` -- it flips `nfs.enabled` to true and mounts immediately. Configurations still carrying the old top-level `nfs_share` key keep working. The nested share value is redacted from diagnostics reports. Full setup notes: `docs/thingino/nfs-share.md` in the firmware tree.
+
 ## Filesystem Overlay
 
 Thingino uses OverlayFS to provide a writable layer over the read-only root filesystem:
