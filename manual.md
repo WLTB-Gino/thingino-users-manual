@@ -28,14 +28,22 @@ Thingino includes an optional **thingino-snmpd** package (mini-snmpd 2.0) for ne
 
 ## Recently Added Cameras
 
-- **Infiya K1** (T31L, SC231HAI sensor, ATBM6132CU WiFi) -- ciao branch (experimental, added 2026-09-11)
-- **Shelly S1** (T23N, MIS20C1 sensor, ATBM6132CU WiFi) -- supported on both branches (ciao 2026-09-09, master 2026-09-10)
+- **Petcube C401A** (T31LC, MIS2008 sensor, ATBM6012B WiFi) -- master, cameras-exp (added 2026-10-05)
+- **Teacup DevBoard** (T31ZX, IMX219 sensor, Ethernet, 16MB flash) -- ciao branch (experimental, added 2026-09-29)
+- **Eufy T8416 (E220 family), dual-sensor mode** (T40XP, two sensors at 20 fps each) -- master. The T40 dual-sensor mode is real on master as of 2026-09-15: both lenses stream concurrently, with per-sensor Raptor configuration keys and U-Boot now parking every sensor's IR-cut pins at boot. Building a T40 dual image still needs the boosted rmem recipe (BR2_THINGINO_RMEM_MB=134, NMEM=22)
+- **Infiya K1** (T31L, SC231HAI sensor, ATBM6132CU WiFi) -- ciao branch (experimental, added 2026-09-11). Profile corrections landed 2026-09-27: the BT-combo `0x6162` USB revision of the WiFi module is auto-flagged for the driver, the audio/LED GPIOs switched to active-low symbols, and the ISP settings now carry per-line comments
+- **DEKCO DC5L** (T23N, SC3332P sensor, WS73V100 USB WiFi, 16MB flash) -- ciao branch (added 2026-09-20; promoted to the mainline camera list)
+- **Shelly S1** (T23N, MIS20C1 sensor, ATBM6132CU WiFi) -- supported on both branches (ciao 2026-09-09, master 2026-09-10). A hardware revision with USB ethernet instead of the wireless module is also supported (ciao, cameras-exp, 2026-09-17)
+- **Sonoff S3W** (T23N, SC231HAI or SC200AI sensor, ATBM6132CU WiFi) -- ciao branch (added 2026-09-17). Two sensor variants exist, one profile each. Recent builds also handle both USB hardware revisions of the ATBM6132CU module: units reporting USB ID `0x6162` are the Bluetooth-combo variant and need the matching driver option (`BR2_PACKAGE_WIFI_ATBM6132CU_6162`, selected automatically for the S3W profile), which ships the combo firmware, enables WiFi+BT sharing (`wifi_bt_comb=1`) and drops the driver's `p2p0` network device
+- **Sonoff CAM-B1P and CAM-PT2** (T23, SC2337P sensor) -- ciao branch (added 2026-10-03). These units carry the SC2337P die, which shares its chip ID with the more common SC2336P; builds from 2026-10-03 auto-tell the two dies apart at boot (see [Troubleshooting](13-troubleshooting.md)), so the wrong profile now fails with a clear sensor error instead of binding the wrong image tuning.
+- **SecuPlug SP1** (T10L, JXH42 sensor, MT7601 USB WiFi) -- ciao branch (added 2026-09-24; motor speed/travel calibrated)
 - **Wyze Cam v3 + RT5370 USB dongle** (T31X, GC2053 -- for units with unsupported internal WiFi; uses an external RT5370 USB dongle) -- ciao (experimental)
 - **Vanhua S62I** (T40XP, SPI-NAND, IMX307, Ethernet) -- master and ciao (experimental)
 - **Vanhua Z55** (T31X, GC4653 4MP, Ethernet) -- master. Builds from 2026-08-28 repin the AVPU hardware encoder clock to a reachable 600 MHz, so it sustains H.265 2560x1440 at 30 fps with lower CPU use (previously the encoder silently ran at 400 MHz and dropped frames at 25 fps)
 - **Wyze Cam Pan V1** (JXF23 sensor + RTL8189FTV WiFi variant) -- master and ciao
 - **Wyze Floodlight V2** (T41NQ) -- ciao branch
   - The Floodlight v1 light (via Wyze Cam Floodlight v1 accessory) now has a `floodlight_ctl` CLI for brightness control: `floodlight_ctl on <1-100>` / `floodlight_ctl off` (verbose with `-v`)
+- **Wyze Lamp Socket** accessory (ciao `3eabd559b`, 2026-10-06): the socket's switched power outlet is controllable from the Web UI and as a Home Assistant switch entity (see [Web UI](03-web-ui.md) and [Home Automation](09-home-automation.md))
 - **Hugolog E5P** (T41LQ) -- ciao branch
 - **Kiwibit BC111** (T23ZN) -- ciao branch
 - **Cinnado B6** (T23ZN) -- ciao branch
@@ -154,6 +162,8 @@ Without `-O`, OpenSSH defaults to the SFTP protocol and the transfer will fail.
 
 The Web UI gives you a browser-based interface for managing your camera. Open it at `http://hostname.local` or `http://<camera-ip>`.
 
+**Since ciao 2026-10-04 (`7cafa145e`), camera pages notice an expired login.** While the tab is visible, the page re-checks the session with the camera once a minute and redirects to the login screen when the session has expired. Before this, a page left open could keep running on an already-expired session (the background heartbeat stream authenticates only once when it opens), and you would only find out when a control silently failed. If you return to a camera tab and find yourself at the login page, that is this check working as intended -- log back in and continue.
+
 ## Live Preview
 
 Since ciao 2026-09-04 (`052f13613`), the preview player recovers on its own when the browser backgrounded or throttled the tab: a watchdog monitors frame progress and force-reconnects after ~20 seconds without video while the tab is visible, and reconnect/retry budgets reset whenever you press Connect. Hover over the preview to reveal PTZ controls. On raptor-streamer builds (from 2026-08-24, `785447b84`) the live preview is proxied through rhd's native MJPEG stream, keeping the JPEG encoder warm and delivering frames at the configured JPEG FPS instead of the previous 3-4 second cadence.
@@ -166,6 +176,22 @@ Since ciao 2026-09-09, Prudynt builds ship a native low-latency live view: the *
 
 Since ciao 2026-09-10 (`a3c1847e8`), Live View (fMP4) is the **default** preview that loads with the camera's page; the classic MJPEG preview remains available alongside it. Both preview styles, plus direct MJPEG stream URLs, are authenticated with the camera's API key (`/etc/thingino-api.key`, passed as `?token=...`) -- direct stream URLs embedded in other tools must include the token parameter.
 
+**Since ciao 2026-09-24, the default preview page is the new PTZ live view** (`/preview.html`): the fMP4 live view with pan/tilt controls, ten preset slots and the OSD overlay combined on one page. The plain fMP4 player remains reachable at `/preview-fmp4.html` (MJPEG unchanged). Preset slots: long-press to name and store the current position, right-click to delete. On cameras without pan/tilt hardware the controls render disabled behind a note, so the same page works everywhere; after a playback stall the player seeks back to the live edge instead of staying behind.
+
+**Fixed 2026-09-14 (ciao `74cf774a4`, prudynt-t `354b1b4`): memory exhaustion with multiple fMP4 preview viewers.** Under multi-client load the fMP4 preview could exhaust camera RAM and take the streamer down. Prudynt-t now releases the fMP4 worker claim after the last previewer disconnects and recycles frame buffers between sessions. If your camera has dropped its stream while the fMP4 preview was in use, flashing a ciao build from 2026-09-14 or newer resolves it.
+
+**Fixed 2026-09-21 (ciao `229c87945`): long-session stability.** The fMP4 preview could die after many minutes (`ERR_INCOMPLETE_CHUNKED_ENCODING` in the browser console) when the camera's send buffer backed up, and a stalled playhead -- background tab, blocked autoplay -- let the buffered video grow without bound. The preview now reads and appends independently with a byte-capped backlog, trims its buffer against the live edge, and **reconnects automatically** after a drop instead of leaving a black player. Long sessions on older builds: refresh the page, or flash a ciao build from 2026-09-21 or newer.
+
+**Since ciao 2026-09-29, the preview pages show a strip of direct-stream endpoint links** below the player: RTSP, fMP4, MJPEG, and snapshot URLs for both the main (ch0) and sub (ch1) streams. Click any link to copy its URL to the clipboard. The RTSP links embed your RTSP username and password (default `thingino`/`thingino`), and the browser/stream/snapshot links include your camera's API key as a `token` parameter, so a copied URL works as-is in another player or tool. The strip follows your configured RTSP endpoints, port, and credentials, and appears on both the classic MJPEG preview and the fMP4/PTZ live view.
+
+**Fixed 2026-10-03 (ciao `d61abd1a2`): fMP4 preview drifting minutes behind.** After a playback stall the camera could keep feeding stale fragments at exactly realtime, so the video played smoothly at 1x while sitting tens of seconds behind the actual scene -- and never recovered until a manual refresh, because the player only compared the playhead to its own buffer (which stayed ~1 s ahead no matter how stale the content was). The player now anchors the stream position to the wall clock and silently reconnects when it detects real drift. If your preview lags the scene, refresh the page once; builds from 2026-10-03 keep themselves honest afterwards.
+
+**Fixed 2026-10-03 (ciao `95e64d6c2`): tiny 16x16 MJPEG on T23 cameras.** A query-string parsing bug in Prudynt's inter-process channel could misread the `ch=1` parameter of one viewer as a 1-pixel height for another, shrinking the shared JPEG encoder to 16x16 pixels for the rest of the stream's life on some T23 builds. The parser now matches whole parameter names only. If your MJPEG preview or stream pages showed a thumbnail-sized image, flashing a ciao build from 2026-10-03 or newer fixes it permanently.
+
+**Fixed 2026-10-04 (ciao `9ba8919c2`, prudynt-t `6e48034`): fMP4 preview frozen on the first frame when the audio encoder fails.** Prudynt advertised an audio track in the fMP4 preview even when its audio encoder had failed to start (the encoder object existed but produced no frames), so the browser waited forever for audio data that never came and never played the video either -- the preview froze on frame one until a page reload briefly recovered it. The audio track is now only advertised when the encoder is actually running: affected cameras get a video-only preview that plays normally, and cameras with healthy audio keep it. If your preview locks on the first frame, a ciao build from 2026-10-04 or newer is the fix.
+
+**Since ciao 2026-10-06, the fMP4 live view also plays H.265 main streams.** The player first tries the browser's built-in decoder (works in Safari and in Chrome/Edge with hardware HEVC), and where that is unavailable -- plain `http://` pages in Chromium, or Firefox -- it falls back to a WebCodecs canvas player instead of showing nothing; a status line points at the H.264 substream if the browser cannot decode at all. A header-repair fix (ciao `151cc18d8`) in the same batch corrects a corrupted H.265 header that previously made the preview reconnect forever instead of starting. On older builds an H.265 main stream shows "unsupported codec" -- switch the previewed stream to H.264, use the MJPEG preview, or flash a ciao build from 2026-10-06 or newer.
+
 ## PTZ Controls
 
 Two control modes are available under **Settings -> Pan/Tilt Motors -> Behavior -> Preview PTZ controls**:
@@ -175,7 +201,7 @@ Two control modes are available under **Settings -> Pan/Tilt Motors -> Behavior 
 
 ## Streamer
 
-The Streamer section contains OSD editor, main stream, sub-stream, image, and sensor configuration.
+The Streamer section contains OSD editor, main stream, sub-stream, image, and sensor configuration. The sensor page reports the real SoC family (fixed in ciao `51dc49f77`, 2026-10-06 -- it could previously show the wrong family on some builds).
 
 On stable builds using Prudynt, the Web UI talks directly to the streamer's API on port 8080 using an API key stored at `/etc/thingino-api.key`. If settings fail to load or save, the API key may be missing or the streamer may not be running.
 
@@ -188,6 +214,8 @@ Recent ciao builds support both SEI metadata mode (default) and an optional **bu
 ### Timelapse
 
 The Timelapse tool is now part of the streamer packages instead of a shared Tools page. On Prudynt (stable) it works via a cron schedule invoking the streamer's `timelapse` command; on Raptor (master) it drives the `[timelapse]` section of `raptor.conf` (enabled, interval, playback\_fps, file\_frames, max\_mb) through `raptorctl`, with native capture and rotation -- no cron needed. Find it under the Services menu on both streamers.
+
+On TIMPS cameras the built-in timelapse **player** (in the camera's web UI) got a playback-smoothness overhaul on ciao builds from 2026-09-20: frames are served without closing the connection each time and the player keeps a deeper prefetch window, so playback no longer stutters between shots.
 
 ## Web UI Plugin Architecture
 
@@ -204,6 +232,8 @@ Currently migrated to the plugin system:
 - **Privacy** (privacy mask configuration)
 - **SNMP** (monitoring)
 - **Doorbell** (chime and button configuration)
+- **Wyze accessories** (when the camera supports them): Floodlight v1 light control, and **Lamp Socket** power control (since ciao `3eabd559b`, 2026-10-06 -- the socket's switched outlet exposes on/off in the Web UI and as a Home Assistant `switch` entity; see [Home Automation](09-home-automation.md))
+- **Commands and logs** (since ciao `5d05ecb37`, 2026-10-06): the former eleven separate Information entries are folded into one page with tabbed sections (Files / Logs / Info); deep links of the old `info.html?<section>` form still work
 - **Streamer pages** (OSD, streams, image, sensor, audio) -- per-streamer plugins; Prudynt pages ship with the prudynt-t package, Raptor pages with the thingino-raptor package, and TIMPS pages with the timps package
 
 Note: On master builds using Raptor there is no streamer config API. Stream settings must be edited directly in `/etc/raptor.conf` (see [Streaming and Video](05-streaming.md)). From builds of 2026-08-28 (`cdb3b8f26`) the Image page controls (white balance, gain, AE compensation, flips) are wired to the agent API and work in the Web UI; only stream parameters still require editing `raptor.conf`. On master builds using **TIMPS** instead, the full set of streamer pages is available in the Web UI (streams, OSD, image, sensor, audio, motion, privacy, recordings, timelapse) via the timps plugin; the raw config stays at `/etc/timps.conf` under **Info -> File: timps.conf**.
@@ -267,16 +297,17 @@ Full reference: [WiFi Reason Codes](https://github.com/themactep/thingino-firmwa
 
 ## Network Watchdog (netwatch)
 
-Since ciao 2026-09-10, builds include a **network watchdog** that reboots the camera when it loses connectivity. Every 30 seconds it pings the network gateway; 3 consecutive failures trigger an automatic reboot. A hardware watchdog backs the mechanism up, so even a completely wedged network stack cannot block the recovery reboot.
+Ciao builds from 2026-09-10 include an optional **network watchdog** that can reboot the camera when it loses connectivity: every 30 seconds it pings the network gateway, and after 3 consecutive failures it reboots the camera. A hardware watchdog backs the mechanism up, so even a completely wedged network stack cannot block the recovery reboot.
 
-The watchdog is **enabled by default**. If your camera sits behind a gateway that blocks or rate-limits ICMP pings, lower sensitivity or disable the feature under **Settings -> Network**, or in the config:
+**As of 2026-09-20 the watchdog is opt-in** -- it no longer arms by default. (Earlier ciao builds rebooted every unit after 3 failed pings, which could turn a marginal Wi-Fi link into a reboot loop.) Enable it under **Settings -> Network** or in the config:
 
 ```sh
-jct /etc/thingino.json set netwatch.enabled false
-jct /etc/thingino.json set netwatch.fail_count 10
+jct /etc/thingino.json set netwatch.enabled true
 ```
 
-Keys: `netwatch.enabled` (default `true`), `netwatch.fail_count` (default `3`), `netwatch.interval` (default `30` seconds).
+Arm/check/reboot decisions are logged -- when diagnosing a flaky link, look for the `netwatch` tag in `logread`.
+
+Keys: `netwatch.enabled` (default `false`), `netwatch.fail_count` (default `3`), `netwatch.interval` (default `30` seconds).
 
 ## Ethernet (Wired)
 
@@ -377,7 +408,36 @@ mpv rtsp://thingino:thingino@192.168.1.10:554/ch0 \
 
 When available, WebRTC provides ultra-low-latency live view in the Web UI. The camera's streaming daemon handles WebRTC negotiation automatically.
 
+### WebRTC / WHEP on TIMPS (v1.9.13+)
+
+TIMPS gained its own WebRTC implementation in v1.9.13, refined through v1.9.14. It serves a standard **WHEP** endpoint (WebRTC-HTTP Egress Protocol): a player POSTs an SDP offer to the camera and receives H.264 video (plus audio) over ICE-lite/DTLS-SRTP -- no plugin, and none of the MSE buffering the fMP4 preview has.
+
+```
+POST   http://<camera-ip>:8880/webrtc/whep        # send the SDP offer, get the answer
+DELETE http://<camera-ip>:8880/webrtc/whep/<id>   # tear a session down
+```
+
+A standalone test page ships with the TIMPS source (`scripts/whep-test.html`).
+
+Deliberate limitations, worth knowing before you try it:
+
+- **LAN/VPN only** -- one host candidate, no STUN/TURN, no NAT traversal, no IPv6
+- **H.264 video only** (the `webrtc.channel` stream) plus **G.711 audio** (PCMU/PCMA) only when the camera actually encodes G.711 -- on AAC cameras, turn on the second encode with `audio.codec2` (below). No Opus, AAC or H.265 over WebRTC; no transcoding
+- **No NACK/retransmission, FEC, or congestion control** -- a LAN live-view path, not a loss-recovery one
+- **Firefox usually will not decode it** (the answer's `profile-level-id` comes from the live SPS, which defaults to High profile); Chrome/Chromium is the tested target
+- **At most 4 concurrent sessions** -- a 5th offer gets `503`, and stalled sessions are reclaimed after 30 seconds
+
+The endpoint is compiled in behind a build flag and **runtime-gated by `webrtc.enabled`** in `/etc/timps.conf`: `1` = on, `2` = on and also accept plaintext WHEP POSTs on a TLS port (the default on WebRTC builds since v1.9.14), `0` = off. With a TLS-protected port (`http.https=1`), plaintext WHEP POSTs are otherwise refused with `426 Upgrade Required` -- signalling belongs on HTTPS. Note that since 2026-09-15 the ciao TIMPS package selects the WebRTC build flag by default (commit `bf0c9111e`; master's package was brought in line on 2026-09-26), so recent images of both branches ship with the endpoint compiled in -- no custom build needed. Older images still lack it.
+
+### WebRTC audio on AAC cameras (`audio.codec2`)
+
+TIMPS v1.9.13/v1.9.14 add an optional **second audio encode** whose only job is to feed WebRTC's G.711-only path: the camera encodes AAC (for RTSP/fMP4) and PCMU side by side. `audio.codec2` in `/etc/timps.conf` accepts `pcmu` or `off` and defaults to `pcmu` on WebRTC builds. The same releases polished the remaining WebRTC audio defaults: `audio.gain` returned to 25, and the inbound SRTCP replay protection is keyed per sender SSRC.
+
 > **Firefox note:** If you get a 400 Bad Request error, set `media.gmp-gmpopenh264.enabled` to `true` in Firefox's `about:config`. The camera only supports H.264 video.
+
+### Server-side stats (`GET /control?stats=1`, v1.9.16+)
+
+The control API gained a server-side stats endpoint, separate from the per-stream stats: `curl http://<camera-ip>:8880/control?stats=1`. It reports the streamer's own counters (session counts, encode drops) in the same JSON shape as the rest of `/control`. Note the scoped-sub-endpoint convention that also landed in v1.9.16: `?stats=1` and friends are matched as scoped queries rather than free-form config reads.
 
 ## ONVIF
 
@@ -439,6 +499,20 @@ Recent Prudynt updates (b8d94db) include:
 - **Shutdown stability** -- Prevents hang in video/JPEG worker threads during shutdown
 - **RTSP audio-only fix** -- Audio-only RTSP sessions no longer crash or hang (Prudynt 6afc440)
 
+### Stream watchdog (Prudynt builds, September 2026)
+
+Prudynt now ships with a supervisor: if the streamer dies (crash, OOM kill), the `S32prudyntwd` watchdog detects it within about a minute and restarts it automatically — previously a dead streamer stayed dead until a manual reboot. How it behaves:
+
+- Liveness is probed via the local HTTP API (with an RTSP probe as fallback), so it works regardless of RTSP authentication settings.
+- After 3 failed restarts in a row it backs off for 10 minutes between rounds, letting transient faults clear instead of restart-looping.
+- If the streamer still has not recovered after 9 failed restarts (~34 minutes), the camera **reboots itself** (with a hardware-watchdog fallback in case the normal reboot path is wedged).
+- **Fixed 2026-10-03 (ciao `2b9361fb0`): the watchdog could not clear a wedged streamer.** When Prudynt hung inside a driver call, the stop routine could not kill the process (logging "no /usr/bin/prudynt found; none killed"), so the watchdog's restart was a no-op and the camera stayed streamless until a manual reboot. Stop now captures the PID before the pidfile is removed and force-kills it directly. If one of your cameras "only a reboot fixes", a build from 2026-10-03 or newer addresses it.
+- To disable the self-reboot and only log/back off, edit `REBOOT_AFTER=0` in `/etc/init.d/S32prudyntwd`.
+
+### PTZ Live View (Prudynt builds, ciao 2026-09-24)
+
+Prudynt builds gain a combined live view: the H.264 stream plays in the browser with pan/tilt controls, ten preset slots and the OSD overlay on a single page. It lives at `/preview.html` and is what the **Preview** nav item opens from 2026-09-24; the plain fMP4 player remains at `/preview-fmp4.html`. Presets are managed in-page: long-press a slot to name and store the current position, right-click to delete it. On cameras without pan/tilt hardware the controls render disabled with a note, so the page serves as a universal default.
+
 ### Colour Fidelity (full-range luma + colour matrix in SPS VUI)
 
 If video from a Prudynt camera looked washed out or had slightly wrong colours in some players, firmware from 2026-08-25 (prudynt-t `b609f30`) fixes it. The encoder now declares full-range luma and an explicit BT.709 colour matrix in the H.264/H.265 SPS VUI, at every resolution -- the pipeline is BT.709 end to end, so a low-resolution substream publishes the same matrix as the main stream and the JPEG snapshot. Previously the stream could be signalled as limited range or even an invalid `gbr` matrix, which some decoders honoured literally. (An earlier revision of the fix wrongly labelled sub-720p streams BT.601; that was a mistake, corrected.) The signal now matches the actual pixels; no configuration needed.
@@ -468,7 +542,7 @@ convert logo-100x30-alpha.png -depth 8 bgra:logo.bgra
 
 ## TIMPS (Alternative Streamer)
 
-TIMPS (Tiny IMP Streamer) is a lightweight streamer available as an alternative to Prudynt/Raptor. On recent builds it installs its own Web UI plugin (preview page, motors controls, SSE position fallback -- 2026-09-04, firmware commits `39523b778`/`7b4e81dc3`). When using TIMPS, these features are available:
+TIMPS (Tiny IMP Streamer) is a lightweight streamer available as an alternative to Prudynt/Raptor. As of v1.9.19 (ciao builds from 2026-09-23), a dropped P-frame reliably triggers an instant keyframe recovery request across all transports -- RTSP, SRT, WebRTC and fMP4 -- instead of leaving a smeared picture until the next natural keyframe (per-protocol 1-second gates used to swallow some recovery requests); and ciao builds apply per-camera `timps.conf` defaults from the camera profile automatically (firmware `ccc103513`), so a profile-tuned camera needs no manual streamer config. On recent builds TIMPS installs its own Web UI plugin (preview page, motors controls, SSE position fallback -- 2026-09-04, firmware commits `39523b778`/`7b4e81dc3`). When using TIMPS, these features are available:
 
 ### Live Control API
 
@@ -507,6 +581,24 @@ TIMPS has built-in adaptive day/night detection with configurable boot-settle pe
 **v1.9.11 (2026-09-11) adds a proper HTTP/HTTPS mode switch and same-port HTTPS.** The new `http.https` setting in `/etc/timps.conf` is a tri-state: `0` = plain HTTP (was the only behaviour of the setting before), `1` = the web UI port serves HTTP and HTTPS together (the server peeks at each connection's first byte and answers HTTP or TLS accordingly), `2` = HTTPS only, plain-HTTP requests are rejected. Self-signed TLS certificates are generated for you when strict mode (`2`) is enabled. Practical effect: a camera without a trusted certificate no longer has to choose between a broken HTTPS preview and an unencrypted port -- mode `1` lets normal browsers keep using `http://` while apps that require a secure context (camera-add flows, PWA installs, some mobile clients) get a real `https://` endpoint on the same port. Firmware-side (ciao PR `#1626`/`#1627`), the setting is only auto-written when the uhttpd redirect prerequisite is present, and the web UI's preview links follow the page scheme. This ships with the v1.9.11 binary -- older v1.9.10 builds misread the `2` as plain HTTP, so the firmware pin bump matters.
 
 > **Note on pins:** ciao bumped to TIMPS v1.9.11 on 2026-09-12 (PRs `#1626`/`#1627`); master caught up the same day with the v1.9.8 -> v1.9.11 bump (PR `#1635`). Everything above ships on new images of both branches.
+
+**v1.9.12 (2026-09-12) rounds out v1.9.11's HTTPS story:** with `http.https=1`, HTTPS responses now gain `Cross-Origin-Opener-Policy`/`Cross-Origin-Embedder-Policy` headers so browser camera-add and PWA flows treat the camera as a secure context, and a plaintext WHEP POST to a TLS port is refused with `426 Upgrade Required` instead of silently misbehaving.
+
+**v1.9.13 (2026-09-13) adds the WHEP WebRTC endpoint** described in the WebRTC section above -- first release to ship it.
+
+**v1.9.14 (2026-09-14) makes WebRTC the default where it exists and polishes its audio:** `webrtc.enabled` now defaults to `2` (on, plaintext-accepting) on WebRTC builds, the WebRTC audio path defaults to G.711 (`audio.codec2=pcmu`), and `audio.gain` is back at 25 after the brief 15 experiment. The endpoint distinguishes "disabled by config" (`503`) from "not built in" (`404`).
+
+**v1.9.23 (2026-09-25) polishes the live-control contract and speeds up WebRTC crypto.** `POST /webrtc/whep?chn=N` picks the video stream per session (main/sub) without changing the global `webrtc.channel` default -- an out-of-range, not-running or non-H.264 stream is refused with `400` (`caps.webrtc.chn_select: 1` advertises the feature). `/control` now grades the audio and OSD sections correctly: keys that genuinely need `S95timps restart` (e.g. `audio.codec`, `osd.enabled`) are listed by name in `caps.restart` and come back in the POST reply's `deferred_keys`, and the Web UI stops asking for pointless restarts; `videoN.rtsp_path` is no longer reported as deferred. WebRTC SRTP encryption is 2.4x faster (390 -> 165 us per packet on a T31). The auto `sensor.fps` cap now follows the fastest enabled `videoN.fps` instead of hard-stopping at 30.
+
+**v1.9.24/v1.9.25 (2026-09-26) answer "who is watching this camera?".** `GET /control?clients=1` lists every connected consumer -- RTSP sessions, fMP4/MJPEG/events connections, WebRTC sessions and SRT receivers -- each with `ip`, `port`, `proto`, `chn`, `since_s` (connected seconds), a live `kbps` reading and the client's `agent` (User-Agent, e.g. `FFmpeg Frigate/0.17.2` or `LibVLC/3.0.20`). One-shot requests (snapshots) are not listed; the table costs ~8 KB RAM for 40 entries. v1.9.25 adds per-client `bytes` (total sent since connect) and connect/disconnect log lines naming the User-Agent and bytes moved, so a client that wedges and vanishes silently leaves a trail. The TIMPS Web UI shows the same table with a Total column.
+
+**v1.9.26 (2026-09-26) adds per-client latency.** `GET /control?clients=1` gains `lat_ms`: how old a frame is when timps hands it to each client (sensor capture to send, averaged) -- typically 5-25 ms on T31 -- across RTSP, WebRTC, fMP4, MJPEG and SRT. The Web UI shows a Latency column, and the preview status line adds the browser's own share (`delay ≈ N ms`: network + jitter buffer + decode for WebRTC, decode + render for the realtime modes, playback buffer for the MSE modes) with the breakdown as a tooltip.
+
+**v1.9.27 (2026-09-27) fixes scheduled day/night switching far from Greenwich.** In `mode=schedule` the sunrise/sunset calendar picked "today" by the UTC day, so west of roughly the US Pacific coast the calendar day rolled over hours before sunset: the camera adopted the *next* day's times and flipped to night at UTC midnight -- 17:00 on the US west coast -- instead of at real sunset. The calendar day is now chosen by local solar time, so the chosen date always contains the sunrise/sunset it refers to. Reported from Vancouver and covered by a new unit test (`scripts/test_daynight_sun.c`).
+
+**v1.9.28 (2026-09-28) is a security and reliability hardening pass over the whole daemon.** The changes a camera owner notices: the `osd.vars_file` config key is gone -- the `{placeholder}` vars file is now fixed at `/tmp/timps_osd.vars` -- because the key was remotely settable through `/control`, letting a caller render secrets from `/etc/timps.conf` into the video overlay; cross-origin POSTs that ride cached browser Basic/Digest credentials are refused with `403 bad origin` (browsers re-send those credentials on any cross-site form post, so a random web page could otherwise drive `/control` on a camera you are logged into -- token, loopback and script clients that send no `Origin` header are unaffected); RTSP closes a connection after 5 rejected logins (ending unlimited password guessing on a single connection) and drops connections that never reach `PLAY` within 60 s, so idle `OPTIONS` loops can no longer lock everyone out; and config rewrites keep the file's permissions, so a hand-applied `chmod 600` on `/etc/timps.conf` survives POSTs instead of being reset to `0644`. Two storage-safety changes: `record.dir`/`timelapse.dir` pointing at the root filesystem are refused (an SD mount point with no card in it used to silently record into flash; the refusal also shows up in `record.last_error`), and a too-large `timelapse.keep_days` no longer deletes the whole archive -- the retention cutoff used to overflow 32-bit arithmetic into the future, so `99999` meant as "keep forever" expired every single shot; the key is now clamped to 0..3650. On T23 builds with software rotation, OSD `font_size` is now absolute pixels like every other path, so text on a rotated sub-1080 stream may need a smaller value. Performance: RTSPS video goes out in staged 16 KB TLS writes instead of one TLS record per packet (one RTSPS client now costs 13.6% CPU against plain RTSP's 7.4%, previously roughly double), cold streams deliver their first frame in 64-137 ms, `GET /control` no longer stalls when the SD card wedges (`record.free_mb`/`timelapse.free_mb` refresh on a 10 s background clock), and a `{"record":{"clip":...}}` capture no longer blocks every other `/control` POST for its whole duration. SRT listeners without a passphrase now log a warning when RTSP/HTTP credentials are set, since such a listener serves video to anyone.
+
+> **Note on pins:** the 2026-09-26 firmware pin batch closes a four-release lag in one go: ciao jumped v1.9.22 -> v1.9.26 (PR `#1706`), and master's package was brought in line with ciao, v1.9.8 -> v1.9.26 (PR `#1707`). Lu-Fi kept the cadence the next day: v1.9.27 was pinned on both branches within the hour of release (PRs `#1709` ciao / `#1710` master). New images of both branches carry everything above, including the streaming-client table, the latency display and the v1.9.27 day/night calendar fix. timps upstream released v1.9.28 (the security hardening pass, see its entry above) on 2026-09-28; the firmware pin batch for it had not landed at the time of writing, so new builds still carried v1.9.27 until it does.
 
 **v1.9.5 (2026-08-29) fixes fMP4 lip-sync after WiFi stalls, shares the web UI's TLS certificate, and cuts OSD CPU cost.** Highlights a camera owner would notice:
 
@@ -611,6 +703,7 @@ Format as FAT32 for best compatibility. Note that ext4 support is **not enabled 
 ### SD Card Tips
 
 - Use a 2GB--8GB card for best compatibility. Some 16GB and 32GB cards may not be recognized in U-Boot's 1-bit MMC mode, particularly on T23N cameras.
+- Card detected but never shows up as `/dev/mmcblk0`? On T31 cameras the advertised microSD/SDIO voltage window was too narrow (3.2--3.4 V), so some cards failed voltage negotiation during enumeration and never appeared. Master builds since 2026-09-18 advertise the full 2.7--3.6 V range and affected cards initialize normally. If a card works in other devices but never mounts on a T31 camera, update the firmware first.
 - To trigger a diagnostics report via SD card, create a file named `.diag` in the root of a blank SD card and insert it into the running camera.
 
 ### SD Card on T40/T41 (XBurst2)
@@ -634,6 +727,15 @@ Since ciao 2026-08-25, NFS shares were mounted **soft** with bounded retries (`s
 Already have unplayable files from the soft-mount era? Since ciao 2026-09-06 the firmware tree ships `scripts/recover-nfs-recordings.py`, which repairs exactly this failure: it detects prudynt-t recordings that lost their MP4 init segment (the `ftyp`+`moov` bytes the lost writes swallowed), copies the init segment from a healthy recording of the same camera and stream settings (auto-detected, or `--donor FILE`), and writes `<name>.recovered.mp4` beside each damaged file. Originals are never modified, so it is safe to re-run. Stop the recording first -- the segment currently being written gets recovered half-finished.
 
 Since ciao 2026-09-10 (`d836336d2`), the boot-time NFS mount works reliably even when the NFS server is specified by **hostname**: the mount helper now passes the bare hostname (not `server:/path`) to the kernel's route lookup, which previously failed and left the share unmounted after every boot until mounted by hand.
+
+**NFS is now opt-in (ciao builds from 2026-10-05).** The mount configuration moved from the flat `nfs_share` string to a nested `nfs` object, and the share is no longer mounted at boot unless you ask for it:
+
+```sh
+jct /etc/thingino.json set nfs.enabled true
+jct /etc/thingino.json set nfs.share "server:/path/to/share"
+```
+
+With `nfs.enabled` false the boot scripts simply skip the mount (the init script logs a notice instead of failing silently). To keep the configured address but mount right now, run `S43mounts force` -- it flips `nfs.enabled` to true and mounts immediately. Configurations still carrying the old top-level `nfs_share` key keep working. The nested share value is redacted from diagnostics reports. Full setup notes: `docs/thingino/nfs-share.md` in the firmware tree.
 
 ## Filesystem Overlay
 
@@ -701,9 +803,35 @@ When enabled, cron entries are automatically generated for your location's sunri
 
 The daynightd daemon uses EV log2 as the primary brightness metric (T31/T23/T21/T30) or gain log2 (T20). The thresholds are configurable:
 
+**Fixed 2026-10-03 (ciao `ff431842d`): cameras stuck in night mode in bright scenes.** The ISP reports EV log2 as 0 at the brightest measurable scene, but the daemon treated a legitimate 0 as a missing reading -- so a camera whose auto-exposure bottomed out could latch in night (IR) mode and never switch back to day. The zero reading is now accepted as valid. If your camera stayed in black-and-white night mode under bright light, updating to a ciao build from 2026-10-03 or newer fixes it.
+
 - **Night threshold** -- EV log2 value at which the camera switches to night mode (default: `550000`). The percentage-based `night_threshold` default was raised from 20 to 25 in recent ciao builds for less flapping at dusk.
 - **Day threshold** -- EV log2 value at which the camera switches back to day mode (default: `350000`)
 - **Brightness percentage thresholds** -- Optional overrides (`night_threshold_pct`, `day_threshold_pct`) that use a 0--100 brightness metric instead of raw EV values
+
+### Tuning day/night thresholds (v1.9.15+)
+
+Thresholds that ship with the firmware are averages. Dark-room readings vary per sensor and mounting (enclosure, IR reflection); when a camera ignores its thresholds, measure instead of guessing.
+
+TIMPS v1.9.15 added a built-in tuning loop that closes this loop entirely on the camera:
+
+- **`GET /control?dn_history=1`** serves the daemon's day/night decision history ring — per-sample brightness values and the mode at each point. Read it right after you see a wrong switch: `curl http://<camera-ip>:8880/control?dn_history=1`
+- **`daynight.diagnose_thresholds`** is reported in `GET /control` status JSON (v1.9.15+), so scripts can detect misconfiguration.
+
+Two more day/night improvements shipped with the 2026-09-26 TIMPS pin batch: the configurable day/night switch and IR-probe commands (`daynight.switch_cmd`/`daynight.irprobe_cmd`) are now started with `vfork()` (v1.9.23), so boards under memory pressure no longer fail to launch them -- the old `fork()` could fail with ENOMEM and silently skip the IR-cut flip; and the day/night controls in the TIMPS Web UI apply immediately instead of waiting for the next day/night edge (ciao builds from 2026-09-26, PR `#1708`). On T20 cameras the routine `isp_info` fallback log line is INFO instead of WARN (v1.9.26), so the Web UI health tile no longer flags healthy day/night as "errors". v1.9.27 (firmware pins 2026-09-27, both branches) fixes scheduled mode (`daynight.schedule`) west of roughly the US Pacific coast: the sunrise/sunset calendar keyed its "today" on the UTC day, so the camera adopted the next day's times and switched to night at UTC midnight (17:00 on the west coast) instead of at real sunset; the calendar day is now chosen by local solar time.
+
+**Measure first, then bracket:** read your actual brightness values (daylight, dusk, fully dark), then set percentage thresholds that bracket them. The percentage keys (`day_threshold`/`night_threshold`, 0-100 scale) map logarithmically to the daemon's raw brightness metric — intermediate readings land in the hysteresis zone and hold the current mode, which is the point of the two thresholds.
+
+**Real-world example (WUUK Y0510 / SC4336P, ciao 2488702):** the shipped raw-EV defaults (night >550000, day <350000) were miscalibrated for that sensor: daylight read ~737k (misread as night), a hand-covered lens read ~1114k — below the computed 1125k night line, so night mode could never engage in the dark. First fix attempt (raw `ev_*` thresholds 800000/1200000) booted to day but still never reached night: the daemon's percentage keys (`daynight.day_threshold`/`night_threshold`, default 50/25) silently override the raw `ev_*` keys whenever they are set — set the percentage keys, don't mix scales. Working calibration:
+
+```sh
+jct /etc/thingino.json set daynight.day_threshold 38
+jct /etc/thingino.json set daynight.night_threshold 30
+service restart daynightd
+logread | grep "Initial mode"   # verify thresholds took effect
+```
+
+Two extra practical rules from that case: brightness under a covered lens is bounded by the sensor's max gain (don't chase ever-higher values), and give the daemon ~20 seconds of sustained samples before expecting a mode flip. When a schedule-based mode is preferable, `daynight.schedule` with start/stop times is the stable fallback.
 
 The daemon also includes configurable sample counts (how many consecutive samples must exceed the threshold before switching) and a hysteresis factor to prevent flapping.
 
@@ -778,6 +906,10 @@ Motion is configured in `/etc/prudynt.json` under the `motion` section. Key sett
 - **Video length** -- Duration of recorded clips when motion is detected
 - **Monitor stream** -- Which stream to monitor (0 = main, 1 = sub)
 
+Since ciao 2026-10-03 (`06590c9d8`), the motion ROI coordinates are interpreted against the monitored stream's own resolution instead of the sensor's, so an ROI drawn for the substream matches the frames the motion engine actually sees. On older builds an ROI configured on the Web UI could cover a different part of the picture than intended when the monitor stream was not the main one -- if your ROI seemed offset, re-save it after updating.
+
+Alert timing also changed on ciao 2026-10-03 (`9f2222d4b`): speaker alerts and text-only notifications now fire the moment motion is detected, while snapshot/clip uploads still wait for the recording to finish. Previously every alert waited for the full clip capture (up to `video_length` + 10 s), which made speaker alerts lag noticeably behind the event on long clip settings.
+
 ## Alert Methods
 
 When motion is detected, Thingino can send alerts via:
@@ -792,7 +924,7 @@ When motion is detected, Thingino can send alerts via:
 | Gotify | `send2gotify` | Self-hosted push notifications |
 | Pushover | `send2pushover` | Push notifications to iOS/Android/desktop |
 
-Recent ciao builds fix both ntfy and webhook notifications: `send2ntfy` now honors the configured scheme/SSL, sends the title and priority headers correctly, and forces HTTP/1.1 (HTTP/2 uploads to ntfy.sh stalled around 84%); `send2webhook` now sends a raw JSON POST body instead of a broken multipart payload.
+Recent ciao builds fix both ntfy and webhook notifications: `send2ntfy` now honors the configured scheme/SSL, sends the title and priority headers correctly, and forces HTTP/1.1 (HTTP/2 uploads to ntfy.sh stalled around 84%); `send2webhook` sends a raw JSON POST body for text-only messages and a proper multipart payload when a photo/video/file is attached -- builds from 2026-09-21 (fixes #1681) no longer fail on every webhook that carries an attachment.
 
 Motion events are suppressed while pan/tilt motors are active: the motors daemon publishes `/run/motors-active` while a move is in flight, and every streamer's motion bridge (Prudynt, Raptor, TIMPS) checks it, so panning the camera no longer fires false motion alerts or clips.
 | FTP | `send2ftp` | Upload snapshots/clips to an FTP server |
@@ -817,12 +949,12 @@ On the master branch the send2 notification scripts live in a standalone `thingi
 
 Cameras with a built-in speaker can play audio alerts when motion is detected. Configure this from the Web UI under **Motion Guard**:
 
-- **Speaker file** -- Audio file to play (must be Opus format on 8 MB flash cameras; MP3 requires 16 MB+ flash)
+- **Speaker file** -- Optional. Audio file to play (must be Opus format on 8 MB flash cameras; MP3 requires 16 MB+ flash). Leave it empty to use a bundled sound: the test button plays `chime_1`, motion alerts play `motiondetectionactivated`.
 - **Volume** -- Speaker volume (0--120)
 - **Gain** -- Audio gain (0--31)
 - **Repeat** -- Number of times to play (0 = forever)
 
-The speaker settings share a save button with motion detection settings in recent builds. Use the **Test** button to preview the sound without triggering motion.
+The speaker settings share a save button with motion detection settings in recent builds. Use the **Test** button to preview the sound without triggering motion. In builds from before October 2026 the test button reported success even when no speaker file was configured (the alert was a silent no-op); current builds fall back to the bundled sound and report the real result.
 
 ---
 
@@ -853,9 +985,14 @@ jct /etc/thingino.json set ha.enabled true
 | IR LED 940nm | Switch | 940nm IR LEDs |
 | White Light | Switch | White LEDs |
 | WiFi RSSI | Sensor | Signal strength |
+| Brightness | Sensor | Camera brightness, 0--100 percent |
+| Day/Night State | Sensor | Current day/night mode (day or night) |
 | Snapshot | Button | Take snapshot |
-| Firmware Update | Update | OTA from GitHub -- currently broken: the button still calls the retired `sysupgrade -p`, which modern builds reject. Update from the Web UI (System -> Upgrade) or with `sysupgrade -f` instead |
+| Firmware Update | Update | Fixed in ciao builds from 2026-10-03 (`ea78f63cf`): the button now runs the supported full-upgrade path (`sysupgrade -f -B`, with a config backup) instead of the retired partial-upgrade command, so Install actually updates the camera. Requires the camera to be online with GitHub access; on older builds the button logged "starting partial firmware upgrade" and did nothing -- use System -> Upgrade or `sysupgrade -f` there |
 | PTZ | Buttons | Up/Down/Left/Right/Home |
+| Lamp Socket (Wyze) | Switch | On/off control of a Wyze Lamp Socket's switched outlet (ciao `3eabd559b`, 2026-10-06), alongside the existing Floodlight v1 light switch |
+
+The Brightness and Day/Night State entities (from daynightd) are gated behind their own enable flags in recent ciao builds (2026-10-03, `429badb45`) -- previously they could not be enabled or disabled independently of the gain/daynight entities. Brightness is only discovered on cameras running the daynightd daemon.
 
 Disable individual entities:
 
@@ -864,6 +1001,8 @@ jct /etc/thingino.json set ha.enable_reboot false
 ```
 
 All MQTT topics use the prefix `cameras/<hostname>/`. Recent builds use the camera **hostname** as its identity (instead of MAC address or SoC serial), making it easier to identify cameras in your HA dashboard.
+
+**FQDN-style hostnames:** HA silently drops discovery topics whose node id contains characters outside `a-zA-Z0-9_-`, so a hostname like `cam-hall.rdw.one` used to produce discovery messages HA discarded. Builds from 2026-09-20 derive a sanitized node id for discovery topics only -- state topics still use the full hostname -- so such cameras appear correctly in HA.
 
 The HA integration also auto-discovers the camera's **sensor model** and **device model** from `/etc/os-release`, so the correct hardware name appears in HA automatically.
 
@@ -891,6 +1030,8 @@ Note for Synology Surveillance Station: cameras on builds from 2026-08-17 (thing
 
 Note for Frigate + PTZ cameras: an ONVIF GetStatus bug (fixed in thingino-onvif `6f299f3`, included in builds from 2026-08-16) caused Frigate to crash with `AttributeError: 'NoneType' object has no attribute 'Position'` on cameras without zoom. Update your firmware if you hit this; old firmware pins also accept a manual workaround (upload the `GetStatus_nozoom.xml` template to `/var/www/onvif/ptz_service_files/`).
 
+Frigate reads the camera's PTZ preset **names** from `GetPresets`, so the descriptions you set in the web UI appear in Frigate's preset menu instead of generic `preset_N` labels. This needs firmware builds from 2026-09-20 (earlier builds exposed only the raw token). Frigate keys its menu by the lowercased name and the preset token is unchanged, so existing `GotoPreset` calls keep working.
+
 ---
 
 <- [Previous: Motion Detection and Alerts](08-motion-alerts.md) | [Next: PTZ (Pan-Tilt-Zoom)](10-ptz.md) ->
@@ -902,15 +1043,17 @@ Hover over the live preview to access PTZ controls. Two control modes are availa
 - **Step move** (default) -- Click or double-click directional buttons to move in steps
 - **Continuous move** -- Press and hold directional buttons for smooth continuous movement
 
-On ciao and master builds with TIMPS as the streamer, a low-latency **WebSocket control path** is used for preview PTZ (`BR2_PACKAGE_THINGINO_MOTORS_WS`, on by default when TIMPS is selected), with the CGI path kept as an automatic fallback. The preview also gains an on-screen **joystick** and motor sensitivity sliders in the motors settings, plus a motors daemon version badge.
+On ciao and master builds with TIMPS as the streamer, a low-latency **WebSocket control path** is used for preview PTZ (`BR2_PACKAGE_THINGINO_MOTORS_WS`, on by default when TIMPS is selected). Since 2026-09-17 (ciao PR #1669) this is WebSocket-only: the CGI fallback was removed because it re-fired every 90 ms against an 82--275 ms round trip, backing up the web server and making held moves overshoot the button release by about two seconds. Every TIMPS build ships the socket, so no socket now means no control path -- the widget shows a notice instead of silently degrading. The joystick also gates its minor axis with hysteresis, so a near-axis hold sends a clean single-axis vector. The preview also gains an on-screen **joystick** and motor sensitivity sliders in the motors settings, plus a motors daemon version badge.
 
 Keyboard jog on the preview page uses **Shift + arrow keys** -- one discrete step per press, browser auto-repeat ignored. Plain arrow keys (and other modifiers) are left to the browser for normal page scrolling.
 
 On ciao builds (2026-09-08+), the preview also shows a **preset quick-bar** under the video: ten slots -- click to move, long-press to save the current position. The bar initially went missing from reflashed cameras because its script was never committed; firmware commit `10bd51d53` fixed the packaging.
 
+**Drag-to-point PTZ (TIMPS v1.9.18):** on TIMPS cameras, the preview video itself is now the PTZ control -- click or tap a spot in the frame and the camera pans/tilts so that point moves to the center, with the motors UI syncing its settings panel in real time. The same release names presets in the toast when you move to one and tolerates motor settle drift when highlighting the active preset. The long-standing arrows/joystick controls remain for fine adjustment.
+
 ## Presets
 
-The Web UI includes a **PTZ Presets** card on **Settings -> Pan/Tilt Motors**: move the camera to a position, give it a description, and save it. Presets are stored in the `motors.presets` array of `/etc/thingino.json` (each entry has a stable numeric `id`, a free-form `description`, and `x`/`y` coordinates) and can be edited and reordered in a **PTZ settings modal**. The id never changes on reorder or rename, and ONVIF clients see a derived machine name (`Preset_<id>`) so NVR labels can't get mangled. The **first preset doubles as the initial point** -- the motor daemon parks the camera at presets[0] on boot. `ptz_presets` CLI management still works (`-g`/`-a`/`-r`/`-o` reorder), and upgraded cameras import an existing `/etc/ptz_presets.conf` once, automatically.
+The Web UI includes a **PTZ Presets** card on **Settings -> Pan/Tilt Motors**: move the camera to a position, give it a description, and save it. Presets are stored in the `motors.presets` array of `/etc/thingino.json` (each entry has a stable numeric `id`, a free-form `description`, and `x`/`y` coordinates) and can be edited and reordered in a **PTZ settings modal**. The id never changes on reorder or rename, and ONVIF clients see a stable token (`PresetToken_<id>`); builds from 2026-09-20 also report your description as the preset **name**, so NVRs like Frigate show the labels you set instead of generic `preset_N` entries. Preset edits made in the preview-page PTZ settings modal persist from 2026-09-20 builds too (they used to vanish on restart -- only the settings-page card wrote to disk). The **first preset doubles as the initial point** -- the motor daemon parks the camera at presets[0] on boot. `ptz_presets` CLI management still works (`-g`/`-a`/`-r`/`-o` reorder), and upgraded cameras import an existing `/etc/ptz_presets.conf` once, automatically.
 
 ## MQTT / Home Assistant
 
@@ -942,6 +1085,8 @@ jct /etc/thingino.json get motors.gpio_tilt
 ```
 
 The earlier double-inversion bug (init script re-applying the daemon's inversion, making the setting a no-op) and the position-counter overshoot are fixed on all motor types; the runtime `motors -I x/y` block for non-SPI cameras was removed from `S59motor`.
+
+**Fixed 2026-10-03 (ciao `277805e1b`): pan/tilt stopped responding until reboot.** The motor service's stop routine could not actually stop the daemon (its PID file was stale from the moment it was written, because the daemon forks itself into the background), so a restart left the old daemon running with the kernel driver removed underneath it -- PTZ then went dead until the camera was rebooted. Stop now finds the real PID and kills it before unloading the module; a stale `S59motor restart` no longer breaks motors on any camera that has panned at least once.
 
 ### Upside-Down Mounts
 
@@ -1051,6 +1196,12 @@ Recent ciao builds add selective partition flashing and config backup/restore to
 
 Recent builds also improve sysupgrade reliability: it now takes over the watchdog (instead of just disarming it) to ensure the camera reboots cleanly after flashing, and suppresses noisy `dd` stderr output during the flash process for cleaner logs.
 
+**Config path fix (2026-09-15):** early September builds briefly wrote the camera's config to `/dev/thingino.json` on some paths; current master and ciao read and write `/etc/thingino.json` consistently (fixed in sysupgrade and the watchdog/failsafe scripts). If a script on your build references `/dev/thingino.json`, update the firmware — configs in `/dev` did not survive a reboot.
+
+**`flash-ota` mtdparts fallback (2026-09-16):** `make ota-upgrade` used to abort with "ERROR: cannot read current mtdparts" on cameras whose U-Boot environment had no `mtdparts` variable (env reset, full-chip flash, or an installer that never seeded it) — GitHub issue #1540. The script now falls back to reading the layout from the kernel command line (`/proc/cmdline`), which is what the running system actually booted with. If you hit that error on an older build, update the firmware or seed the variable manually (`fw_setenv mtdparts '<layout from /proc/cmdline, without the mtdparts= prefix>'`) and re-run.
+
+**Oversize guard (ciao builds from 2026-09-18):** OTA flashing now refuses to run when the built image does not actually fit the target's flash partitions -- both at build time (`make ota` preflight checks kernel, data, bootloader slot, and total image size against the layout) and on the device (the camera-side check rejects the flash *before* erasing anything if the image is bigger than the sum of the real partitions). Previously an oversized image (rootfs grown to fill an 8 MiB chip) could be flashed and leave the camera with a zero-byte data partition, so this turns a brick-risk into a clean build failure. Nothing to configure; if you ever see the refusal, your build config overflows the camera's flash chip.
+
 Recent ciao builds fix a segfault in sysupgrade that occurred when flashing the data partition after the rootfs during a full upgrade. The U-Boot autoupdate-full.bin SD card flashing path also received a reliability fix. During the reboot sequence after flashing, sysupgrade now runs from a tmpfs copy of busybox, so the flash and reboot no longer depend on a rootfs being unmounted underneath them.
 
 Another ciao fix prevents partition corruption on **old flash layouts**: the 'upgrade' partition is a virtual partition that overlaps kernel/rootfs/extras, and the full-flash loop used to erase and re-flash over the partitions it had just written. The virtual partition is now skipped, matching the other layout calculations.
@@ -1128,9 +1279,13 @@ Or via SD card: create a `.diag` file on a blank SD card and insert it into the 
 
 Thingino detects the image sensor by its ID at boot. If the wrong sensor driver is configured, you see a clear error in the boot log and **no image is produced**. Check the boot log for sensor mismatch messages.
 
+**SC2336P vs SC2337P (Sonoff and similar T23 cameras, fixed in builds from 2026-10-03):** these two dies report the *same* chip ID to the driver, so older builds could not tell them apart -- a profile built for one bound the other's init timings and image tuning, giving a wrong-looking or broken picture instead of a clean error. The sensor driver now checks a revision register and selects the right die: a mismatched profile fails loudly at `AddSensor` (the usual "no image" path) instead of silently misbehaving. If your SC2336P/SC2337P camera showed odd colors or a dead image on an older build and the boot log mentions a sensor mismatch, identify the exact die and pick the matching profile on a build from 2026-10-03 or newer.
+
 Camera sensors **cannot** be identified visually. Check `/proc/device-info` or boot logs for the sensor model. GalaxyCore sensors (GC-prefixed) generally have better low-light performance.
 
 ## WiFi Won't Connect
+
+**4.4-kernel cameras (T40/T41) with a `gpio.wlan` pin sequence in the profile (fixed in builds from 2026-10-03):** some boards power or reset their WiFi module through GPIOs, and the boot script only applied that pin sequence on 3.10-kernel builds -- on T40/T41 it logged "Skipping WLAN GPIO toggling for kernel 4.4" and did nothing, so the WiFi module never powered up (`590f68bdc`). If a T40/T41 camera's WiFi was dead from first boot with no driver error, updating fixes it.
 
 - Check reason codes in the log (see [Networking](04-networking.md))
 - Ensure your WPA2 passphrase is correct
@@ -1186,6 +1341,10 @@ Hold Ctrl-C until the prompt appears; `boot` resumes, `reset` reboots, Ctrl-T ex
 **Security:** NetConsole has no authentication. In broadcast mode any host on the subnet can interrupt autoboot and get a U-Boot prompt -- enable it only on trusted networks. To pin a single client: `fw_setenv ncip <your-host-ip>`.
 
 Covers the U-Boot phase only; kernel messages still need a serial console or Linux-side netconsole.
+
+## Reboot Hangs (older master builds)
+
+`reboot` could hang forever on master builds: the kernel shutdown path disarmed the hardware watchdog, so when shutdown or the low-level restart routine stalled, nothing reset the SoC and the camera sat there until power-cycled. Master builds since 2026-09-18 (`c4d3bcc01`, ported from the ciao branch) keep the watchdog armed across shutdown as a fallback -- a wedged reboot now self-resets after the configured watchdog timeout. If your camera hangs on `reboot`, power-cycle it and update the firmware.
 
 ## Copying Files via SCP
 
