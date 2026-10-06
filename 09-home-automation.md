@@ -28,6 +28,7 @@ jct /etc/thingino.json set ha.enabled true
 | Snapshot | Button | Take snapshot |
 | Firmware Update | Update | Fixed in ciao builds from 2026-10-03 (`ea78f63cf`): the button now runs the supported full-upgrade path (`sysupgrade -f -B`, with a config backup) instead of the retired partial-upgrade command, so Install actually updates the camera. Requires the camera to be online with GitHub access; on older builds the button logged "starting partial firmware upgrade" and did nothing -- use System -> Upgrade or `sysupgrade -f` there |
 | PTZ | Buttons | Up/Down/Left/Right/Home |
+| Lamp Socket (Wyze) | Switch | On/off control of a Wyze Lamp Socket's switched outlet (ciao `3eabd559b`, 2026-10-06), alongside the existing Floodlight v1 light switch |
 
 The Brightness and Day/Night State entities (from daynightd) are gated behind their own enable flags in recent ciao builds (2026-10-03, `429badb45`) -- previously they could not be enabled or disabled independently of the gain/daynight entities. Brightness is only discovered on cameras running the daynightd daemon.
 

@@ -28,6 +28,8 @@ Since ciao 2026-09-10 (`a3c1847e8`), Live View (fMP4) is the **default** preview
 
 **Fixed 2026-10-04 (ciao `9ba8919c2`, prudynt-t `6e48034`): fMP4 preview frozen on the first frame when the audio encoder fails.** Prudynt advertised an audio track in the fMP4 preview even when its audio encoder had failed to start (the encoder object existed but produced no frames), so the browser waited forever for audio data that never came and never played the video either -- the preview froze on frame one until a page reload briefly recovered it. The audio track is now only advertised when the encoder is actually running: affected cameras get a video-only preview that plays normally, and cameras with healthy audio keep it. If your preview locks on the first frame, a ciao build from 2026-10-04 or newer is the fix.
 
+**Since ciao 2026-10-06, the fMP4 live view also plays H.265 main streams.** The player first tries the browser's built-in decoder (works in Safari and in Chrome/Edge with hardware HEVC), and where that is unavailable -- plain `http://` pages in Chromium, or Firefox -- it falls back to a WebCodecs canvas player instead of showing nothing; a status line points at the H.264 substream if the browser cannot decode at all. A header-repair fix (ciao `151cc18d8`) in the same batch corrects a corrupted H.265 header that previously made the preview reconnect forever instead of starting. On older builds an H.265 main stream shows "unsupported codec" -- switch the previewed stream to H.264, use the MJPEG preview, or flash a ciao build from 2026-10-06 or newer.
+
 ## PTZ Controls
 
 Two control modes are available under **Settings -> Pan/Tilt Motors -> Behavior -> Preview PTZ controls**:
@@ -37,7 +39,7 @@ Two control modes are available under **Settings -> Pan/Tilt Motors -> Behavior 
 
 ## Streamer
 
-The Streamer section contains OSD editor, main stream, sub-stream, image, and sensor configuration.
+The Streamer section contains OSD editor, main stream, sub-stream, image, and sensor configuration. The sensor page reports the real SoC family (fixed in ciao `51dc49f77`, 2026-10-06 -- it could previously show the wrong family on some builds).
 
 On stable builds using Prudynt, the Web UI talks directly to the streamer's API on port 8080 using an API key stored at `/etc/thingino-api.key`. If settings fail to load or save, the API key may be missing or the streamer may not be running.
 
@@ -68,6 +70,8 @@ Currently migrated to the plugin system:
 - **Privacy** (privacy mask configuration)
 - **SNMP** (monitoring)
 - **Doorbell** (chime and button configuration)
+- **Wyze accessories** (when the camera supports them): Floodlight v1 light control, and **Lamp Socket** power control (since ciao `3eabd559b`, 2026-10-06 -- the socket's switched outlet exposes on/off in the Web UI and as a Home Assistant `switch` entity; see [Home Automation](09-home-automation.md))
+- **Commands and logs** (since ciao `5d05ecb37`, 2026-10-06): the former eleven separate Information entries are folded into one page with tabbed sections (Files / Logs / Info); deep links of the old `info.html?<section>` form still work
 - **Streamer pages** (OSD, streams, image, sensor, audio) -- per-streamer plugins; Prudynt pages ship with the prudynt-t package, Raptor pages with the thingino-raptor package, and TIMPS pages with the timps package
 
 Note: On master builds using Raptor there is no streamer config API. Stream settings must be edited directly in `/etc/raptor.conf` (see [Streaming and Video](05-streaming.md)). From builds of 2026-08-28 (`cdb3b8f26`) the Image page controls (white balance, gain, AE compensation, flips) are wired to the agent API and work in the Web UI; only stream parameters still require editing `raptor.conf`. On master builds using **TIMPS** instead, the full set of streamer pages is available in the Web UI (streams, OSD, image, sensor, audio, motion, privacy, recordings, timelapse) via the timps plugin; the raw config stays at `/etc/timps.conf` under **Info -> File: timps.conf**.
