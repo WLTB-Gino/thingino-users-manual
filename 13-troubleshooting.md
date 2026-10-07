@@ -45,6 +45,8 @@ Camera sensors **cannot** be identified visually. Check `/proc/device-info` or b
 - Try moving the camera closer to the AP
 - Verify the WiFi module's GPIO power config in `/etc/thingino.json`
 
+**First-boot stuck at "Running pre-portal WiFi scan" (fixed in ciao builds from 2026-10-07):** during provisioning the camera scans for networks before starting its setup hotspot, and on builds up to and including the 2026-10-04 release a wedged WiFi driver could hang that scan indefinitely -- the camera sat at "Running pre-portal WiFi scan" for ten minutes, never broadcast the setup AP, and gave you no login prompt. The scan is now hard-bounded to a few seconds. If your camera hangs at this message on an older build: power-cycle it (a retry usually gets past it), and flash a ciao build from 2026-10-07 or newer for a permanent fix.
+
 ## WebRTC 400 Bad Request (Firefox)
 
 Set `media.gmp-gmpopenh264.enabled` to `true` in Firefox `about:config`.

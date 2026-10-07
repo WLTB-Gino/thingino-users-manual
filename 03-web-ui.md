@@ -41,7 +41,7 @@ Two control modes are available under **Settings -> Pan/Tilt Motors -> Behavior 
 
 The Streamer section contains OSD editor, main stream, sub-stream, image, and sensor configuration. The sensor page reports the real SoC family (fixed in ciao `51dc49f77`, 2026-10-06 -- it could previously show the wrong family on some builds).
 
-On stable builds using Prudynt, the Web UI talks directly to the streamer's API on port 8080 using an API key stored at `/etc/thingino-api.key`. If settings fail to load or save, the API key may be missing or the streamer may not be running.
+On stable builds using Prudynt, the Web UI talks to the streamer's API through same-origin CGI endpoints on the camera itself (since ciao `d48cfc659`, 2026-10-07). This matters if you browse the camera over HTTPS: pages loaded over HTTPS used to talk to the streamer's API on port 8080 over plain HTTP, and browsers blocked those requests as mixed content -- the RTSP/ONVIF password form and the streamer settings pages would fail to load or save with the console full of "blocked: mixed-content" errors. The proxy keeps using the API key at `/etc/thingino-api.key` internally, so nothing changes for plain-HTTP users; HTTPS users just need a ciao build from 2026-10-07 or newer.
 
 ### OSD Editor
 

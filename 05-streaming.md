@@ -77,6 +77,8 @@ ONVIF motion events work with UniFi Protect and other NVRs that support third-pa
 
 Recent builds fix a crash in ONVIF `GetProfiles` when audio output is disabled -- some NVRs would fail to add the camera if it reported audio capabilities it could not deliver.
 
+**Fixed in ciao builds from 2026-10-07 (`3de7d47f0`): changing the RTSP/ONVIF password in the Web UI now reaches ONVIF clients.** On builds from 2026-10-04, saving a new password in **Settings -> RTSP/ONVIF** updated RTSP immediately, but the ONVIF service kept authenticating against the old file on disk -- NVRs and Home Assistant configured with the new password got "user was not authorized" until you either set the same password over SSH (`jct /etc/prudynt.json set rtsp.password '...'`) or flashed a newer build. ONVIF credentials always follow the RTSP username/password: whatever works for `rtsp://` works for ONVIF.
+
 ## OSD (On-Screen Display)
 
 Thingino supports customizable OSD overlays with the following element types:
