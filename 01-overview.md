@@ -65,6 +65,12 @@ Some cameras ship with eFuse secure boot locked: Wyze Cam V4, Wyze Doorbell V2, 
 - **Discord**: https://discord.gg/gFc9jR2eXV
 - **Wiki**: https://github.com/themactep/thingino-firmware/wiki
 
+## Video Guides, Unbricking & Installer Images
+
+- **[WLTechBlog on YouTube](https://www.youtube.com/@WLTechBlog)** -- Step-by-step installation and unbricking videos, plus a curated list of cameras that are easy to install Thingino on.
+- **[Universal Unbricker](https://unbricker.wltechblog.com/)** -- Web tool by Josh at WLTechBlog that builds a per-camera unbrick image for the flash glitch recovery method. Check the device list for supported models.
+- **[thingino-installers](https://github.com/wltechblog/thingino-installers)** -- Ready-made per-model SD-card installer images for the first flash from stock to Thingino. Installers are for initial installation only -- never use them to update an existing install; do a full firmware upgrade afterwards instead.
+
 ## Web Tools
 
 Two browser-based tools make Thingino more accessible:
