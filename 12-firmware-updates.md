@@ -38,6 +38,8 @@ Recent builds also improve sysupgrade reliability: it now takes over the watchdo
 
 Recent ciao builds fix a segfault in sysupgrade that occurred when flashing the data partition after the rootfs during a full upgrade. The U-Boot autoupdate-full.bin SD card flashing path also received a reliability fix. During the reboot sequence after flashing, sysupgrade now runs from a tmpfs copy of busybox, so the flash and reboot no longer depend on a rootfs being unmounted underneath them.
 
+**Full-image OTA RAM requirement lowered (ciao 8e3f24857, 2026-10-08):** flashing a full image over OTA no longer requires 1.5x the firmware size in free `/tmp` (RAM). The old check forced low-RAM cameras (64 MB and less) to reboot before flashing even with a storage card mounted. sysupgrade now needs only the firmware size plus about 2 MB of headroom, so full-image OTA works in tight-RAM situations where it previously could not start.
+
 Another ciao fix prevents partition corruption on **old flash layouts**: the 'upgrade' partition is a virtual partition that overlaps kernel/rootfs/extras, and the full-flash loop used to erase and re-flash over the partitions it had just written. The virtual partition is now skipped, matching the other layout calculations.
 
 Latest builds fix full upgrades **across partition layout changes**: the flash loop now writes each running MTD device the image bytes at the same absolute offsets (32K blocks, byte-addressing fallback), so the image is copied byte-for-byte regardless of how the image itself is partitioned. Previously, non-64K-aligned layouts (e.g. a 32K env partition) were silently mis-sliced, which could leave U-Boot with no valid environment and a dead boot after reboot.
