@@ -30,6 +30,8 @@ When motion is detected, Thingino can send alerts via:
 
 Recent ciao builds fix both ntfy and webhook notifications: `send2ntfy` now honors the configured scheme/SSL, sends the title and priority headers correctly, and forces HTTP/1.1 (HTTP/2 uploads to ntfy.sh stalled around 84%); `send2webhook` sends a raw JSON POST body for text-only messages and a proper multipart payload when a photo/video/file is attached -- builds from 2026-09-21 (fixes #1681) no longer fail on every webhook that carries an attachment.
 
+**Snapshots and clips land with readable permissions (ciao 2026-10-09):** storage uploads (SD card or NFS, including the test snapshot) previously saved media files as owner-only (mode 600), so other users on an NFS/NAS share could not read them. Current builds chmod stored media to 644, so whatever lands in your share is readable by your NVR, HA, or other local users. On older builds the workaround was `find /mnt/... -name '*.jpg' -perm 600 -exec chmod a+r {} +`.
+
 Motion events are suppressed while pan/tilt motors are active: the motors daemon publishes `/run/motors-active` while a move is in flight, and every streamer's motion bridge (Prudynt, Raptor, TIMPS) checks it, so panning the camera no longer fires false motion alerts or clips.
 | FTP | `send2ftp` | Upload snapshots/clips to an FTP server |
 | Storage | `send2storage` | Save recordings to SD card or NFS |

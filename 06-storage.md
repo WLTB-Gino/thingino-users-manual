@@ -41,6 +41,10 @@ jct /etc/thingino.json set nfs.share "server:/path/to/share"
 
 With `nfs.enabled` false the boot scripts simply skip the mount (the init script logs a notice instead of failing silently). To keep the configured address but mount right now, run `S43mounts force` -- it flips `nfs.enabled` to true and mounts immediately. Configurations still carrying the old top-level `nfs_share` key keep working. The nested share value is redacted from diagnostics reports. Full setup notes: `docs/thingino/nfs-share.md` in the firmware tree.
 
+### Media File Permissions
+
+Since ciao 2026-10-09, snapshots and clips published by the notification system to storage (SD card or NFS share) are written world-readable (mode 644). Earlier builds staged files with restrictive permissions, so motion photos served from an NFS/NAS share could fail to open for non-root readers. Files saved by older builds keep their old permissions -- a one-time `chmod 644` on the share fixes those.
+
 ## Filesystem Overlay
 
 Thingino uses OverlayFS to provide a writable layer over the read-only root filesystem:
