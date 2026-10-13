@@ -65,6 +65,12 @@ Some cameras ship with eFuse secure boot locked: Wyze Cam V4, Wyze Doorbell V2, 
 - **Discord**: https://discord.gg/gFc9jR2eXV
 - **Wiki**: https://github.com/themactep/thingino-firmware/wiki
 
+## Video Guides, Unbricking & Installer Images
+
+- **[WLTechBlog on YouTube](https://www.youtube.com/@WLTechBlog)** -- Step-by-step installation and unbricking videos, plus a curated list of cameras that are easy to install Thingino on.
+- **[Universal Unbricker](https://unbricker.wltechblog.com/)** -- Web tool by Josh at WLTechBlog that builds a per-camera unbrick image for the flash glitch recovery method. Check the device list for supported models.
+- **[thingino-installers](https://github.com/wltechblog/thingino-installers)** -- Ready-made per-model SD-card installer images for the first flash from stock to Thingino. Installers are for initial installation only -- never use them to update an existing install; do a full firmware upgrade afterwards instead.
+
 ## Web Tools
 
 Two browser-based tools make Thingino more accessible:
@@ -203,7 +209,7 @@ Two control modes are available under **Settings -> Pan/Tilt Motors -> Behavior 
 
 The Streamer section contains OSD editor, main stream, sub-stream, image, and sensor configuration. The sensor page reports the real SoC family (fixed in ciao `51dc49f77`, 2026-10-06 -- it could previously show the wrong family on some builds).
 
-On stable builds using Prudynt, the Web UI talks directly to the streamer's API on port 8080 using an API key stored at `/etc/thingino-api.key`. If settings fail to load or save, the API key may be missing or the streamer may not be running.
+On stable builds using Prudynt, the Web UI talks to the streamer's API through same-origin CGI endpoints on the camera itself (since ciao `d48cfc659`, 2026-10-07). This matters if you browse the camera over HTTPS: pages loaded over HTTPS used to talk to the streamer's API on port 8080 over plain HTTP, and browsers blocked those requests as mixed content -- the RTSP/ONVIF password form and the streamer settings pages would fail to load or save with the console full of "blocked: mixed-content" errors. The proxy keeps using the API key at `/etc/thingino-api.key` internally, so nothing changes for plain-HTTP users; HTTPS users just need a ciao build from 2026-10-07 or newer.
 
 ### OSD Editor
 
@@ -236,7 +242,7 @@ Currently migrated to the plugin system:
 - **Commands and logs** (since ciao `5d05ecb37`, 2026-10-06): the former eleven separate Information entries are folded into one page with tabbed sections (Files / Logs / Info); deep links of the old `info.html?<section>` form still work
 - **Streamer pages** (OSD, streams, image, sensor, audio) -- per-streamer plugins; Prudynt pages ship with the prudynt-t package, Raptor pages with the thingino-raptor package, and TIMPS pages with the timps package
 
-Note: On master builds using Raptor there is no streamer config API. Stream settings must be edited directly in `/etc/raptor.conf` (see [Streaming and Video](05-streaming.md)). From builds of 2026-08-28 (`cdb3b8f26`) the Image page controls (white balance, gain, AE compensation, flips) are wired to the agent API and work in the Web UI; only stream parameters still require editing `raptor.conf`. On master builds using **TIMPS** instead, the full set of streamer pages is available in the Web UI (streams, OSD, image, sensor, audio, motion, privacy, recordings, timelapse) via the timps plugin; the raw config stays at `/etc/timps.conf` under **Info -> File: timps.conf**.
+Note: On master builds using Raptor there is no streamer config API. Stream settings must be edited directly in `/etc/raptor.conf` (see [Streaming and Video](05-streaming.md)). From builds of 2026-08-28 (`cdb3b8f26`) the Image page controls (white balance, gain, AE compensation, flips) are wired to the agent API and work in the Web UI; only stream parameters still require editing `raptor.conf`. On master builds using **TIMPS** instead, the full set of streamer pages is available in the Web UI (streams, OSD, image, sensor, audio, motion, privacy, recordings, timelapse) via the timps plugin; the raw config stays at `/etc/timps.conf` under **Info -> File: timps.conf**. On ciao builds from 2026-10-12 (TIMPS v1.10.1) the streamer pages also include **Crop/zoom** and **ROI** tabs on the overlays page -- a full-sensor crop editor with a draggable window and a zoom slider, plus per-region encoder quality editing -- and the Day/Night page gains an Idle-Dark card.
 
 ## Settings
 
@@ -452,6 +458,8 @@ ONVIF motion events work with UniFi Protect and other NVRs that support third-pa
 
 Recent builds fix a crash in ONVIF `GetProfiles` when audio output is disabled -- some NVRs would fail to add the camera if it reported audio capabilities it could not deliver.
 
+**Fixed in ciao builds from 2026-10-07 (`3de7d47f0`): changing the RTSP/ONVIF password in the Web UI now reaches ONVIF clients.** On builds from 2026-10-04, saving a new password in **Settings -> RTSP/ONVIF** updated RTSP immediately, but the ONVIF service kept authenticating against the old file on disk -- NVRs and Home Assistant configured with the new password got "user was not authorized" until you either set the same password over SSH (`jct /etc/prudynt.json set rtsp.password '...'`) or flashed a newer build. ONVIF credentials always follow the RTSP username/password: whatever works for `rtsp://` works for ONVIF.
+
 ## OSD (On-Screen Display)
 
 Thingino supports customizable OSD overlays with the following element types:
@@ -596,6 +604,14 @@ TIMPS has built-in adaptive day/night detection with configurable boot-settle pe
 
 **v1.9.27 (2026-09-27) fixes scheduled day/night switching far from Greenwich.** In `mode=schedule` the sunrise/sunset calendar picked "today" by the UTC day, so west of roughly the US Pacific coast the calendar day rolled over hours before sunset: the camera adopted the *next* day's times and flipped to night at UTC midnight -- 17:00 on the US west coast -- instead of at real sunset. The calendar day is now chosen by local solar time, so the chosen date always contains the sunrise/sunset it refers to. Reported from Vancouver and covered by a new unit test (`scripts/test_daynight_sun.c`).
 
+**v1.10.1 (ciao builds from 2026-10-12, firmware PRs `#1810`/`#1812`) brings privacy masking, digital crop/zoom, a redesigned day/night engine and several security fixes.** Availability of the new image features is graded per build and SoC: `GET /control` reports `caps.roi` / `caps.fcrop` tiers (`effective` / `experimental` / `unsupported`) -- encoder ROI needs an OpenIMP libimp, and most vendor blobs report `unsupported`. On capable builds:
+
+- **Encoder ROI** (`roi<S>.<N>.*`, up to 4 regions per stream; 10 on T31 OpenIMP) keeps a monitored area -- a door, a gate -- at high quality while the rest of the frame compresses harder, cutting bitrate without losing detail where it matters. Applied live, per-region QP or delta-QP.
+- **ISP FrontCrop / digital zoom** (`image.fcrop_*`) crops the sensor picture before encoding; the crop window follows `image.hflip`/`image.vflip` on OpenIMP. The Web UI gains **Crop/zoom** and **ROI** tabs on the overlays page with a full-sensor crop editor (drag the window, zoom slider to the real maximum) -- see [Web UI](03-web-ui.md).
+- **Redesigned day/night engine** -- see [Night Vision](07-night-vision.md). Retired keys (`probe_min_gap_s`, `probe_confirm_s`, `boot_probe`, `diagnose_thresholds`) are ignored with a warning; the new `daynight.jump_pct` sets the brightness drop that triggers an early look.
+- **Security:** every non-loopback HTTP request must name the camera in its `Host` header (IP, `localhost` or the hostname) or get `421` -- this closes DNS-rebinding attacks against `/control`; `http.allowed_hosts` exists for reverse proxies and DNS aliases. HTTP Digest nonces are now bound to the peer they were issued to, so a sniffed response cannot be replayed from another host.
+- **API and reliability:** `/control` POST replies carry a per-key `errors` object with numeric codes (refused/unknown/file-only/absent, plus specific rotation refusals) and `GET /control` reports `video.<N>.rotation_state` explaining why a stream runs unrotated; the video page gains a rotation selector. Config writes to flash are batched to at most once per 3 s (`persist_pending` in the status) so slider drags and automations no longer hammer the flash. On-demand clips (`record.clip`) are RAM-budgeted -- too large a clip is refused with a WARN instead of OOM-killing a 64 MB board. `timpsd --check-libs` (run automatically by the boot script) refuses to start against a mismatched `libimp` instead of crashing later, and the binary is ~6% smaller (link-time optimisation).
+
 **v1.9.28 (2026-09-28) is a security and reliability hardening pass over the whole daemon.** The changes a camera owner notices: the `osd.vars_file` config key is gone -- the `{placeholder}` vars file is now fixed at `/tmp/timps_osd.vars` -- because the key was remotely settable through `/control`, letting a caller render secrets from `/etc/timps.conf` into the video overlay; cross-origin POSTs that ride cached browser Basic/Digest credentials are refused with `403 bad origin` (browsers re-send those credentials on any cross-site form post, so a random web page could otherwise drive `/control` on a camera you are logged into -- token, loopback and script clients that send no `Origin` header are unaffected); RTSP closes a connection after 5 rejected logins (ending unlimited password guessing on a single connection) and drops connections that never reach `PLAY` within 60 s, so idle `OPTIONS` loops can no longer lock everyone out; and config rewrites keep the file's permissions, so a hand-applied `chmod 600` on `/etc/timps.conf` survives POSTs instead of being reset to `0644`. Two storage-safety changes: `record.dir`/`timelapse.dir` pointing at the root filesystem are refused (an SD mount point with no card in it used to silently record into flash; the refusal also shows up in `record.last_error`), and a too-large `timelapse.keep_days` no longer deletes the whole archive -- the retention cutoff used to overflow 32-bit arithmetic into the future, so `99999` meant as "keep forever" expired every single shot; the key is now clamped to 0..3650. On T23 builds with software rotation, OSD `font_size` is now absolute pixels like every other path, so text on a rotated sub-1080 stream may need a smaller value. Performance: RTSPS video goes out in staged 16 KB TLS writes instead of one TLS record per packet (one RTSPS client now costs 13.6% CPU against plain RTSP's 7.4%, previously roughly double), cold streams deliver their first frame in 64-137 ms, `GET /control` no longer stalls when the SD card wedges (`record.free_mb`/`timelapse.free_mb` refresh on a 10 s background clock), and a `{"record":{"clip":...}}` capture no longer blocks every other `/control` POST for its whole duration. SRT listeners without a passphrase now log a warning when RTSP/HTTP credentials are set, since such a listener serves video to anyone.
 
 > **Note on pins:** the 2026-09-26 firmware pin batch closes a four-release lag in one go: ciao jumped v1.9.22 -> v1.9.26 (PR `#1706`), and master's package was brought in line with ciao, v1.9.8 -> v1.9.26 (PR `#1707`). Lu-Fi kept the cadence the next day: v1.9.27 was pinned on both branches within the hour of release (PRs `#1709` ciao / `#1710` master). New images of both branches carry everything above, including the streaming-client table, the latency display and the v1.9.27 day/night calendar fix. timps upstream released v1.9.28 (the security hardening pass, see its entry above) on 2026-09-28; the firmware pin batch for it had not landed at the time of writing, so new builds still carried v1.9.27 until it does.
@@ -737,6 +753,10 @@ jct /etc/thingino.json set nfs.share "server:/path/to/share"
 
 With `nfs.enabled` false the boot scripts simply skip the mount (the init script logs a notice instead of failing silently). To keep the configured address but mount right now, run `S43mounts force` -- it flips `nfs.enabled` to true and mounts immediately. Configurations still carrying the old top-level `nfs_share` key keep working. The nested share value is redacted from diagnostics reports. Full setup notes: `docs/thingino/nfs-share.md` in the firmware tree.
 
+### Media File Permissions
+
+Since ciao 2026-10-09, snapshots and clips published by the notification system to storage (SD card or NFS share) are written world-readable (mode 644). Earlier builds staged files with restrictive permissions, so motion photos served from an NFS/NAS share could fail to open for non-root readers. Files saved by older builds keep their old permissions -- a one-time `chmod 644` on the share fixes those.
+
 ## Filesystem Overlay
 
 Thingino uses OverlayFS to provide a writable layer over the read-only root filesystem:
@@ -821,6 +841,8 @@ TIMPS v1.9.15 added a built-in tuning loop that closes this loop entirely on the
 Two more day/night improvements shipped with the 2026-09-26 TIMPS pin batch: the configurable day/night switch and IR-probe commands (`daynight.switch_cmd`/`daynight.irprobe_cmd`) are now started with `vfork()` (v1.9.23), so boards under memory pressure no longer fail to launch them -- the old `fork()` could fail with ENOMEM and silently skip the IR-cut flip; and the day/night controls in the TIMPS Web UI apply immediately instead of waiting for the next day/night edge (ciao builds from 2026-09-26, PR `#1708`). On T20 cameras the routine `isp_info` fallback log line is INFO instead of WARN (v1.9.26), so the Web UI health tile no longer flags healthy day/night as "errors". v1.9.27 (firmware pins 2026-09-27, both branches) fixes scheduled mode (`daynight.schedule`) west of roughly the US Pacific coast: the sunrise/sunset calendar keyed its "today" on the UTC day, so the camera adopted the next day's times and switched to night at UTC midnight (17:00 on the west coast) instead of at real sunset; the calendar day is now chosen by local solar time.
 
 **Measure first, then bracket:** read your actual brightness values (daylight, dusk, fully dark), then set percentage thresholds that bracket them. The percentage keys (`day_threshold`/`night_threshold`, 0-100 scale) map logarithmically to the daemon's raw brightness metric — intermediate readings land in the hysteresis zone and hold the current mode, which is the point of the two thresholds.
+
+**TIMPS v1.10.1 (ciao builds from 2026-10-12) ships a redesigned day/night engine.** Transitions are faster and more stable: a silent 8-second look with the IR illuminator off runs every 45 minutes or whenever brightness falls 20% (`daynight.jump_pct`) below the last look, failed day-checks back off exponentially (1, 2, 4 ... minutes), and the lamps recover within 60 seconds of a failed check instead of pendulum-flapping. The old tuning constants `probe_min_gap_s`, `probe_confirm_s`, `boot_probe` and `diagnose_thresholds` are retired -- they are ignored with a warning and no longer echoed in the status output. The Web UI Day/Night page gains an Idle-Dark card for an optional extra-dark idle night mode (off by default).
 
 **Real-world example (WUUK Y0510 / SC4336P, ciao 2488702):** the shipped raw-EV defaults (night >550000, day <350000) were miscalibrated for that sensor: daylight read ~737k (misread as night), a hand-covered lens read ~1114k — below the computed 1125k night line, so night mode could never engage in the dark. First fix attempt (raw `ev_*` thresholds 800000/1200000) booted to day but still never reached night: the daemon's percentage keys (`daynight.day_threshold`/`night_threshold`, default 50/25) silently override the raw `ev_*` keys whenever they are set — set the percentage keys, don't mix scales. Working calibration:
 
@@ -926,6 +948,8 @@ When motion is detected, Thingino can send alerts via:
 
 Recent ciao builds fix both ntfy and webhook notifications: `send2ntfy` now honors the configured scheme/SSL, sends the title and priority headers correctly, and forces HTTP/1.1 (HTTP/2 uploads to ntfy.sh stalled around 84%); `send2webhook` sends a raw JSON POST body for text-only messages and a proper multipart payload when a photo/video/file is attached -- builds from 2026-09-21 (fixes #1681) no longer fail on every webhook that carries an attachment.
 
+**Snapshots and clips land with readable permissions (ciao 2026-10-09):** storage uploads (SD card or NFS, including the test snapshot) previously saved media files as owner-only (mode 600), so other users on an NFS/NAS share could not read them. Current builds chmod stored media to 644, so whatever lands in your share is readable by your NVR, HA, or other local users. On older builds the workaround was `find /mnt/... -name '*.jpg' -perm 600 -exec chmod a+r {} +`.
+
 Motion events are suppressed while pan/tilt motors are active: the motors daemon publishes `/run/motors-active` while a move is in flight, and every streamer's motion bridge (Prudynt, Raptor, TIMPS) checks it, so panning the camera no longer fires false motion alerts or clips.
 | FTP | `send2ftp` | Upload snapshots/clips to an FTP server |
 | Storage | `send2storage` | Save recordings to SD card or NFS |
@@ -934,7 +958,7 @@ Motion events are suppressed while pan/tilt motors are active: the motors daemon
 
 Enable via the Web UI under **Tools** or through `jct /etc/prudynt.json`.
 
-**Note on master builds**: `send2xmpp` is a master-branch addition; on ciao/stable only the methods listed above it are available.
+**Note on master builds**: `send2xmpp` is a master-branch addition; on ciao only the methods listed above it are available.
 
 ## send2 Toolkit Architecture (master)
 
@@ -1188,9 +1212,9 @@ sysupgrade /mnt/mmcblk0p1/autoupdate-full.bin
 sysupgrade http://example.com/firmware.bin
 ```
 
-On the ciao (stable) branch, `sysupgrade -f` now pulls from the ciao branch directly, so you stay on stable when updating.
+On the ciao branch, `sysupgrade -f` now pulls from the ciao branch directly, so you stay on ciao when updating.
 
-Master branch builds now publish to their own dated release tags (`master-YYYY-MM-DD`) instead of sharing the generic `latest` tag with stable. This means `sysupgrade -f` on a master-branch camera pulls master firmware, and stable cameras are no longer accidentally served a master build.
+Master branch builds now publish to their own dated release tags (`master-YYYY-MM-DD`) instead of sharing the generic `latest` tag with ciao. This means `sysupgrade -f` on a master-branch camera pulls master firmware, and ciao cameras are no longer accidentally served a master build.
 
 Recent ciao builds add selective partition flashing and config backup/restore to sysupgrade, but a full upgrade still resets the environment.
 
@@ -1203,6 +1227,10 @@ Recent builds also improve sysupgrade reliability: it now takes over the watchdo
 **Oversize guard (ciao builds from 2026-09-18):** OTA flashing now refuses to run when the built image does not actually fit the target's flash partitions -- both at build time (`make ota` preflight checks kernel, data, bootloader slot, and total image size against the layout) and on the device (the camera-side check rejects the flash *before* erasing anything if the image is bigger than the sum of the real partitions). Previously an oversized image (rootfs grown to fill an 8 MiB chip) could be flashed and leave the camera with a zero-byte data partition, so this turns a brick-risk into a clean build failure. Nothing to configure; if you ever see the refusal, your build config overflows the camera's flash chip.
 
 Recent ciao builds fix a segfault in sysupgrade that occurred when flashing the data partition after the rootfs during a full upgrade. The U-Boot autoupdate-full.bin SD card flashing path also received a reliability fix. During the reboot sequence after flashing, sysupgrade now runs from a tmpfs copy of busybox, so the flash and reboot no longer depend on a rootfs being unmounted underneath them.
+
+**Avoid `sysupgrade -r` for now (issue #1791):** rootfs-only flashing is currently broken on all builds -- a BusyBox `od` parsing failure makes the script compute a zero rootfs size, so it can erase your rootfs and abort with the camera unbootable. Don't use `-r` until this is fixed. Two safe routes instead: full-image flashing (`sysupgrade -f` / a full `.bin`, which does not run this code path), or rootfs+data flashing from your build host with `make ota-upgrade IP=<camera>` (same result as `-r` but the split happens host-side; add `-B` behavior via `make ota` only if you want the full image). Note `make ota-rootfs` flashes without a config backup, so settings reset.
+
+**Full-image OTA RAM requirement lowered (ciao 8e3f24857, 2026-10-08):** flashing a full image over OTA no longer requires 1.5x the firmware size in free `/tmp` (RAM). The old check forced low-RAM cameras (64 MB and less) to reboot before flashing even with a storage card mounted. sysupgrade now needs only the firmware size plus about 2 MB of headroom, so full-image OTA works in tight-RAM situations where it previously could not start.
 
 Another ciao fix prevents partition corruption on **old flash layouts**: the 'upgrade' partition is a virtual partition that overlaps kernel/rootfs/extras, and the full-flash loop used to erase and re-flash over the partitions it had just written. The virtual partition is now skipped, matching the other layout calculations.
 
@@ -1291,6 +1319,8 @@ Camera sensors **cannot** be identified visually. Check `/proc/device-info` or b
 - Ensure your WPA2 passphrase is correct
 - Try moving the camera closer to the AP
 - Verify the WiFi module's GPIO power config in `/etc/thingino.json`
+
+**First-boot stuck at "Running pre-portal WiFi scan" (fixed in ciao builds from 2026-10-07):** during provisioning the camera scans for networks before starting its setup hotspot, and on builds up to and including the 2026-10-04 release a wedged WiFi driver could hang that scan indefinitely -- the camera sat at "Running pre-portal WiFi scan" for ten minutes, never broadcast the setup AP, and gave you no login prompt. The scan is now hard-bounded to a few seconds. If your camera hangs at this message on an older build: power-cycle it (a retry usually gets past it), and flash a ciao build from 2026-10-07 or newer for a permanent fix.
 
 ## WebRTC 400 Bad Request (Firefox)
 
