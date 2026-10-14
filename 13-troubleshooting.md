@@ -111,6 +111,10 @@ scp -O file.txt root@hostname.local:/tmp/
 
 Without `-O`, OpenSSH defaults to the SFTP protocol and the transfer will fail.
 
+## curl HTTPS Failures to Some Servers
+
+On-device curl (used by notification scripts such as `send2telegram` and custom webhooks) negotiated TLS 1.3, but the small MIPS TLS stack fails the handshake against some servers -- typically self-hosted endpoints -- with "A field in a message was incorrect or inconsistent". Builds since 2026-10-14 (master) cap curl at TLS 1.2 across all call sites (send2telegram and send2xmpp already did). If an older build cannot reach your HTTPS endpoint, update the firmware.
+
 ## Remote Logging to a Syslog Server
 
 The camera can send its logs to a central syslog server (configurable in the Web UI under **Settings**). Two ready-made receiver setups are documented in the firmware docs (`docs/thingino/services/rsyslog.md`):

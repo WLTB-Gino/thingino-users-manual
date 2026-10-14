@@ -34,6 +34,7 @@ Recent ciao builds fix both ntfy and webhook notifications: `send2ntfy` now hono
 
 Motion events are suppressed while pan/tilt motors are active: the motors daemon publishes `/run/motors-active` while a move is in flight, and every streamer's motion bridge (Prudynt, Raptor, TIMPS) checks it, so panning the camera no longer fires false motion alerts or clips.
 | FTP | `send2ftp` | Upload snapshots/clips to an FTP server |
+| FTPS | `send2ftp` | Same upload over explicit TLS (AUTH TLS, port 21) for hosts that require it, e.g. Hetzner Storage Box -- enable "Use FTPS (explicit TLS)" in the notification settings (since 2026-10-14; self-signed certificates supported via the ignore-certificate option) |
 | Storage | `send2storage` | Save recordings to SD card or NFS |
 | XMPP | `send2xmpp` | Send message via Jabber/XMPP |
 | Speaker | `playonspeaker` | Play an audio alert through the camera's speaker |
