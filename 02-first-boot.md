@@ -62,6 +62,13 @@ If you need to start over -- wrong WiFi credentials, misconfigured settings -- a
 
 This is the fastest way to recover from incorrect WiFi credentials without needing network access.
 
+### Factory reset internals (2026-10-16)
+
+Two fixes landed the same day that make factory reset safer on current builds:
+
+- `firstboot -e` (commit `233641e41`) now clears provisioning keys only instead of erasing the whole U-Boot environment. Erasing the env was dangerous: U-Boot would boot its built-in defaults (including `bootcmd=bootp`), then lose the `mtdparts` that sysupgrade wrote, so the next boot could no longer load the kernel.
+- The Web UI's factory-reset page (commit `84392b22b`) now wipes the overlay via `firstboot -e` instead of erasing `/dev/mtd2`, which is actually the config backup partition -- a web-triggered reset no longer destroys your settings backup.
+
 ## Shell Access
 
 SSH (Dropbear) is available for command-line access:
