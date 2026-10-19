@@ -105,6 +105,17 @@ raptorctl ric config save                   # persist the tune
 
 Everything is live except the IR-CUT wiring and `enabled` (re-pinning a live ircut coil is a hardware hazard, not a tuning knob). Tunables include the ADC pair (`adc_night` must stay below `adc_day`), photo EV thresholds (`photo_ev_night`/`photo_ev_day`), the LED probe trio (`probe_gain_pct`, `probe_recheck_sec`), bank policies for `ir850`/`ir940` (apply immediately, even mid-night -- e.g. dropping the 850nm bank to kill a window reflection), `pulse_ms`, and trigger choice via `set-trigger`. Changes apply at runtime; `config save` persists them.
 
+**IRCUT tuning keys (Raptor)** -- the ric daemon reads these from the `ircut` section of `/etc/raptor.conf` at startup (set with `raptorctl config set ircut <key> <value>` + `service restart raptor`):
+
+- `trigger` -- `luma` (default), `gain`, `adc` or `photo`; picks the transition policy.
+- `night_gain` / `night_luma` -- ISP total gain and luma limits for entering night mode.
+- `day_gain_pct` / `probe_gain_pct` -- day-exit and IR-probe arm points as a percentage of the night baseline.
+- `probe_holdoff_sec` / `probe_recheck_sec` -- LED-probe pacing (`probe_recheck_sec` > 0 forces a probe on that cadence even with no brightness dip).
+- `hysteresis_sec` -- seconds a candidate mode must hold before a switch commits.
+- `poll_interval_ms`, `pulse_ms`, `night_fps` -- polling cadence, IR-CUT coil pulse width, and night-mode frame rate.
+
+On some boards (Wyze Cam v4 / OS04D10 tested) `ae_luma` is pinned near a constant by the auto-exposure loop, so `night_luma` never trips; entry is driven by total gain and the exit path runs on the EV baseline. Set thresholds from `raptorctl rvd get-exposure` readings on your own camera, not from another board's values.
+
 ### Night-Mode FPS Reduction
 
 On ciao (Prudynt) builds, night-mode FPS halving is now handled directly by Prudynt rather than a separate script. This produces smoother transitions and avoids brief stream interruptions when switching modes.
@@ -112,6 +123,14 @@ On ciao (Prudynt) builds, night-mode FPS halving is now handled directly by Prud
 ## IR-CUT Filter
 
 The IR-CUT filter blocks infrared light during the day for accurate colors and removes it at night to allow IR illumination. GPIO pins are configured under `gpio.ircut` in `/etc/thingino.json`.
+
+Cameras with a **dual-pin solenoid IR-CUT** (two GPIO pins, e.g. Wyze Cam v4) use a pin *pair* whose order encodes polarity. For the Wyze Cam v4 the correct declaration is:
+
+```sh
+jct /etc/thingino.json set gpio.ircut "50 49"
+```
+
+If both directions of the filter behave swapped (day actuation does what night should), reverse the pin order. Missing `gpio.ircut` entirely leaves the mechanical filter unmoved -- day/night switching then happens in the ISP only and night shots get a color cast under IR.
 
 ### IRCUT Pulse Duration
 
