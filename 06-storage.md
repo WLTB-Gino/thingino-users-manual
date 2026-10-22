@@ -8,11 +8,14 @@ Format as FAT32 for best compatibility. Note that ext4 support is **not enabled 
 
 - Use a 2GB--8GB card for best compatibility. Some 16GB and 32GB cards may not be recognized in U-Boot's 1-bit MMC mode, particularly on T23N cameras.
 - Card detected but never shows up as `/dev/mmcblk0`? On T31 cameras the advertised microSD/SDIO voltage window was too narrow (3.2--3.4 V), so some cards failed voltage negotiation during enumeration and never appeared. Master builds since 2026-09-18 advertise the full 2.7--3.6 V range and affected cards initialize normally. If a card works in other devices but never mounts on a T31 camera, update the firmware first.
-- To trigger a diagnostics report via SD card, create a file named `.diag` in the root of a blank SD card and insert it into the running camera.
 
 ### SD Card on T40/T41 (XBurst2)
 
 Recent master and ciao builds add SD card support on XBurst2 SoCs (T40/T41) via the MSC controller. Cameras that declare SD card support in their profile (three XBurst2 profiles already do) get the driver and automatic mounting.
+
+## Motion Recording Recovery
+
+Recording that gets interrupted mid-file -- a crash, a power cut, or a watchdog restart -- used to stay off after the camera came back: the recorder looked at a leftover state file from the dead process, concluded it was still recording, and never restarted. Fixed on master 2026-10-21: the boot script now clears stale recorder state after an unclean stop, so if **Motion recording** is enabled it resumes automatically after crashes and forced restarts. No action needed -- this is a fix for anyone who noticed recording silently not coming back after a camera glitch.
 
 ## NFS Network Storage
 

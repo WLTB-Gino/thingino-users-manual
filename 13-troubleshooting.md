@@ -34,6 +34,8 @@ Thingino detects the image sensor by its ID at boot. If the wrong sensor driver 
 
 **SC2336P vs SC2337P (Sonoff and similar T23 cameras, fixed in builds from 2026-10-03):** these two dies report the *same* chip ID to the driver, so older builds could not tell them apart -- a profile built for one bound the other's init timings and image tuning, giving a wrong-looking or broken picture instead of a clean error. The sensor driver now checks a revision register and selects the right die: a mismatched profile fails loudly at `AddSensor` (the usual "no image" path) instead of silently misbehaving. If your SC2336P/SC2337P camera showed odd colors or a dead image on an older build and the boot log mentions a sensor mismatch, identify the exact die and pick the matching profile on a build from 2026-10-03 or newer.
 
+**T33DL mislabeled as T33LQ (builds up to 2026-10-20):** the SoC identification table mapped the chip-ID byte 0x11 to "T33LQ", but that die is actually **T33DL** -- so affected cameras reported the wrong SoC name in the Web UI footer and `soc` output. Master builds from 2026-10-20 also corrected several other T32/T33 variant names and newly recognize the T32Pro and CW080 dies. If your camera showed the wrong chip family in the UI, updating fixes the label; hardware behavior is unchanged.
+
 Camera sensors **cannot** be identified visually. Check `/proc/device-info` or boot logs for the sensor model. GalaxyCore sensors (GC-prefixed) generally have better low-light performance.
 
 ## WiFi Won't Connect
