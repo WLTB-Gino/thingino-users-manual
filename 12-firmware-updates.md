@@ -52,6 +52,8 @@ Latest builds also make **config backup on upgrade actually work**. `sysupgrade 
 
 The default backup list keeps growing: TIMPS streamer settings (`/etc/timps.conf`) and ONVIF settings (`/etc/onvif.json`) are included since 2026-09-06, alongside `/etc/thingino.json`. See `/etc/cfg-backup.list` for the full list and the "You can add more paths" section at the bottom for adding your own.
 
+**Builds from 2026-10-23 keep more of your settings across upgrades.** The backup payload is compressed with gzip when available (smaller snapshot, same restore), the backup list on master now matches ciao's, and on ciao the camera **name and raptor.conf** (`/etc/raptor.conf`) are preserved across a full upgrade alongside the rest. On older builds a full flash still resets the camera name and Raptor streamer settings.
+
 ## SD Card Update
 
 The most reliable update method, especially for cameras with unreliable WiFi:

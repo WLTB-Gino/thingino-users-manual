@@ -22,7 +22,7 @@ jct /etc/thingino.json set ha.enabled true
 | IR LED 850nm | Switch | 850nm IR LEDs |
 | IR LED 940nm | Switch | 940nm IR LEDs |
 | White Light | Switch | White LEDs |
-| WiFi RSSI | Sensor | Signal strength |
+| WiFi RSSI | Sensor | Signal strength. Since 2026-10-23 the camera probes every wireless interface for the reading, so dual-radio boards (for example 2.4/5 GHz combos) report signal instead of staying unknown |
 | Brightness | Sensor | Camera brightness, 0--100 percent |
 | Day/Night State | Sensor | Current day/night mode (day or night) |
 | Snapshot | Button | Take snapshot |

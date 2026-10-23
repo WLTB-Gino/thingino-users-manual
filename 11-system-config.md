@@ -55,6 +55,8 @@ Recent builds display overlay usage statistics in the SSH shell banner, so you c
 
 Thingino automatically receives timezone from DHCP Option 101 and NTP server from DHCP Option 42.
 
+**Builds from 2026-10-23 display DHCP timezones correctly** (PR #1848): DHCP can deliver timezone names with underscores (for example `America/New_York` arriving as `America/New_York` with spaces or underscores), and the camera now maps underscores to spaces so the zone resolves instead of falling back to UTC. The bundled timezone database was also updated to IANA 2026e (PR #1838), so recently-changed zone rules are covered. If your camera showed UTC despite a DHCP-supplied timezone, updating the firmware fixes it.
+
 ---
 
 <- [Previous: PTZ (Pan-Tilt-Zoom)](10-ptz.md) | [Next: Firmware Updates](12-firmware-updates.md) ->
