@@ -32,6 +32,8 @@ jct /etc/thingino.json set ha.enabled true
 
 The Brightness and Day/Night State entities (from daynightd) are gated behind their own enable flags in recent ciao builds (2026-10-03, `429badb45`) -- previously they could not be enabled or disabled independently of the gain/daynight entities. Brightness is only discovered on cameras running the daynightd daemon.
 
+**Gain and Brightness on Raptor builds (fixed 2026-10-24, master):** the HA Gain sensor used to read a sysfs source that only the daynightd stack exposes, so on Raptor builds it was discovered but stayed stuck at "unknown" -- Mina's fw issue #1767. Two fixes merged (`21d941461` / `36af7f299`): the agent adapter now reads exposure and gain from Raptor's `rvd` runtime interface, and gain is reported in **dB** with a brightness entity that no longer depends on daynightd. On current master Raptor builds both entities report live values; on older builds the gain entity simply stays unknown.
+
 Disable individual entities:
 
 ```sh

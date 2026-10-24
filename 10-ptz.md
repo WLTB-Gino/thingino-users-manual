@@ -48,7 +48,11 @@ jct /etc/thingino.json get motors.gpio_tilt
 
 The earlier double-inversion bug (init script re-applying the daemon's inversion, making the setting a no-op) and the position-counter overshoot are fixed on all motor types; the runtime `motors -I x/y` block for non-SPI cameras was removed from `S59motor`.
 
+**Pan/tilt dead after an upside-down correction (fixed 2026-10-24, master + ciao):** on SPI-motor cameras (Tapo C200 class), the old builds delivered the `invert_y` setting to the kernel module *and* re-applied it in the motor daemon -- the two flips cancelled out (setting seemed to do nothing), and on top of that the boot-time homing sweep ran with the flipped direction, overshot, and the daemon clamped the tilt counter so the camera would not move vertically until reboot. The init script no longer passes invert params to the kernel module (fw commits `f083382c1` / `4654b3d32`): one `motors.invert_y true` + reboot now behaves as documented.
+
 **Fixed 2026-10-03 (ciao `277805e1b`): pan/tilt stopped responding until reboot.** The motor service's stop routine could not actually stop the daemon (its PID file was stale from the moment it was written, because the daemon forks itself into the background), so a restart left the old daemon running with the kernel driver removed underneath it -- PTZ then went dead until the camera was rebooted. Stop now finds the real PID and kills it before unloading the module; a stale `S59motor restart` no longer breaks motors on any camera that has panned at least once.
+
+**Fixed 2026-10-24 (master `164e67dde`, issue #1536): motor daemon wedge during motion.** On some boards a stop command during motion could wedge `motors-daemon` in an unrecoverable kernel wait: the daemon went D-state, pan/tilt stayed frozen, and only a power cycle brought it back. The daemon now bails out of the stop path before entering that state; such a stop leaves the camera responsive (worst case the move continues to its target or parks). 2026-10-04+ master builds only.
 
 ### Upside-Down Mounts
 
