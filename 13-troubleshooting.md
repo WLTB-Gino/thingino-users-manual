@@ -36,6 +36,8 @@ Thingino detects the image sensor by its ID at boot. If the wrong sensor driver 
 
 **T33DL mislabeled as T33LQ (builds up to 2026-10-20):** the SoC identification table mapped the chip-ID byte 0x11 to "T33LQ", but that die is actually **T33DL** -- so affected cameras reported the wrong SoC name in the Web UI footer and `soc` output. Master builds from 2026-10-20 also corrected several other T32/T33 variant names and newly recognize the T32Pro and CW080 dies. If your camera showed the wrong chip family in the UI, updating fixes the label; hardware behavior is unchanged.
 
+**Wyze Cam v4 sensor never detected / no video (fixed in master builds from 2026-10-25, PR `#1887`):** on some v4 units the OS04D10 sensor received its 24 MHz master clock at too weak a GPIO drive strength, the sensor never answered on I2C, and the boot failed with "sensor undetect" -- no image. The camera profile now raises the clock pin's drive strength via the device tree, and affected units detect and stream on first boot. If your v4 showed no video on an older build with a sensor-probe error in the log, updating to a master build from 2026-10-25 or newer fixes it.
+
 Camera sensors **cannot** be identified visually. Check `/proc/device-info` or boot logs for the sensor model. GalaxyCore sensors (GC-prefixed) generally have better low-light performance.
 
 ## WiFi Won't Connect

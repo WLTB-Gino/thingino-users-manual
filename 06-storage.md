@@ -2,7 +2,7 @@
 
 SD cards are mounted automatically at `/mnt/mmcblk0p1`, **async** on both ciao (since 2026-08-25) and master (since 2026-09-03, PR #1535), with a global dirty-page writeback bound. Sustained recording no longer stalls on every write to slow cards -- a long-standing source of periodic freezes and UI sluggishness on single-core cameras. Reliability is unaffected: diagnostics and recorder flows sync explicitly. A power cut can lose the last seconds of buffered writes (as with any async removable-media mount), but the filesystem itself is safe.
 
-Format as FAT32 for best compatibility. Note that ext4 support is **not enabled by default** -- it requires enabling `BR2_PACKAGE_THINGINO_KOPT_EXTFS` in the build config. exFAT may also require additional kernel options.
+Format as FAT32 for best compatibility. Note that ext4 support is **not enabled by default** -- it requires enabling `BR2_PACKAGE_THINGINO_KOPT_EXTFS` in the build config. exFAT is supported via the `exfat-nofuse` kernel module and is the Web UI formatter's default -- but on builds merged before 2026-10-25 (PR `#1881`) the module could land under a wrong `/lib/modules` path and never load, so **exFAT cards would not mount at all, including cards formatted by the Web UI**. If an exFAT card never appears in `/mnt` on an older build, update the firmware (or format FAT32 as a workaround).
 
 ### SD Card Tips
 
