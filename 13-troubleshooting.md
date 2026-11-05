@@ -44,6 +44,8 @@ Camera sensors **cannot** be identified visually. Check `/proc/device-info` or b
 
 **4.4-kernel cameras (T40/T41) with a `gpio.wlan` pin sequence in the profile (fixed in builds from 2026-10-03):** some boards power or reset their WiFi module through GPIOs, and the boot script only applied that pin sequence on 3.10-kernel builds -- on T40/T41 it logged "Skipping WLAN GPIO toggling for kernel 4.4" and did nothing, so the WiFi module never powered up (`590f68bdc`). If a T40/T41 camera's WiFi was dead from first boot with no driver error, updating fixes it.
 
+- **aic8800-based cameras (fixed in builds from 2026-10-30):** the boot script waited for the interface to show up in `/proc/net/wireless`, which only lists WEXT-capable drivers -- full-MAC cfg80211 drivers like aic8800 never appear there, so every boot paid a wait timeout even though `wlan0` was already up. Boot now checks `ip link` like the rest of the interface logic; the wait delay and misleading "WiFi missing" symptom during startup are gone.
+
 - Check reason codes in the log (see [Networking](04-networking.md))
 - Ensure your WPA2 passphrase is correct
 - Try moving the camera closer to the AP
@@ -118,6 +120,8 @@ Without `-O`, OpenSSH defaults to the SFTP protocol and the transfer will fail.
 ## curl HTTPS Failures to Some Servers
 
 On-device curl (used by notification scripts such as `send2telegram` and custom webhooks) negotiated TLS 1.3, but the small MIPS TLS stack fails the handshake against some servers -- typically self-hosted endpoints -- with "A field in a message was incorrect or inconsistent". Builds since 2026-10-14 (master) cap curl at TLS 1.2 across all call sites (send2telegram and send2xmpp already did). If an older build cannot reach your HTTPS endpoint, update the firmware.
+
+The certificate bundle ships refreshed: builds from early November 2026 carry an updated CA trust store, and a `make update-certs` target lets image builders refresh it from the current Mozilla bundle at build time. If the camera must reach a server whose certificate chain postdates your firmware image, either update the firmware or run `make update-certs` before building.
 
 ## Remote Logging to a Syslog Server
 

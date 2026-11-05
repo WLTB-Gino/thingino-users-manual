@@ -37,6 +37,8 @@ GPIO pins for SD card power and WiFi modules are configured in `/etc/thingino.js
 
 `gpio.speaker` sets the speaker amp enable pin (pin number or object form) and is read at build time -- it feeds the gpio-userkeys module config and the U-Boot device tree, so changing it requires a rebuild rather than a runtime `jct` edit.
 
+**Finding pins:** the `gpio scan` command (builds from 2026-10-27) sweeps every free pin as an input and reports which ones change state -- handy when populating `gpio.mmc_power` or `gpio.wlan` on an undocumented board. Pins 55, 56 and pins referenced in `/etc/web.conf` are skipped automatically; `gpio scan 12 13` additionally leaves pins 12 and 13 alone. This replaces the older standalone `gpioscan` tool.
+
 ## Hostname
 
 The hostname suffix is derived at boot from the SoC serial number (same function that generates the MAC), and it is never regenerated from a later MAC change. A custom hostname set via `conf s hostname` is stored in the provisioning key/value store and applied on boot.

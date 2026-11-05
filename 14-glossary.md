@@ -6,6 +6,7 @@
 | **AWB** | Automatic White Balance |
 | **BLC** | Backlight Compensation |
 | **DNR** | Digital Noise Reduction (3D-DNR = temporal) |
+| **Divinus** | Experimental proof-of-concept streamer for T31 cameras (RTSP, JPEG snapshots, fMP4 recording) |
 | **GPIO** | General Purpose Input/Output |
 | **ICR / IR-CUT** | Infrared Cut Filter Removal |
 | **IMP** | Ingenic Media Platform (SDK) |
