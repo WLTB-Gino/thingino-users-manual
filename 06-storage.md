@@ -1,52 +1,42 @@
 ## SD Card
 
-SD cards are mounted automatically at `/mnt/mmcblk0p1`, **async** on both ciao (since 2026-08-25) and master (since 2026-09-03, PR #1535), with a global dirty-page writeback bound. Sustained recording no longer stalls on every write to slow cards -- a long-standing source of periodic freezes and UI sluggishness on single-core cameras. Reliability is unaffected: diagnostics and recorder flows sync explicitly. A power cut can lose the last seconds of buffered writes (as with any async removable-media mount), but the filesystem itself is safe.
+SD cards are mounted automatically at `/mnt/mmcblk0p1` in **async** mode, with a global dirty-page writeback bound. Sustained recording does not stall on every write to slow cards, which avoids periodic freezes and UI sluggishness on single-core cameras. Reliability is unaffected: diagnostics and recorder flows sync explicitly. A power cut can lose the last seconds of buffered writes (as with any async removable-media mount), but the filesystem itself is safe.
 
-Format as FAT32 for best compatibility. Note that ext4 support is **not enabled by default** -- it requires enabling `BR2_PACKAGE_THINGINO_KOPT_EXTFS` in the build config. exFAT is supported via the `exfat-nofuse` kernel module and is the Web UI formatter's default -- but on builds merged before 2026-10-25 (PR `#1881`) the module could land under a wrong `/lib/modules` path and never load, so **exFAT cards would not mount at all, including cards formatted by the Web UI**. If an exFAT card never appears in `/mnt` on an older build, update the firmware (or format FAT32 as a workaround). Builds from 2026-10-30 (ciao) additionally preload the exFAT module at boot: the card automounter only tries filesystems already loaded into the kernel, so a hot-inserted exFAT card could previously race the module load and stay unmounted.
+Format as FAT32 for best compatibility. Note that ext4 support is **not enabled by default** -- it requires enabling `BR2_PACKAGE_THINGINO_KOPT_EXTFS` in the build config. exFAT is supported via the `exfat-nofuse` kernel module and is the Web UI formatter's default. The exFAT module is preloaded at boot, so hot-inserted exFAT cards mount immediately: the card automounter only tries filesystems already loaded into the kernel. If an exFAT card never appears in `/mnt` on an older build, update the firmware (or format FAT32 as a workaround).
 
 ### SD Card Tips
 
 - Use a 2GB--8GB card for best compatibility. Some 16GB and 32GB cards may not be recognized in U-Boot's 1-bit MMC mode, particularly on T23N cameras.
-- Card detected but never shows up as `/dev/mmcblk0`? On T31 cameras the advertised microSD/SDIO voltage window was too narrow (3.2--3.4 V), so some cards failed voltage negotiation during enumeration and never appeared. Master builds since 2026-09-18 advertise the full 2.7--3.6 V range and affected cards initialize normally. If a card works in other devices but never mounts on a T31 camera, update the firmware first.
+- Card detected but never shows up as `/dev/mmcblk0`? Builds that advertise only a narrow 3.2--3.4 V microSD/SDIO voltage window on T31 cameras let some cards fail voltage negotiation during enumeration, so the card never appears. Firmware advertising the full 2.7--3.6 V range initializes these cards normally. If a card works in other devices but never mounts on a T31 camera, update the firmware first.
 
 ### SD Card on T40/T41 (XBurst2)
 
-Recent master and ciao builds add SD card support on XBurst2 SoCs (T40/T41) via the MSC controller. Cameras that declare SD card support in their profile (three XBurst2 profiles already do) get the driver and automatic mounting.
+SD card support on XBurst2 SoCs (T40/T41) works via the MSC controller. Cameras that declare SD card support in their profile (three XBurst2 profiles do) get the driver and automatic mounting.
 
 ## Motion Recording Recovery
 
-Recording that gets interrupted mid-file -- a crash, a power cut, or a watchdog restart -- used to stay off after the camera came back: the recorder looked at a leftover state file from the dead process, concluded it was still recording, and never restarted. Fixed on master 2026-10-21: the boot script now clears stale recorder state after an unclean stop, so if **Motion recording** is enabled it resumes automatically after crashes and forced restarts. No action needed -- this is a fix for anyone who noticed recording silently not coming back after a camera glitch.
+After an unclean stop -- a crash, a power cut, or a watchdog restart -- the boot script clears stale recorder state, so if **Motion recording** is enabled it resumes automatically once the camera comes back. No action is needed.
 
 ## NFS Network Storage
 
-Thingino supports NFS v2/v3 (not v4). To set up persistent NFS storage, configure the share path and the `S43mounts` init script mounts it automatically at boot:
-
-```sh
-jct /etc/thingino.json set nfs_share "server:/path/to/share"
-```
-
-The share will be mounted at `/mnt/nfs` on boot (using `-o nolock`). Verify with `mount | grep nfs`.
-
-Since ciao 2026-08-25, NFS shares were mounted **soft** with bounded retries (`soft,timeo=30,retrans=2`) instead of hard. If the NFS server stalls or disappears, processes get an I/O error instead of hanging the whole camera in D-state. Access is also noticeably more responsive when the server is slow.
-
-**Reversed on ciao 2026-09-03:** the mount is **hard** again (`hard,timeo=30,retrans=2`). In practice the soft mount turned a stalled server into silent data loss -- the recorder's write returns an error after ~9 seconds, and with no error checking in place the recording kept going with a hole in it (typically exactly where the MP4 init segment lives), producing unplayable files. A hard mount blocks instead of losing data. Check `mount | grep nfs` if a stuck write ever freezes the camera -- that is the trade-off.
-
-Already have unplayable files from the soft-mount era? Since ciao 2026-09-06 the firmware tree ships `scripts/recover-nfs-recordings.py`, which repairs exactly this failure: it detects prudynt-t recordings that lost their MP4 init segment (the `ftyp`+`moov` bytes the lost writes swallowed), copies the init segment from a healthy recording of the same camera and stream settings (auto-detected, or `--donor FILE`), and writes `<name>.recovered.mp4` beside each damaged file. Originals are never modified, so it is safe to re-run. Stop the recording first -- the segment currently being written gets recovered half-finished.
-
-Since ciao 2026-09-10 (`d836336d2`), the boot-time NFS mount works reliably even when the NFS server is specified by **hostname**: the mount helper now passes the bare hostname (not `server:/path`) to the kernel's route lookup, which previously failed and left the share unmounted after every boot until mounted by hand.
-
-**NFS is now opt-in (ciao builds from 2026-10-05).** The mount configuration moved from the flat `nfs_share` string to a nested `nfs` object, and the share is no longer mounted at boot unless you ask for it:
+Thingino supports NFS v2/v3 (not v4). NFS storage is **opt-in**: the share is not mounted at boot unless enabled. Configure it with the nested `nfs` object:
 
 ```sh
 jct /etc/thingino.json set nfs.enabled true
 jct /etc/thingino.json set nfs.share "server:/path/to/share"
 ```
 
-With `nfs.enabled` false the boot scripts simply skip the mount (the init script logs a notice instead of failing silently). To keep the configured address but mount right now, run `S43mounts force` -- it flips `nfs.enabled` to true and mounts immediately. Configurations still carrying the old top-level `nfs_share` key keep working. The nested share value is redacted from diagnostics reports. Full setup notes: `docs/thingino/nfs-share.md` in the firmware tree.
+The `S43mounts` init script mounts the share at `/mnt/nfs` on boot (using `-o nolock`). Verify with `mount | grep nfs`. Configurations still carrying the old top-level `nfs_share` key keep working. With `nfs.enabled` false the boot scripts simply skip the mount (the init script logs a notice instead of failing silently). To keep the configured address but mount right now, run `S43mounts force` -- it flips `nfs.enabled` to true and mounts immediately. The share value is redacted from diagnostics reports. Full setup notes: `docs/thingino/nfs-share.md` in the firmware tree.
+
+The mount is **hard** (`hard,timeo=30,retrans=2`): if the NFS server stalls or disappears, writes block instead of silently losing data. Check `mount | grep nfs` if a stuck write ever freezes the camera -- that is the trade-off.
+
+Recordings that lost their MP4 init segment (the `ftyp`+`moov` bytes a stalled write swallowed) can be repaired with `scripts/recover-nfs-recordings.py` from the firmware tree: it detects prudynt-t recordings with a missing init segment, copies it from a healthy recording of the same camera and stream settings (auto-detected, or `--donor FILE`), and writes `<name>.recovered.mp4` beside each damaged file. Originals are never modified, so it is safe to re-run. Stop the recording first -- the segment currently being written gets recovered half-finished.
+
+Boot-time NFS mounts work reliably even when the NFS server is specified by **hostname**: the mount helper passes the bare hostname (not `server:/path`) to the kernel's route lookup.
 
 ### Media File Permissions
 
-Since ciao 2026-10-09, snapshots and clips published by the notification system to storage (SD card or NFS share) are written world-readable (mode 644). Earlier builds staged files with restrictive permissions, so motion photos served from an NFS/NAS share could fail to open for non-root readers. Files saved by older builds keep their old permissions -- a one-time `chmod 644` on the share fixes those.
+Snapshots and clips published by the notification system to storage (SD card or NFS share) are written world-readable (mode 644). Files saved by older builds keep their restrictive permissions -- a one-time `chmod 644` on the share fixes those.
 
 ## Filesystem Overlay
 

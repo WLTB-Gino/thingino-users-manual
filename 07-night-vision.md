@@ -1,6 +1,6 @@
 ## Day/Night Mode
 
-Thingino automatically switches between day (color) and night (IR) modes based on ambient light. A dedicated **daynightd** daemon coordinates the IR-CUT filter, IR LEDs, white LEDs, and ISP color mode. As of recent builds, the old `thingino-daynight` package has been consolidated into `thingino-daynightd` -- all day/night logic now lives in a single daemon with a Web UI plugin for configuration.
+Thingino automatically switches between day (color) and night (IR) modes based on ambient light. A single **daynightd** daemon coordinates the IR-CUT filter, IR LEDs, white LEDs, and ISP color mode, configured via a Web UI plugin. If your build still ships the old `thingino-daynight` package, update the firmware.
 
 ### Manual Control
 
@@ -45,45 +45,54 @@ Thingino can switch modes based on actual sunrise/sunset times using `dusk2dawn`
 jct /etc/thingino.json set daynight.sun.enabled true
 ```
 
-When enabled, cron entries are automatically generated for your location's sunrise and sunset times.
+When enabled, cron entries are automatically generated for your location's sunrise and sunset times. Scheduled mode (`daynight.schedule`) keys its calendar to local solar time, so cameras in far-west time zones switch at real sunset rather than at UTC midnight.
+
+### How Switching Works
+
+The daemon uses EV log2 as the primary brightness metric (T31/T23/T21/T30) or gain log2 (T20). A reading of zero is valid -- the ISP reports EV log2 as 0 at the brightest measurable scene. Configurable sample counts set how many consecutive samples must exceed the threshold before switching, and a hysteresis factor prevents flapping.
+
+The engine works in periodic dark looks: every 45 minutes, or sooner when brightness falls 20% (`daynight.jump_pct`) below the last look, it takes a silent 8-second look with the IR illuminator off. Failed day-checks back off exponentially (1, 2, 4 ... minutes, capped at 16 minutes), and the lamps recover within 60 seconds of a failed check.
+
+At night the camera also watches the colour of the IR-lit picture (ISP AWB statistics). When a lamp or dawn shifts that colour by more than `daynight.color_pct` (default 3%, 0 = off, applied live) for 20 seconds, the daemon takes an extra dark look immediately instead of waiting for the next timer look, so a weak illuminator ends night mode within about 40 seconds. Colour looks are at least 5 minutes apart and the gap doubles toward 45 minutes; with a working colour trigger the periodic look stretches to every 6 hours, so a night sees about 6 dark looks instead of 16. Every failed check teaches the daemon how much brighter that light source reads, so a living-room lamp or a neighbour's IR camera no longer buys a look pair at every brightness jump.
+
+A "day" verdict must hold: a check decides "day" only once the reading has stayed on the day side for 10 seconds after settling, so drivers that report a stale exposure for a few seconds after the IR switch cannot strand the camera in day mode with the lamp off. The boot-time check waits at most 30 seconds for a steady exposure and recognises an obviously-bright scene at once. Each stream gets a keyframe about 0.8 s after an IR or IR-cut switch, once auto-exposure has settled, so players show the new scene instead of the old one until the next GOP boundary.
+
+Dawns stay calm: after a colour look the engine only re-checks while the reading is actually near the day boundary, and the overnight watchdog limit is 18 hours, so long winter nights do not end with a spurious check before dawn.
+
+Two implementation notes: timed switches and IR-probe commands (`daynight.switch_cmd`, `daynight.irprobe_cmd`) are launched with `vfork()`, so they still run on boards under memory pressure; and on T20 cameras the routine `isp_info` fallback is logged at INFO, so the Web UI health tile does not flag healthy day/night as errors. On T21 cameras running the vendor ISP driver, day/night reads exposure from the IMP library instead of the `isp_path` proc file, which that driver corrupts on read.
+
+The Web UI Day/Night page offers an Idle-Dark card for an optional extra-dark idle night mode (off by default).
 
 ### Threshold and Tolerance
 
-The daynightd daemon uses EV log2 as the primary brightness metric (T31/T23/T21/T30) or gain log2 (T20). The thresholds are configurable:
-
-**Fixed 2026-10-03 (ciao `ff431842d`): cameras stuck in night mode in bright scenes.** The ISP reports EV log2 as 0 at the brightest measurable scene, but the daemon treated a legitimate 0 as a missing reading -- so a camera whose auto-exposure bottomed out could latch in night (IR) mode and never switch back to day. The zero reading is now accepted as valid. If your camera stayed in black-and-white night mode under bright light, updating to a ciao build from 2026-10-03 or newer fixes it.
-
-- **Night threshold** -- EV log2 value at which the camera switches to night mode (default: `550000`). The percentage-based `night_threshold` default was raised from 20 to 25 in recent ciao builds for less flapping at dusk.
+- **Night threshold** -- EV log2 value at which the camera switches to night mode (default: `550000`)
 - **Day threshold** -- EV log2 value at which the camera switches back to day mode (default: `350000`)
-- **Brightness percentage thresholds** -- Optional overrides (`night_threshold_pct`, `day_threshold_pct`) that use a 0--100 brightness metric instead of raw EV values
+- **Brightness percentage thresholds** -- Optional overrides (`night_threshold_pct`, `day_threshold_pct`) that use a 0--100 brightness metric instead of raw EV values (defaults: 25 night / 50 day)
 
-### Tuning day/night thresholds (v1.9.15+)
+```sh
+jct /etc/thingino.json set daynight.ev_night_threshold 550000
+jct /etc/thingino.json set daynight.ev_day_threshold 350000
+```
+
+Day/night thresholds and behavior are also adjustable from the Web UI configuration page.
+
+### Tuning Day/Night Thresholds
 
 Thresholds that ship with the firmware are averages. Dark-room readings vary per sensor and mounting (enclosure, IR reflection); when a camera ignores its thresholds, measure instead of guessing.
 
-TIMPS v1.9.15 added a built-in tuning loop that closes this loop entirely on the camera:
+**Measure first, then bracket:** read your actual brightness values (daylight, dusk, fully dark), then set percentage thresholds that bracket them. The percentage keys (`day_threshold`/`night_threshold`, 0-100 scale) map logarithmically to the daemon's raw brightness metric -- intermediate readings land in the hysteresis zone and hold the current mode, which is the point of the two thresholds. Percentage keys silently override the raw `ev_*` keys whenever they are set -- set one scale, don't mix them.
 
-- **`GET /control?dn_history=1`** serves the daemon's day/night decision history ring — per-sample brightness values and the mode at each point. Read it right after you see a wrong switch: `curl http://<camera-ip>:8880/control?dn_history=1`
-- **`daynight.diagnose_thresholds`** is reported in `GET /control` status JSON (v1.9.15+), so scripts can detect misconfiguration.
+`GET /control?dn_history=1` serves the daemon's day/night decision history ring -- per-sample brightness values and the mode at each point. Read it right after you see a wrong switch:
 
-Two more day/night improvements shipped with the 2026-09-26 TIMPS pin batch: the configurable day/night switch and IR-probe commands (`daynight.switch_cmd`/`daynight.irprobe_cmd`) are now started with `vfork()` (v1.9.23), so boards under memory pressure no longer fail to launch them -- the old `fork()` could fail with ENOMEM and silently skip the IR-cut flip; and the day/night controls in the TIMPS Web UI apply immediately instead of waiting for the next day/night edge (ciao builds from 2026-09-26, PR `#1708`). On T20 cameras the routine `isp_info` fallback log line is INFO instead of WARN (v1.9.26), so the Web UI health tile no longer flags healthy day/night as "errors". v1.9.27 (firmware pins 2026-09-27, both branches) fixes scheduled mode (`daynight.schedule`) west of roughly the US Pacific coast: the sunrise/sunset calendar keyed its "today" on the UTC day, so the camera adopted the next day's times and switched to night at UTC midnight (17:00 on the west coast) instead of at real sunset; the calendar day is now chosen by local solar time.
+```sh
+curl http://<camera-ip>:8880/control?dn_history=1
+```
 
-**Measure first, then bracket:** read your actual brightness values (daylight, dusk, fully dark), then set percentage thresholds that bracket them. The percentage keys (`day_threshold`/`night_threshold`, 0-100 scale) map logarithmically to the daemon's raw brightness metric — intermediate readings land in the hysteresis zone and hold the current mode, which is the point of the two thresholds.
+Give the daemon about 20 seconds of sustained samples before expecting a mode flip, and remember that brightness under a covered lens is bounded by the sensor's max gain. When fixed times are preferable to auto-switching, `daynight.schedule` with start/stop times is the stable fallback.
 
-**TIMPS v1.10.1 (ciao builds from 2026-10-12) ships a redesigned day/night engine.** Transitions are faster and more stable: a silent 8-second look with the IR illuminator off runs every 45 minutes or whenever brightness falls 20% (`daynight.jump_pct`) below the last look, failed day-checks back off exponentially (1, 2, 4 ... minutes), and the lamps recover within 60 seconds of a failed check instead of pendulum-flapping. The old tuning constants `probe_min_gap_s`, `probe_confirm_s`, `boot_probe` and `diagnose_thresholds` are retired -- they are ignored with a warning and no longer echoed in the status output. The Web UI Day/Night page gains an Idle-Dark card for an optional extra-dark idle night mode (off by default).
+The tuning constants `probe_min_gap_s`, `probe_confirm_s`, `boot_probe` and `diagnose_thresholds` are retired: they are ignored with a warning and no longer echoed in the status output.
 
-**TIMPS v1.11.0/v1.11.1 (2026-10-25; ciao builds from ~2026-10-26) refine the engine further:**
-
-- **Colour re-check at night:** the camera watches the colour of the IR-lit picture (ISP AWB statistics). When a lamp or dawn shifts that colour by more than `daynight.color_pct` (default 3%, 0 = off, live) for 20 seconds, it takes an extra dark look immediately instead of waiting for the next timer look -- a weak illuminator now ends night mode within about 40 seconds. Colour looks are at least 5 minutes apart and the gap doubles toward 45 minutes; with a working colour trigger the periodic timer look stretches to every 6 hours, so a night sees about 6 dark 8-second looks instead of 16.
-- **Smarter re-checks near lamps and TVs:** every failed check teaches the daemon how much brighter that light source reads (a learned factor `k`), so a living-room lamp or a neighbour's IR camera no longer buys a click pair at every brightness jump -- measured ~8 click pairs per evening down to ~2, while a genuinely bright morning ceiling light still triggers a check.
-- **A "day" verdict must hold:** a check decides "day" only once the reading has stayed on the day side for 10 seconds after settling, so cameras whose driver reports a stale exposure for a few seconds after the IR switch no longer sit in day mode with the lamp off (a bug that also kept neighbouring IR cameras awake all night).
-- **Failed-check lockout capped:** the back-off after failed checks stops doubling at 16 minutes instead of growing past an hour -- a camera parked next to other IR cameras used to stay in night mode all morning while its neighbours switched to day.
-- **Boot check is fast:** the startup day/night check waits at most 30 seconds instead of up to 2 minutes for a steady exposure; an obviously-bright scene is recognised at once (a dark-garage camera used to show a black day picture for 2 minutes after every boot).
-- **Keyframe after every switch:** each stream gets a keyframe ~0.8 s after an IR or IR-cut switch, once auto-exposure has settled -- players no longer keep showing the old scene until the next GOP boundary.
-- **Vendor T21 safety:** on T21 cameras running the vendor ISP driver, day/night no longer reads the `isp_path` proc file -- that driver corrupts kernel memory on the read and an oops killed the day/night thread; exposure comes from the IMP library there instead.
-- **Calmer dawns (TIMPS builds from early November 2026, after v1.11.1):** after a colour look the engine only re-checks while the reading is actually near the day boundary -- it used to keep asking all the way to full daylight, costing extra IR-click pairs every morning -- and the overnight watchdog limit rose from 12 to 18 hours, so long winter nights no longer end with a spurious check before dawn.
-
-**Real-world example (WUUK Y0510 / SC4336P, ciao 2488702):** the shipped raw-EV defaults (night >550000, day <350000) were miscalibrated for that sensor: daylight read ~737k (misread as night), a hand-covered lens read ~1114k — below the computed 1125k night line, so night mode could never engage in the dark. First fix attempt (raw `ev_*` thresholds 800000/1200000) booted to day but still never reached night: the daemon's percentage keys (`daynight.day_threshold`/`night_threshold`, default 50/25) silently override the raw `ev_*` keys whenever they are set — set the percentage keys, don't mix scales. Working calibration:
+**Real-world example (WUUK Y0510 / SC4336P):** the shipped raw-EV defaults (night >550000, day <350000) are miscalibrated for that sensor: daylight reads ~737k (misread as night) and a hand-covered lens reads ~1114k -- below the computed 1125k night line, so night mode can never engage in the dark, and because the percentage keys override raw `ev_*` values, raw thresholds alone cannot fix it. Working calibration:
 
 ```sh
 jct /etc/thingino.json set daynight.day_threshold 38
@@ -92,16 +101,7 @@ service restart daynightd
 logread | grep "Initial mode"   # verify thresholds took effect
 ```
 
-Two extra practical rules from that case: brightness under a covered lens is bounded by the sensor's max gain (don't chase ever-higher values), and give the daemon ~20 seconds of sustained samples before expecting a mode flip. When a schedule-based mode is preferable, `daynight.schedule` with start/stop times is the stable fallback.
-
-The daemon also includes configurable sample counts (how many consecutive samples must exceed the threshold before switching) and a hysteresis factor to prevent flapping.
-
-```sh
-jct /etc/thingino.json set daynight.ev_night_threshold 550000
-jct /etc/thingino.json set daynight.ev_day_threshold 350000
-```
-
-Day/night thresholds and behavior are also adjustable from the Web UI configuration page.
+If a camera latches in black-and-white night mode under bright light even though the lens is uncovered, update the firmware: builds that treat a zero EV reading as a missing reading cause exactly this.
 
 ### Live Day/Night Tuning (Raptor, master)
 
@@ -129,7 +129,7 @@ On some boards (Wyze Cam v4 / OS04D10 tested) `ae_luma` is pinned near a constan
 
 ### Night-Mode FPS Reduction
 
-On ciao (Prudynt) builds, night-mode FPS halving is now handled directly by Prudynt rather than a separate script. This produces smoother transitions and avoids brief stream interruptions when switching modes.
+On ciao (Prudynt) builds, night-mode FPS halving is handled directly by Prudynt rather than a separate script. This produces smoother transitions and avoids brief stream interruptions when switching modes.
 
 ## IR-CUT Filter
 
@@ -145,7 +145,7 @@ If both directions of the filter behave swapped (day actuation does what night s
 
 ### IRCUT Pulse Duration
 
-Recent builds add a configurable `pulse_ms` option for the IR-CUT filter actuation pulse. This controls how long the GPIO pulse lasts when switching the filter. If your camera's IR-CUT filter is unreliable or switches too slowly/fast, adjust this:
+The `pulse_ms` option controls how long the GPIO pulse lasts when switching the IR-CUT filter. If your camera's IR-CUT filter is unreliable or switches too slowly/fast, adjust this:
 
 ```sh
 jct /etc/thingino.json set gpio.pulse_ms 10

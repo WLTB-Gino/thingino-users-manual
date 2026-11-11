@@ -29,40 +29,38 @@ mpv rtsp://thingino:thingino@192.168.1.10:554/ch0 \
 
 ## WebRTC (Live View)
 
-> **Note:** WebRTC is only available with **Raptor**, which is in development builds only. It is **not available** in stable release builds (which use Prudynt).
+> **Note:** WebRTC requires **Raptor** (development builds) or a **TIMPS** streamer with the WebRTC endpoint compiled in. It is **not available** in stable release builds, which use Prudynt.
 
 When available, WebRTC provides ultra-low-latency live view in the Web UI. The camera's streaming daemon handles WebRTC negotiation automatically.
 
-### WebRTC / WHEP on TIMPS (v1.9.13+)
+### WebRTC / WHEP on TIMPS
 
-TIMPS gained its own WebRTC implementation in v1.9.13, refined through v1.9.14. It serves a standard **WHEP** endpoint (WebRTC-HTTP Egress Protocol): a player POSTs an SDP offer to the camera and receives H.264 video (plus audio) over ICE-lite/DTLS-SRTP -- no plugin, and none of the MSE buffering the fMP4 preview has.
+TIMPS serves a standard **WHEP** endpoint (WebRTC-HTTP Egress Protocol): a player POSTs an SDP offer to the camera and receives H.264 video (plus audio) over ICE-lite/DTLS-SRTP -- no plugin, and none of the MSE buffering the fMP4 preview has.
 
 ```
 POST   http://<camera-ip>:8880/webrtc/whep        # send the SDP offer, get the answer
 DELETE http://<camera-ip>:8880/webrtc/whep/<id>   # tear a session down
 ```
 
+`POST /webrtc/whep?chn=N` picks the video stream per session (main/sub) without changing the global `webrtc.channel` default; an out-of-range, not-running or non-H.264 stream is refused with `400` (advertised as `caps.webrtc.chn_select: 1`).
+
 A standalone test page ships with the TIMPS source (`scripts/whep-test.html`).
 
 Deliberate limitations, worth knowing before you try it:
 
 - **LAN/VPN only** -- one host candidate, no STUN/TURN, no NAT traversal, no IPv6
-- **H.264 video only** (the `webrtc.channel` stream) plus **G.711 audio** (PCMU/PCMA) only when the camera actually encodes G.711 -- on AAC cameras, turn on the second encode with `audio.codec2` (below). No Opus, AAC or H.265 over WebRTC; no transcoding
+- **H.264 video only** (the `webrtc.channel` stream) plus **G.711 audio** (PCMU/PCMA) only when the camera actually encodes G.711 -- on AAC cameras, enable the second audio encode with `audio.codec2` (below). No Opus, AAC or H.265 over WebRTC; no transcoding
 - **No NACK/retransmission, FEC, or congestion control** -- a LAN live-view path, not a loss-recovery one
 - **Firefox usually will not decode it** (the answer's `profile-level-id` comes from the live SPS, which defaults to High profile); Chrome/Chromium is the tested target
 - **At most 4 concurrent sessions** -- a 5th offer gets `503`, and stalled sessions are reclaimed after 30 seconds
 
-The endpoint is compiled in behind a build flag and **runtime-gated by `webrtc.enabled`** in `/etc/timps.conf`: `1` = on, `2` = on and also accept plaintext WHEP POSTs on a TLS port (the default on WebRTC builds since v1.9.14), `0` = off. With a TLS-protected port (`http.https=1`), plaintext WHEP POSTs are otherwise refused with `426 Upgrade Required` -- signalling belongs on HTTPS. Note that since 2026-09-15 the ciao TIMPS package selects the WebRTC build flag by default (commit `bf0c9111e`; master's package was brought in line on 2026-09-26), so recent images of both branches ship with the endpoint compiled in -- no custom build needed. Older images still lack it.
-
-### WebRTC audio on AAC cameras (`audio.codec2`)
-
-TIMPS v1.9.13/v1.9.14 add an optional **second audio encode** whose only job is to feed WebRTC's G.711-only path: the camera encodes AAC (for RTSP/fMP4) and PCMU side by side. `audio.codec2` in `/etc/timps.conf` accepts `pcmu` or `off` and defaults to `pcmu` on WebRTC builds. The same releases polished the remaining WebRTC audio defaults: `audio.gain` returned to 25, and the inbound SRTCP replay protection is keyed per sender SSRC.
+The endpoint is compiled in behind a build flag and **runtime-gated by `webrtc.enabled`** in `/etc/timps.conf`: `0` = off, `1` = on, `2` = on and also accepting plaintext WHEP POSTs on a TLS port (the default on WebRTC builds). With a TLS-protected port (`http.https=1`), plaintext WHEP POSTs are refused with `426 Upgrade Required` -- signalling belongs on HTTPS. The endpoint answers `503` when disabled by config and `404` when not built in.
 
 > **Firefox note:** If you get a 400 Bad Request error, set `media.gmp-gmpopenh264.enabled` to `true` in Firefox's `about:config`. The camera only supports H.264 video.
 
-### Server-side stats (`GET /control?stats=1`, v1.9.16+)
+### WebRTC Audio on AAC Cameras (`audio.codec2`)
 
-The control API gained a server-side stats endpoint, separate from the per-stream stats: `curl http://<camera-ip>:8880/control?stats=1`. It reports the streamer's own counters (session counts, encode drops) in the same JSON shape as the rest of `/control`. Note the scoped-sub-endpoint convention that also landed in v1.9.16: `?stats=1` and friends are matched as scoped queries rather than free-form config reads.
+TIMPS can run an optional **second audio encode** whose only job is to feed WebRTC's G.711-only path: the camera encodes AAC (for RTSP/fMP4) and PCMU side by side. `audio.codec2` in `/etc/timps.conf` accepts `pcmu` or `off` and defaults to `pcmu` on WebRTC builds. `audio.gain` defaults to 25, and inbound SRTCP replay protection is keyed per sender SSRC.
 
 ## ONVIF
 
@@ -75,9 +73,13 @@ Thingino provides ONVIF Profile S compliance, enabling compatibility with NVRs, 
 
 ONVIF motion events work with UniFi Protect and other NVRs that support third-party ONVIF cameras.
 
-Recent builds fix a crash in ONVIF `GetProfiles` when audio output is disabled -- some NVRs would fail to add the camera if it reported audio capabilities it could not deliver.
+ONVIF `GetProfiles` only advertises capabilities the camera actually delivers, so NVRs can add a camera that has audio output disabled.
 
-**Fixed in ciao builds from 2026-10-07 (`3de7d47f0`): changing the RTSP/ONVIF password in the Web UI now reaches ONVIF clients.** On builds from 2026-10-04, saving a new password in **Settings -> RTSP/ONVIF** updated RTSP immediately, but the ONVIF service kept authenticating against the old file on disk -- NVRs and Home Assistant configured with the new password got "user was not authorized" until you either set the same password over SSH (`jct /etc/prudynt.json set rtsp.password '...'`) or flashed a newer build. ONVIF credentials always follow the RTSP username/password: whatever works for `rtsp://` works for ONVIF.
+ONVIF credentials always follow the RTSP username/password: whatever works for `rtsp://` works for ONVIF. Saving a new password in **Settings -> RTSP/ONVIF** updates the credentials for both RTSP and ONVIF. You can also set the password over SSH:
+
+```sh
+jct /etc/prudynt.json set rtsp.password '...'
+```
 
 ## OSD (On-Screen Display)
 
@@ -91,7 +93,7 @@ Thingino supports customizable OSD overlays with the following element types:
 - **Static Text** -- User-defined text label
 - **Logo** -- Custom image overlay
 
-### How OSD Works on Stable (Prudynt)
+### How OSD Works on Prudynt (SEI vs Burn-In)
 
 On stable release builds, OSD data is **embedded as SEI metadata** within the H.264 stream by default -- it is **not burned into the video pixels**. This means:
 
@@ -100,53 +102,50 @@ On stable release builds, OSD data is **embedded as SEI metadata** within the H.
 - The OSD is not visible in recorded video clips
 - This design avoids performance issues on less powerful camera hardware
 
-Recent ciao builds add an optional **burn-in** mode (`BR2_PACKAGE_PRUDYNT_T_OSD_BURNIN`) that renders OSD directly into video pixels at build time. This makes OSD visible in all RTSP players and recordings.
+A build-time **burn-in** option (`BR2_PACKAGE_PRUDYNT_T_OSD_BURNIN`) renders OSD directly into video pixels instead, making it visible in all RTSP players and recordings.
 
-### Sub-Stream OSD Burn-In Control
+### Per-Stream OSD Control
 
-With Prudynt 0881124 (now in ciao), you can keep OSD burned into the main stream while disabling the burned-in timestamp on the sub-stream:
+On Prudynt builds, you can keep OSD burned into the main stream while disabling the burned-in timestamp on the sub-stream:
 
 ```sh
 jct /etc/prudynt.json set osd.burnin.substream_disabled true
 service restart prudynt
 ```
 
-This is a config-only flag -- the Web UI SVG overlay (SEI) works on all streams when `osd.sei.enabled` is set to `true` (it is off by default and must be explicitly enabled).
+The Web UI SVG overlay (SEI) works on all streams when `osd.sei.enabled` is set to `true` (it is off by default and must be explicitly enabled).
 
 On Raptor (master), per-stream OSD control is a native config key: set `osd_enabled = false` under any `[streamN]` section in `raptor.conf` to drop the OSD from that stream while keeping it on others.
 
-### Prudynt Reliability Improvements
+### Streaming Behavior (Prudynt)
 
-Recent Prudynt updates (b8d94db) include:
+- **UDP burst pacing** -- initial frame bursts are paced to prevent jitter buffer overflow in RTSP clients
+- **RTCP SR accuracy** -- sender reports use a fresh clock sample for accurate NTP-to-RTP timestamp pairing
+- **JPEG encoder FPS** -- the JPEG encoder runs at its configured FPS
+- **Clean shutdown** -- video/JPEG worker threads do not hang during shutdown, and audio-only RTSP sessions are handled without crashes or hangs
+- **Night FPS** (Raptor, master) -- `night_fps` in the stream config lowers the frame rate in night mode to save bandwidth and reduce noise (e.g. `jct /etc/raptor.conf set stream0.night_fps 10`)
 
-- **UDP burst handling** -- Initial frame bursts are now paced to prevent jitter buffer overflow in RTSP clients
-- **RTCP SR reliability** -- Sender reports use a fresh clock sample for accurate NTP-to-RTP timestamp pairing
-- **JPEG encoder FPS** -- Uses configured FPS instead of a hardcoded 24 fps
-- **Night FPS** (Raptor, master) -- `night_fps` knob in the stream config lowers the frame rate in night mode to save bandwidth and reduce noise (e.g. `jct /etc/raptor.conf set stream0.night_fps 10`)
-- **Shutdown stability** -- Prevents hang in video/JPEG worker threads during shutdown
-- **RTSP audio-only fix** -- Audio-only RTSP sessions no longer crash or hang (Prudynt 6afc440)
+### Colour Fidelity (SPS VUI)
 
-### Stream watchdog (Prudynt builds, September 2026)
-
-Prudynt now ships with a supervisor: if the streamer dies (crash, OOM kill), the `S32prudyntwd` watchdog detects it within about a minute and restarts it automatically — previously a dead streamer stayed dead until a manual reboot. How it behaves:
-
-- Liveness is probed via the local HTTP API (with an RTSP probe as fallback), so it works regardless of RTSP authentication settings.
-- After 3 failed restarts in a row it backs off for 10 minutes between rounds, letting transient faults clear instead of restart-looping.
-- If the streamer still has not recovered after 9 failed restarts (~34 minutes), the camera **reboots itself** (with a hardware-watchdog fallback in case the normal reboot path is wedged).
-- **Fixed 2026-10-03 (ciao `2b9361fb0`): the watchdog could not clear a wedged streamer.** When Prudynt hung inside a driver call, the stop routine could not kill the process (logging "no /usr/bin/prudynt found; none killed"), so the watchdog's restart was a no-op and the camera stayed streamless until a manual reboot. Stop now captures the PID before the pidfile is removed and force-kills it directly. If one of your cameras "only a reboot fixes", a build from 2026-10-03 or newer addresses it.
-- To disable the self-reboot and only log/back off, edit `REBOOT_AFTER=0` in `/etc/init.d/S32prudyntwd`.
-
-### PTZ Live View (Prudynt builds, ciao 2026-09-24)
-
-Prudynt builds gain a combined live view: the H.264 stream plays in the browser with pan/tilt controls, ten preset slots and the OSD overlay on a single page. It lives at `/preview.html` and is what the **Preview** nav item opens from 2026-09-24; the plain fMP4 player remains at `/preview-fmp4.html`. Presets are managed in-page: long-press a slot to name and store the current position, right-click to delete it. On cameras without pan/tilt hardware the controls render disabled with a note, so the page serves as a universal default.
-
-### Colour Fidelity (full-range luma + colour matrix in SPS VUI)
-
-If video from a Prudynt camera looked washed out or had slightly wrong colours in some players, firmware from 2026-08-25 (prudynt-t `b609f30`) fixes it. The encoder now declares full-range luma and an explicit BT.709 colour matrix in the H.264/H.265 SPS VUI, at every resolution -- the pipeline is BT.709 end to end, so a low-resolution substream publishes the same matrix as the main stream and the JPEG snapshot. Previously the stream could be signalled as limited range or even an invalid `gbr` matrix, which some decoders honoured literally. (An earlier revision of the fix wrongly labelled sub-720p streams BT.601; that was a mistake, corrected.) The signal now matches the actual pixels; no configuration needed.
+Prudynt declares full-range luma and an explicit BT.709 colour matrix in the H.264/H.265 SPS VUI at every resolution. The pipeline is BT.709 end to end, so a low-resolution substream publishes the same matrix as the main stream and the JPEG snapshot, and the signalled range always matches the actual pixels. No configuration needed.
 
 ### Automatic Bitrate Scaling
 
-Prudynt (since `3188189`) derives each stream's default bitrate from its encoded resolution -- roughly 1 Mbps per megapixel -- instead of a fixed value. Users who set an explicit bitrate keep their setting; this only affects streams left at the default.
+Prudynt derives each stream's default bitrate from its encoded resolution -- roughly 1 Mbps per megapixel. An explicitly set bitrate is kept; scaling only affects streams left at the default.
+
+### Stream Watchdog (Prudynt)
+
+Prudynt ships with a supervisor: if the streamer dies (crash, OOM kill), the `S32prudyntwd` watchdog detects it within about a minute and restarts it automatically.
+
+- Liveness is probed via the local HTTP API (with an RTSP probe as fallback), so it works regardless of RTSP authentication settings.
+- A wedged streamer is force-killed (the PID is captured before the pidfile is removed), so the restart takes effect even when the process is stuck inside a driver call.
+- After 3 failed restarts in a row it backs off for 10 minutes between rounds, letting transient faults clear instead of restart-looping.
+- If the streamer still has not recovered after 9 failed restarts (~34 minutes), the camera **reboots itself** (with a hardware-watchdog fallback in case the normal reboot path is wedged).
+- To disable the self-reboot and only log/back off, set `REBOOT_AFTER=0` in `/etc/init.d/S32prudyntwd`.
+
+### PTZ Live View (Prudynt)
+
+Prudynt builds offer a combined live view: the H.264 stream plays in the browser with pan/tilt controls, ten preset slots and the OSD overlay on a single page at `/preview.html` (what the **Preview** nav item opens). The plain fMP4 player remains at `/preview-fmp4.html`. Presets are managed in-page: long-press a slot to name and store the current position, right-click to delete it. On cameras without pan/tilt hardware the controls render disabled with a note, so the page serves as a universal default.
 
 ### Restoring OSD in RTSP and Recordings (SEI Mode)
 
@@ -169,7 +168,15 @@ convert logo-100x30-alpha.png -depth 8 bgra:logo.bgra
 
 ## TIMPS (Alternative Streamer)
 
-TIMPS (Tiny IMP Streamer) is a lightweight streamer available as an alternative to Prudynt/Raptor. As of v1.9.19 (ciao builds from 2026-09-23), a dropped P-frame reliably triggers an instant keyframe recovery request across all transports -- RTSP, SRT, WebRTC and fMP4 -- instead of leaving a smeared picture until the next natural keyframe (per-protocol 1-second gates used to swallow some recovery requests); and ciao builds apply per-camera `timps.conf` defaults from the camera profile automatically (firmware `ccc103513`), so a profile-tuned camera needs no manual streamer config. On recent builds TIMPS installs its own Web UI plugin (preview page, motors controls, SSE position fallback -- 2026-09-04, firmware commits `39523b778`/`7b4e81dc3`). When using TIMPS, these features are available:
+TIMPS (Tiny IMP Streamer) is a lightweight streamer available as an alternative to Prudynt/Raptor. The boot script runs `timpsd --check-libs`, which refuses to start against a mismatched `libimp` instead of crashing later. Notable streaming behavior:
+
+- A dropped P-frame triggers an instant keyframe recovery request across all transports -- RTSP, SRT, WebRTC and fMP4 -- instead of leaving a smeared picture until the next natural keyframe.
+- RTSP-over-UDP clients that reconnect from a new source port (NAT rebinding) keep receiving video without a client restart.
+- A/V lip-sync survives delivery gaps on the MP4/preview path and the SD recorder: the video timeline re-anchors to true media time after a client stall.
+- Camera profiles apply their per-camera `timps.conf` defaults automatically, so a profile-tuned camera needs no manual streamer config.
+- TIMPS installs its own Web UI plugin (preview page, motor controls).
+
+When using TIMPS, these features are available:
 
 ### Live Control API
 
@@ -177,10 +184,14 @@ TIMPS exposes a live control API at `http://<camera-ip>:8880/control` (GET to re
 
 - Adjust bitrate, FPS, GOP, and resolution on the fly
 - Toggle audio, backchannel, privacy mode
-- Control motion sensitivity in real time (IMP_IVS)
+- Control motion sensitivity in real time (IMP_IVS); changes take effect on the running detector and survive a restart
 - Take snapshots
-- Encoder rate-control knobs (qp, min/max QP, quality_lvl, i_bias_lvl, fluc_lvl) -- applied live where the SoC allows, with `deferred_keys` in the reply naming anything that waits for a restart
-- `encoder.<n>.rc` readback showing what the encoder actually holds right now
+- Encoder rate-control knobs (qp, min/max QP, quality_lvl, i_bias_lvl, fluc_lvl) -- applied live where the SoC allows (`caps.video_live` advertises which keys apply live), with `deferred_keys` in the reply naming anything that waits for a restart; `caps.restart` lists the keys that need a `S95timps` restart
+- `encoder.<n>.rc` readback showing what the encoder actually holds right now, so writes can be verified against reality
+- The auto `sensor.fps` cap follows the fastest enabled `videoN.fps`
+- Config writes to flash are batched to at most once per 3 s (`persist_pending` in the status), so slider drags and automations do not hammer the flash
+
+Config changes through the API are applied atomically, so adjusting stream parameters while streaming cannot corrupt internal state. POST replies carry a per-key `errors` object with numeric codes; value rejection is reported as `409`, and an empty string clears a text field. `GET /control` advertises what the build can do (`caps.*`) instead of refusing without explanation.
 
 Example -- change main stream bitrate:
 
@@ -188,86 +199,19 @@ Example -- change main stream bitrate:
 curl -X POST http://192.168.1.10:8880/control -d '{"stream0.bitrate": 2000000}'
 ```
 
-The reply names any request fields it ignored, so a typo in a mixed request no longer looks like a clean success.
+The reply names any request fields it ignored, so a typo in a mixed request is visible instead of looking like a clean success.
 
 ### Day/Night Detection
 
-TIMPS has built-in adaptive day/night detection with configurable boot-settle period and periodic night reconfirmation. This prevents false day/night flapping from temporary light changes.
+TIMPS has a built-in adaptive day/night engine with a configurable boot-settle period and periodic night reconfirmation, so temporary light changes do not cause flapping. The engine reads the real AE exposure from IMP as its primary signal (with an estimate-based fallback when only an estimate is available), and verifies every switch against the ISP's reported running mode 18 seconds after the transition: agreement closes quietly, disagreement warns and forces exactly one repair transition through the opposite mode. The status appears as `daynight.isp_desync` on `/control` and `/events`; persistent standing disagreement is reported but never enforced, so manual ISP overrides are not fought.
 
-**v1.9.6 (2026-09-01) adds browser push-to-talk and fixes day/night on cameras that rest fully dark.** Highlights:
+Clipped meter readings are barred from long-term memory (the night reference, the trend detector, filter-cost learning and probe diagnostics), so cameras whose dark rest state is a fully-clipped meter -- zero exposure headroom, e.g. the T20 in Wyze Pan -- cannot anchor a worthless reference. A clipped reading that has held stable still counts as valid data. An illuminator relight runs when an abandoned silent probe would otherwise leave the IR light in the wrong state, and board hooks (`daynight.switch_cmd`/`irprobe_cmd`) are killed after a timeout, so a hanging hook cannot freeze day/night switching or daemon shutdown.
 
-- **Talk through the camera from the browser.** The preview gains a talk button: the page captures your microphone and streams it to the camera's speaker over a WebSocket (`/talk` endpoint), alongside the existing RTSP/ONVIF talk paths. Multiple simultaneous talkers are arbitrated the same way as RTSP talkers, and a stalled WiFi connection drops its audio backlog instead of playing it seconds late. Runtime `audio.talk_ws` in `/etc/timps.conf` (default off, restart to apply): `0` = disabled, `1` = on but TLS-only, `2` = on and accepts plain `ws://` too (for a camera without HTTPS where you grant the origin a secure context by hand in the browser -- mic audio then crosses the network unencrypted). Since firmware v1.9.7 the feature is compiled in by default (`BR2_PACKAGE_TIMPS_BC_WS`, no longer requires TLS at build time) and `audio.backchannel`/`audio.talk_ws` auto-enable when built in.
-- **Day/night fix for boards whose dark rest state is a fully-clipped meter** (zero exposure headroom, e.g. the T20 in Wyze Pan): the night reference and the trend detector could both get permanently stuck on such cameras, leaving only the 12-hour reconfirmation heartbeat. A clipped reading that has held stable now counts as valid data for both paths.
+In `mode=schedule`, the sunrise/sunset calendar is chosen by local solar time, so the chosen date always contains the sunrise/sunset it refers to.
 
-**v1.9.8 (2026-09-03) hardens recording and transport edges.** Recording now prunes with a sanity-capped `record.min_free_mb` -- absurd values are refused and surfaced via `/control` status instead of wedging the SD loop, and the recorder backs off gracefully while the free-space target stays unreachable. Pre-roll re-anchors to the oldest available keyframe in the ring, so clips start on complete frames. RTSP-over-UDP clients that reconnect from a new source port (NAT rebinding) keep receiving video without a client restart. Day/night gets an illuminator relight when an abandoned silent probe would otherwise leave the IR light in the wrong state.
+The optional `ae_it_max_us` key in `/etc/timps.conf` caps the AE integration time, so a dark scene cannot stretch exposure far enough to smear motion across frames -- e.g. `ae_it_max_us 20000` for a 20 ms ceiling; leaving it unset keeps the uncapped behavior.
 
-**v1.9.9 (2026-09-07) tames night exposure and hardens the audio path.** Two day/night wins for night footage: a new opt-in `ae_it_max_us` key caps the AE integration time, so a dark scene can no longer stretch exposure far enough to smear motion across frames -- set it in `/etc/timps.conf` (e.g. `ae_it_max_us 20000` for a 20 ms ceiling); leaving it unset keeps the old uncapped behaviour. Day/night now reads the real AE exposure from IMP as its primary signal (with an estimate-based fallback when the scrape only has an estimate), so the dark/light decision tracks actual sensor exposure. On the audio side, the talk-back channel elects its owner only on real audio packets, so non-audio traffic can no longer claim the speaker. The built-in preview/control HTTP server accepts 16 concurrent clients (previously 8).
-
-**v1.9.10 (2026-09-09) makes motion sensitivity changes stick.** Setting `motion.sensitivity` through `/control` or the Web UI now updates the running detector *and* survives a restart -- previously the new value could be reverted by a stale read-back and the change never reached `/etc/timps.conf`. Also along for the ride: the motion helper now spawns via `posix_spawn` (kinder to memory-tight cameras) and QA coverage for the encoder read-back path.
-
-**v1.9.11 (2026-09-11) adds a proper HTTP/HTTPS mode switch and same-port HTTPS.** The new `http.https` setting in `/etc/timps.conf` is a tri-state: `0` = plain HTTP (was the only behaviour of the setting before), `1` = the web UI port serves HTTP and HTTPS together (the server peeks at each connection's first byte and answers HTTP or TLS accordingly), `2` = HTTPS only, plain-HTTP requests are rejected. Self-signed TLS certificates are generated for you when strict mode (`2`) is enabled. Practical effect: a camera without a trusted certificate no longer has to choose between a broken HTTPS preview and an unencrypted port -- mode `1` lets normal browsers keep using `http://` while apps that require a secure context (camera-add flows, PWA installs, some mobile clients) get a real `https://` endpoint on the same port. Firmware-side (ciao PR `#1626`/`#1627`), the setting is only auto-written when the uhttpd redirect prerequisite is present, and the web UI's preview links follow the page scheme. This ships with the v1.9.11 binary -- older v1.9.10 builds misread the `2` as plain HTTP, so the firmware pin bump matters.
-
-> **Note on pins:** ciao bumped to TIMPS v1.9.11 on 2026-09-12 (PRs `#1626`/`#1627`); master caught up the same day with the v1.9.8 -> v1.9.11 bump (PR `#1635`). Everything above ships on new images of both branches.
-
-**v1.9.12 (2026-09-12) rounds out v1.9.11's HTTPS story:** with `http.https=1`, HTTPS responses now gain `Cross-Origin-Opener-Policy`/`Cross-Origin-Embedder-Policy` headers so browser camera-add and PWA flows treat the camera as a secure context, and a plaintext WHEP POST to a TLS port is refused with `426 Upgrade Required` instead of silently misbehaving.
-
-**v1.9.13 (2026-09-13) adds the WHEP WebRTC endpoint** described in the WebRTC section above -- first release to ship it.
-
-**v1.9.14 (2026-09-14) makes WebRTC the default where it exists and polishes its audio:** `webrtc.enabled` now defaults to `2` (on, plaintext-accepting) on WebRTC builds, the WebRTC audio path defaults to G.711 (`audio.codec2=pcmu`), and `audio.gain` is back at 25 after the brief 15 experiment. The endpoint distinguishes "disabled by config" (`503`) from "not built in" (`404`).
-
-**v1.9.23 (2026-09-25) polishes the live-control contract and speeds up WebRTC crypto.** `POST /webrtc/whep?chn=N` picks the video stream per session (main/sub) without changing the global `webrtc.channel` default -- an out-of-range, not-running or non-H.264 stream is refused with `400` (`caps.webrtc.chn_select: 1` advertises the feature). `/control` now grades the audio and OSD sections correctly: keys that genuinely need `S95timps restart` (e.g. `audio.codec`, `osd.enabled`) are listed by name in `caps.restart` and come back in the POST reply's `deferred_keys`, and the Web UI stops asking for pointless restarts; `videoN.rtsp_path` is no longer reported as deferred. WebRTC SRTP encryption is 2.4x faster (390 -> 165 us per packet on a T31). The auto `sensor.fps` cap now follows the fastest enabled `videoN.fps` instead of hard-stopping at 30.
-
-**v1.9.24/v1.9.25 (2026-09-26) answer "who is watching this camera?".** `GET /control?clients=1` lists every connected consumer -- RTSP sessions, fMP4/MJPEG/events connections, WebRTC sessions and SRT receivers -- each with `ip`, `port`, `proto`, `chn`, `since_s` (connected seconds), a live `kbps` reading and the client's `agent` (User-Agent, e.g. `FFmpeg Frigate/0.17.2` or `LibVLC/3.0.20`). One-shot requests (snapshots) are not listed; the table costs ~8 KB RAM for 40 entries. v1.9.25 adds per-client `bytes` (total sent since connect) and connect/disconnect log lines naming the User-Agent and bytes moved, so a client that wedges and vanishes silently leaves a trail. The TIMPS Web UI shows the same table with a Total column.
-
-**v1.9.26 (2026-09-26) adds per-client latency.** `GET /control?clients=1` gains `lat_ms`: how old a frame is when timps hands it to each client (sensor capture to send, averaged) -- typically 5-25 ms on T31 -- across RTSP, WebRTC, fMP4, MJPEG and SRT. The Web UI shows a Latency column, and the preview status line adds the browser's own share (`delay ≈ N ms`: network + jitter buffer + decode for WebRTC, decode + render for the realtime modes, playback buffer for the MSE modes) with the breakdown as a tooltip.
-
-**v1.9.27 (2026-09-27) fixes scheduled day/night switching far from Greenwich.** In `mode=schedule` the sunrise/sunset calendar picked "today" by the UTC day, so west of roughly the US Pacific coast the calendar day rolled over hours before sunset: the camera adopted the *next* day's times and flipped to night at UTC midnight -- 17:00 on the US west coast -- instead of at real sunset. The calendar day is now chosen by local solar time, so the chosen date always contains the sunrise/sunset it refers to. Reported from Vancouver and covered by a new unit test (`scripts/test_daynight_sun.c`).
-
-**v1.10.1 (ciao builds from 2026-10-12, firmware PRs `#1810`/`#1812`) brings privacy masking, digital crop/zoom, a redesigned day/night engine and several security fixes.** Availability of the new image features is graded per build and SoC: `GET /control` reports `caps.roi` / `caps.fcrop` tiers (`effective` / `experimental` / `unsupported`) -- encoder ROI needs an OpenIMP libimp, and most vendor blobs report `unsupported`. On capable builds:
-
-- **Encoder ROI** (`roi<S>.<N>.*`, up to 4 regions per stream; 10 on T31 OpenIMP) keeps a monitored area -- a door, a gate -- at high quality while the rest of the frame compresses harder, cutting bitrate without losing detail where it matters. Applied live, per-region QP or delta-QP.
-- **ISP FrontCrop / digital zoom** (`image.fcrop_*`) crops the sensor picture before encoding; the crop window follows `image.hflip`/`image.vflip` on OpenIMP. The Web UI gains **Crop/zoom** and **ROI** tabs on the overlays page with a full-sensor crop editor (drag the window, zoom slider to the real maximum) -- see [Web UI](03-web-ui.md).
-- **Redesigned day/night engine** -- see [Night Vision](07-night-vision.md). Retired keys (`probe_min_gap_s`, `probe_confirm_s`, `boot_probe`, `diagnose_thresholds`) are ignored with a warning; the new `daynight.jump_pct` sets the brightness drop that triggers an early look.
-- **Security:** every non-loopback HTTP request must name the camera in its `Host` header (IP, `localhost` or the hostname) or get `421` -- this closes DNS-rebinding attacks against `/control`; `http.allowed_hosts` exists for reverse proxies and DNS aliases. HTTP Digest nonces are now bound to the peer they were issued to, so a sniffed response cannot be replayed from another host.
-- **API and reliability:** `/control` POST replies carry a per-key `errors` object with numeric codes (refused/unknown/file-only/absent, plus specific rotation refusals) and `GET /control` reports `video.<N>.rotation_state` explaining why a stream runs unrotated; the video page gains a rotation selector. Config writes to flash are batched to at most once per 3 s (`persist_pending` in the status) so slider drags and automations no longer hammer the flash. On-demand clips (`record.clip`) are RAM-budgeted -- too large a clip is refused with a WARN instead of OOM-killing a 64 MB board. `timpsd --check-libs` (run automatically by the boot script) refuses to start against a mismatched `libimp` instead of crashing later, and the binary is ~6% smaller (link-time optimisation).
-
-**v1.11.0/v1.11.1 (2026-10-25; ciao builds from ~2026-10-26 -- master stays on the v1.9.29 line for now) focus on the open media stack (T40/T41 with OpenIMP) and the day/night engine.** Camera-owner highlights:
-
-- **T40/T41 image controls with OpenIMP:** `image.drc_strength`, `image.dpc_strength` and `image.defog_strength` (0..255, 128 = the vendor default picture) are live-tunable; rotation on T40/T41 now follows the vendor encoder-side semantics (width/height multiples of 8); and encoder ROI + ISP FrontCrop/digital zoom land on XBurst2 -- availability is runtime-detected and reported in `GET /control` (`caps.roi` / `caps.fcrop` / `caps.rotation`).
-- **Test-pattern buttons on the Web UI preview page:** modes 0-4 (v1.11.0) plus the mid-ISP pattern mode 5 (v1.11.1) where the build supports it. Day/night is held in day mode while a pattern runs, and mode 3 scores your motion detection (hits, misses, false alarms, detection delay).
-- **System stats:** `GET /control?stats=1` gains a `system` object (load average, total/available memory, machine and streamer CPU %), shown in the Web UI stats card.
-- **4K snapshots fixed:** JPEG snapshots larger than 1 MiB were silently dropped on T40/T41; the buffer cap is now 4 MiB.
-- Day/night refinements (colour re-check at night, capped re-check lockout, forced keyframe after IR switches) are covered in [Night Vision](07-night-vision.md).
-- **T20 macroblock rate control off by default (`videoN.mbrc`, TIMPS builds from early November 2026):** the vendor encoder libraries enable macroblock-level QP control unless told otherwise -- on a T20 at 1080p15 that lifted streamer CPU use from ~7% to ~35% and made the first IDR at low bitrate coarser. TIMPS now disables it; set `video.0.mbrc` to `1` via `POST /control` (or the Web UI once exposed) to re-enable, stream restart required. Reported as `video.<N>.mbrc` in `GET /control`.
-
-**v1.9.28 (2026-09-28) is a security and reliability hardening pass over the whole daemon.** The changes a camera owner notices: the `osd.vars_file` config key is gone -- the `{placeholder}` vars file is now fixed at `/tmp/timps_osd.vars` -- because the key was remotely settable through `/control`, letting a caller render secrets from `/etc/timps.conf` into the video overlay; cross-origin POSTs that ride cached browser Basic/Digest credentials are refused with `403 bad origin` (browsers re-send those credentials on any cross-site form post, so a random web page could otherwise drive `/control` on a camera you are logged into -- token, loopback and script clients that send no `Origin` header are unaffected); RTSP closes a connection after 5 rejected logins (ending unlimited password guessing on a single connection) and drops connections that never reach `PLAY` within 60 s, so idle `OPTIONS` loops can no longer lock everyone out; and config rewrites keep the file's permissions, so a hand-applied `chmod 600` on `/etc/timps.conf` survives POSTs instead of being reset to `0644`. Two storage-safety changes: `record.dir`/`timelapse.dir` pointing at the root filesystem are refused (an SD mount point with no card in it used to silently record into flash; the refusal also shows up in `record.last_error`), and a too-large `timelapse.keep_days` no longer deletes the whole archive -- the retention cutoff used to overflow 32-bit arithmetic into the future, so `99999` meant as "keep forever" expired every single shot; the key is now clamped to 0..3650. On T23 builds with software rotation, OSD `font_size` is now absolute pixels like every other path, so text on a rotated sub-1080 stream may need a smaller value. Performance: RTSPS video goes out in staged 16 KB TLS writes instead of one TLS record per packet (one RTSPS client now costs 13.6% CPU against plain RTSP's 7.4%, previously roughly double), cold streams deliver their first frame in 64-137 ms, `GET /control` no longer stalls when the SD card wedges (`record.free_mb`/`timelapse.free_mb` refresh on a 10 s background clock), and a `{"record":{"clip":...}}` capture no longer blocks every other `/control` POST for its whole duration. SRT listeners without a passphrase now log a warning when RTSP/HTTP credentials are set, since such a listener serves video to anyone.
-
-> **Note on pins:** the 2026-09-26 firmware pin batch closes a four-release lag in one go: ciao jumped v1.9.22 -> v1.9.26 (PR `#1706`), and master's package was brought in line with ciao, v1.9.8 -> v1.9.26 (PR `#1707`). Lu-Fi kept the cadence the next day: v1.9.27 was pinned on both branches within the hour of release (PRs `#1709` ciao / `#1710` master). New images of both branches carry everything above, including the streaming-client table, the latency display and the v1.9.27 day/night calendar fix. timps upstream released v1.9.28 (the security hardening pass, see its entry above) on 2026-09-28; the firmware pin batch for it had not landed at the time of writing, so new builds still carried v1.9.27 until it does.
-
-**Seekable recordings over HTTP (master and ciao, 2026-11-05 -- PR #1902):** the web server now passes a player's `Range` header through to CGI scripts as `HTTP_RANGE`, so SD-card recordings streamed via the Web UI play **seekable** in VLC, Kodi and browsers instead of forcing a full-file download before playback. On a T31X (Eufy C120), Kodi's loading dialog on a 40 MB clip went from ~33 seconds to a fast seek.
-
-**v1.9.5 (2026-08-29) fixes fMP4 lip-sync after WiFi stalls, shares the web UI's TLS certificate, and cuts OSD CPU cost.** Highlights a camera owner would notice:
-
-- **A/V sync after a network stall (browser/MP4 playback).** If a weak-WiFi client stalled for more than 10 seconds, the video track silently fell behind audio by the length of the stall and stayed offset for the rest of the session (a real 24-second skew was captured in QA). The video timeline now re-anchors to true media time, so lip-sync survives delivery gaps. RTSP playback was never affected; this hits the MP4/preview path and the SD recorder.
-- **HTTPS preview on iOS Safari.** The preview at port 8880 now presents the *same* TLS certificate as the web UI on port 443 (via a symlink resolved at boot). Previously the second self-signed cert could not earn browser trust from JavaScript -- Safari shows no click-through for a failed fetch, so enabling HTTPS produced a silent "Load failed" error. One trust decision now covers both ports.
-- **TLS session resumption** (RFC 5077 tickets) -- repeat HTTPS/RTSPS connections skip the expensive full handshake.
-- **OSD rendering is ~39% cheaper on the CPU** (measured on T31), from a rewritten TrueType glyph rasterizer. Visually identical output.
-- **Numerous internal performance wins** (batched TCP RTSP sends, hourly timelapse retention, one clock read per frame) that reduce CPU load and SD-card churn on long-running cameras. The recording prune is now a single SD walk; if you tune `record.min_free_mb` upward, note it lives (default 200 MB, applies live on the next record cycle, documented range 0-1048576).
-- Day/night board hooks (`daynight.switch_cmd`/`irprobe_cmd`) that hang can no longer freeze day/night switching or daemon shutdown -- they are killed after a timeout.
-
-**v1.9.3 (2026-08-23) makes boot measure before it decides, and made the daemon survive bad restarts.** Three fleet-incident fixes:
-
-- **Boot no longer trusts the saved day/night state.** The old path restored the persisted mode immediately and never physically asserted it on the board -- five fleet cameras that rebooted after dark spent the night with the IR LEDs off because the runtime state file resets to `day` on every reboot and nothing re-drove it. Boot now waits for the AE to settle, runs one ordinary probe, and asserts the measured answer on the board once. `daynight.boot_probe=0` opts out of the *measurement* only -- the persisted value is still asserted physically.
-- **A service restart can no longer strand the daemon dead.** After `S95timps restart`, the old instance's rmem is not always released when the new one starts, and a single encoder-start failure used to exit the process permanently (5 of 12 cameras died this way on 2026-08-22). Start failures now retry with backoff, are capped at 10 attempts, and escalate to exactly one real reboot before giving up -- a persistent marker file guarantees it cannot become a boot loop.
-- **The rate-control keys became real config keys and apply live where the SoC allows.** `videoN.quality_lvl`, `change_pos`, `i_bias_lvl`, `fluc_lvl` were hardcoded literals; `qualityLvl` in particular imposed an invisible 60% bitrate floor (measured: 2091 kbit/s where the scene needed 278). Live application per platform is advertised honestly via `caps.video_live`, and POST replies carry `deferred_keys` listing anything that waits for a restart. `GET /control` gains `encoder.<n>.rc` -- a live readback of what the encoder actually holds, so writes can be verified against reality. The `daynight` config surface shrank by ten keys (`learn`/`state_path` removed, eight tuning constants hardcoded -- old configs still parse with a grace-period warning).
-
-**v1.9.2 (2026-08-21) closed the day/night trust loop against the hardware.** A camera could switch itself to day, log success on every layer, and have the ISP keep rendering night for half an hour -- the automaton trusted its own commanded state and only WARNed on divergence, never the actual readback. The ISP's reported running mode is now a first-class sample, and every mode switch arms a verification 18 s later: agreement closes quietly, disagreement warns and forces exactly one transition through the opposite mode (measured to be the only repair: a stuck exposure fell 131072 -> 5720). Persistent standing disagreement is reported but never enforced, so manual ISP overrides are not fought; `daynight.isp_desync` appears on `/control` and `/events` for dashboards.
-
-**v1.9.1 (2026-08-21) hardened the v1.9.0 day/night automaton.** The fixes target a class of defects where the automaton *trusted measurements it should not have*: a railed AE meter (no exposure reserve left) can justify a "night" verdict but must never be remembered as a reference level -- a camera booting with its meter pegged at the dark end previously anchored its night reference on that worthless reading, making a twentyfold-too-dark night look normal. Clipped readings are now barred from long-term memory across the reference anchor, the revert ratchet, the filter-cost learning, the probe threshold diagnostic, and the trend memory. A railed boot is now repaired by a genuine mode transition through the other mode rather than re-asserting the running mode (re-assertion was a no-op on the already-persisted value). Cameras whose ISP dump lacks gain-ceiling fields (unknown AE reserve) no longer get structurally stuck in night mode: unknown reserve now escalates to the audible probe instead of being read as "proof" of a pegged meter. The day/night probe escalations from v1.9.0 now actually reach the audible path (an internal latch bug could silently loop probes forever without ever consulting the day pipeline), and the filter-cost projection verdict now lowers the reference like every other night verdict, stopping an every-26-seconds probe loop on scenes resting below the bar.
-
-**v1.9.0 (2026-08-19) rebuilt the day/night automaton** around four independent decision paths with an IR-ratio verdict, a trend trigger (gradual light changes now trigger transitions without waiting for a sudden jump), and IR-ratio thresholds re-derived from a full night of data rather than estimates. The dusk-switch cost earlier testing suggested was withdrawn -- it turned out to be the test camera itself being tested.
-
-You can now ask for a day/night probe on demand via the control API:
+You can ask for a day/night probe on demand via the control API:
 
 ```sh
 curl -X POST http://192.168.1.10:8880/control -d '{"daynight":{"probe":1}}'
@@ -275,19 +219,66 @@ curl -X POST http://192.168.1.10:8880/control -d '{"daynight":{"probe":1}}'
 
 This arms a silent IR probe for the next automaton tick -- useful to verify a camera can actually see daylight instead of waiting up to half an hour for the heartbeat. Cameras without `daynight.irprobe_cmd` configured cannot probe silently and report that refusal instead of silently doing nothing.
 
-**v1.9.0 API grading changes:** `/control` now advertises what this build can do (capabilities) instead of overloading HTTP 422 for every refusal. Value rejection moved from 422 to 409, and an empty string clears a text field instead of being refused. API clients should treat these codes accordingly.
+> Builds with the redesigned day/night engine ignore the retired keys `probe_min_gap_s`, `probe_confirm_s`, `boot_probe` and `diagnose_thresholds` with a warning; `daynight.jump_pct` sets the brightness drop that triggers an early look. See [Night Vision](07-night-vision.md).
 
-Earlier v1.8.x releases fix three compounding defects that caused a perpetual day/night flip loop, route the adaptive night-to-day transition through the brightening probe only (preventing oscillation), and warn on persistent running mode divergence. The GOP setting on new-API SoCs (T23+) is also fixed -- it was running at double the configured value. Additional fixes halve the sustained-brightening confirm period (60s to 30s) for faster day recovery, close an ambiguous-probe loophole that could cause a spurious day trigger, and guard the periodic reconfirm against baseline drift.
+### Browser Talk-Back
 
-TIMPS images now also install the shared board day/night hardware scripts (`daynight`, `ircut`, `light`); previously only Prudynt builds got them, so a TIMPS camera could correctly detect night but fail to actually move the IR-cut filter or light the IR LEDs (image turns purple/IR-tinted). If you run a TIMPS build from before this fix (2026-08), update the firmware.
+The TIMPS preview offers talk-through-the-camera: the page captures your microphone and streams it to the camera's speaker over a WebSocket (`/talk` endpoint), alongside the existing RTSP/ONVIF talk paths. Multiple simultaneous talkers are arbitrated the same way as RTSP talkers, and a stalled WiFi connection drops its audio backlog instead of playing it seconds late.
 
-On master builds from 2026-09-04 (firmware commits `39523b778`/`7b4e81dc3`), the TIMPS package also brings its own Web UI preview page and motors controls, replacing the earlier thingino-webui fork approach. The motors page gains an SSE position fallback for builds without the WS transport, and the motors-UI reapply hook is applied via a global finalize hook so it wins its config merge deterministically.
+Runtime `audio.talk_ws` in `/etc/timps.conf` (default off, restart to apply): `0` = disabled, `1` = on but TLS-only, `2` = on and accepts plain `ws://` too (for a camera without HTTPS where you grant the origin a secure context by hand in the browser -- mic audio then crosses the network unencrypted). The feature is compiled in by default (`BR2_PACKAGE_TIMPS_BC_WS`); when built in, `audio.backchannel` and `audio.talk_ws` auto-enable.
 
-**v1.9.0 reliability fixes:** shutdown no longer leaves stream threads running while tearing down their state (teardown with a client attached went from 20.5 s to 26-30 ms), SRT client sockets close before the shutdown drain, an fMP4 init segment can no longer ship with an empty codec configuration box, and software-rotation now enforces the configured FPS (measured on hardware).
+### HTTP/HTTPS Modes
 
-### Data Race Hardening (v1.7.8)
+`http.https` in `/etc/timps.conf` is a tri-state:
 
-TIMPS v1.7.8 adds C11 data race protections on live-mutable config. If you adjust stream parameters via the control API while streaming, changes are now atomic and cannot corrupt internal state.
+- `0` = plain HTTP
+- `1` = the web UI port serves HTTP and HTTPS together (the server peeks at each connection's first byte and answers HTTP or TLS accordingly); HTTPS responses carry `Cross-Origin-Opener-Policy`/`Cross-Origin-Embedder-Policy` headers so browser camera-add and PWA flows treat the camera as a secure context
+- `2` = HTTPS only; plain-HTTP requests are rejected, and self-signed TLS certificates are generated for you
+
+Mode `1` lets normal browsers keep using `http://` while apps that require a secure context (camera-add flows, PWA installs, some mobile clients) get a real `https://` endpoint on the same port. Firmware-side, the setting is only auto-written when the uhttpd redirect prerequisite is present, and the web UI's preview links follow the page scheme. The preview at port 8880 presents the *same* TLS certificate as the web UI on port 443 (a symlink resolved at boot), so one browser trust decision covers both ports. TLS session resumption (RFC 5077 tickets) speeds up repeat HTTPS/RTSPS connections. The built-in preview/control HTTP server accepts 16 concurrent clients.
+
+### Request Handling and Security
+
+- Every non-loopback HTTP request must name the camera in its `Host` header (IP, `localhost` or the hostname) or get `421` -- this closes DNS-rebinding attacks against `/control`; `http.allowed_hosts` exists for reverse proxies and DNS aliases.
+- Cross-origin POSTs that ride cached browser Basic/Digest credentials are refused with `403 bad origin` (browsers re-send those credentials on any cross-site form post, so a random web page could otherwise drive `/control` on a camera you are logged into). Token, loopback and script clients that send no `Origin` header are unaffected.
+- HTTP Digest nonces are bound to the peer they were issued to, so a sniffed response cannot be replayed from another host.
+- RTSP closes a connection after 5 rejected logins and drops connections that never reach `PLAY` within 60 s, so password guessing and idle `OPTIONS` loops cannot lock everyone out.
+- Config rewrites keep the file's permissions, so a hand-applied `chmod 600` on `/etc/timps.conf` survives POSTs.
+- The `{placeholder}` OSD vars file is fixed at `/tmp/timps_osd.vars`; `osd.vars_file` is not a config key.
+- An SRT listener without a passphrase logs a warning when RTSP/HTTP credentials are set, since such a listener serves video to anyone.
+
+### Client Table and Server Stats
+
+`GET /control?clients=1` lists every connected consumer -- RTSP sessions, fMP4/MJPEG/events connections, WebRTC sessions and SRT receivers -- each with `ip`, `port`, `proto`, `chn`, `since_s` (connected seconds), a live `kbps` reading, total `bytes` sent and the client's `agent` (User-Agent, e.g. `FFmpeg Frigate/0.17.2` or `LibVLC/3.0.20`). It also reports `lat_ms`: how old a frame is when the streamer hands it to each client (sensor capture to send, averaged) -- typically 5-25 ms on T31 -- across all protocols. One-shot requests (snapshots) are not listed; the table costs ~8 KB RAM for 40 entries. The TIMPS Web UI shows the same table with Total and Latency columns, and the preview status line adds the browser's own share of the delay (`delay ≈ N ms`) with the breakdown as a tooltip.
+
+`GET /control?stats=1` reports the streamer's own counters (session counts, encode drops) plus a `system` object (load average, total/available memory, machine and streamer CPU %) in the same JSON shape as the rest of `/control`; the Web UI shows it in the stats card. `?stats=1` and friends are matched as scoped queries rather than free-form config reads, and `/control` does not stall when the SD card wedges (`record.free_mb`/`timelapse.free_mb` refresh on a 10 s background clock).
+
+### Recording on SD Card
+
+- Recording prunes with a sanity-capped `record.min_free_mb` (default 200 MB, documented range 0-1048576, applies live on the next record cycle). Absurd values are refused and surfaced via `/control` status instead of wedging the SD loop, and the recorder backs off gracefully while the free-space target stays unreachable. The prune is a single SD walk.
+- Pre-roll re-anchors to the oldest available keyframe in the ring, so clips start on complete frames.
+- On-demand clips (`record.clip`) are RAM-budgeted -- a clip too large for the board is refused with a WARN instead of OOM-killing a 64 MB board.
+- `record.dir`/`timelapse.dir` pointing at the root filesystem are refused (an SD mount point with no card in it would otherwise silently record into flash); the refusal shows up in `record.last_error`.
+- `timelapse.keep_days` is clamped to 0..3650 -- a huge "keep forever" value no longer expires every single shot.
+
+### Privacy Masking, Crop/Zoom and ROI
+
+Availability of these image features is graded per build and SoC: `GET /control` reports `caps.roi` / `caps.fcrop` / `caps.rotation` tiers (`effective` / `experimental` / `unsupported`) -- encoder ROI needs an OpenIMP libimp, and most vendor blobs report `unsupported`. On capable builds:
+
+- **Encoder ROI** (`roi<S>.<N>.*`, up to 4 regions per stream; 10 on T31 OpenIMP) keeps a monitored area -- a door, a gate -- at high quality while the rest of the frame compresses harder, cutting bitrate without losing detail where it matters. Applied live, per-region QP or delta-QP.
+- **ISP FrontCrop / digital zoom** (`image.fcrop_*`) crops the sensor picture before encoding; the crop window follows `image.hflip`/`image.vflip` on OpenIMP. The Web UI offers **Crop/zoom** and **ROI** tabs on the overlays page with a full-sensor crop editor (drag the window, zoom slider to the real maximum) -- see [Web UI](03-web-ui.md).
+- Rotation follows the encoder-side semantics (width/height multiples of 8 on T40/T41). The video page has a rotation selector, and `GET /control` reports `video.<N>.rotation_state` explaining why a stream runs unrotated.
+
+### Open Media Stack Features (T40/T41, OpenIMP)
+
+- **Image controls:** `image.drc_strength`, `image.dpc_strength` and `image.defog_strength` (0..255, 128 = the vendor default picture) are live-tunable.
+- **Test-pattern buttons on the Web UI preview page:** modes 0-4 plus the mid-ISP pattern mode 5 where the build supports it. Day/night is held in day mode while a pattern runs, and mode 3 scores your motion detection (hits, misses, false alarms, detection delay).
+- **Snapshots:** JPEG snapshots up to 4 MiB are supported.
+- **T20 macroblock rate control is off by default:** the vendor encoder libraries enable macroblock-level QP control unless told otherwise -- on a T20 at 1080p15 that lifted streamer CPU use from ~7% to ~35% and made the first IDR at low bitrate coarser. Set `video.0.mbrc` to `1` via `POST /control` to re-enable (stream restart required); the state is reported as `video.<N>.mbrc` in `GET /control`.
+
+### Seekable Recordings
+
+The web server passes a player's `Range` header through to CGI scripts as `HTTP_RANGE`, so SD-card recordings streamed via the Web UI play seekable in VLC, Kodi and browsers instead of forcing a full-file download before playback.
 
 ### Optional Opus Audio
 
@@ -303,13 +294,13 @@ TIMPS includes a built-in browser preview at `http://<camera-ip>:8880/` with sna
 
 ### Divinus (experimental, T31)
 
-Divinus is a compact proof-of-concept streamer for Ingenic T31 cameras, selectable as a build-time package alongside Prudynt and TIMPS (added 2026-11-02). It speaks RTSP, serves JPEG snapshots from its own web server and can record fMP4. It is **not a working end-user package yet**: it builds and starts on a T31, but it is not integrated with the rest of the Thingino userland (day/night, OSD defaults, ONVIF discovery, WebUI) the way prudynt-t and timps are. Expect to run it by hand and adjust `/etc/divinus.yaml` for your sensor and board.
+Divinus is a compact proof-of-concept streamer for Ingenic T31 cameras, selectable as a build-time package alongside Prudynt and TIMPS. It speaks RTSP, serves JPEG snapshots from its own web server and can record fMP4. It is **not a working end-user package yet**: it builds and starts on a T31, but it is not integrated with the rest of the Thingino userland (day/night, OSD defaults, ONVIF discovery, WebUI) the way prudynt-t and timps are. Expect to run it by hand and adjust `/etc/divinus.yaml` for your sensor and board.
 
 ## Two-Way Audio (RTSP Backchannel)
 
 Two-way audio works over the RTSP backchannel (ONVIF Profile T). Clients send audio to the camera speaker; the camera picks the codec by what the client sends (TCP or UDP).
 
-**Raptor (development builds)** now offers five talk-back codecs: **PCMU, PCMA, Opus, AAC and L16**, with UDP transport, receiver reports, and BYE leave handling. You can restrict the offer at build time with `backchannel_codecs` (e.g. `"pcmu,opus"`; empty offers everything the build carries). PCMU is the ONVIF Profile T baseline -- excluding it is honored but warned.
+**Raptor (development builds)** offers five talk-back codecs: **PCMU, PCMA, Opus, AAC and L16**, with UDP transport, receiver reports, and BYE leave handling. You can restrict the offer at build time with `backchannel_codecs` (e.g. `"pcmu,opus"`; empty offers everything the build carries). PCMU is the ONVIF Profile T baseline -- excluding it is honored but warned.
 
 **Prudynt (stable)** offers PCMU, PCMA, Opus and AAC; `audio.output_enabled` gates the backchannel entirely.
 

@@ -41,9 +41,9 @@ Full reference: [WiFi Reason Codes](https://github.com/themactep/thingino-firmwa
 
 ## Network Watchdog (netwatch)
 
-Ciao builds from 2026-09-10 include an optional **network watchdog** that can reboot the camera when it loses connectivity: every 30 seconds it pings the network gateway, and after 3 consecutive failures it reboots the camera. A hardware watchdog backs the mechanism up, so even a completely wedged network stack cannot block the recovery reboot.
+Ciao builds include an optional **network watchdog** that can reboot the camera when it loses connectivity: every 30 seconds it pings the network gateway, and after 3 consecutive failures it reboots the camera. A hardware watchdog backs the mechanism up, so even a completely wedged network stack cannot block the recovery reboot.
 
-**As of 2026-09-20 the watchdog is opt-in** -- it no longer arms by default. (Earlier ciao builds rebooted every unit after 3 failed pings, which could turn a marginal Wi-Fi link into a reboot loop.) Enable it under **Settings -> Network** or in the config:
+The watchdog is **opt-in** -- it does not arm by default, so a marginal Wi-Fi link cannot turn into a reboot loop unless you enable it. Enable it under **Settings -> Network** or in the config:
 
 ```sh
 jct /etc/thingino.json set netwatch.enabled true
@@ -59,7 +59,7 @@ Wired Ethernet is plug-and-play on devices with an Ethernet port. The MAC addres
 
 ## Time and Timezone
 
-Recent ciao builds introduce **timectl**, the single entry point for clock, timezone, and NTP configuration:
+**timectl** is the single entry point for clock, timezone, and NTP configuration:
 
 ```sh
 timectl set-timezone "Europe/Berlin"
@@ -67,7 +67,7 @@ timectl pin-timezone        # disable automatic timezone from DHCP
 timectl unpin-timezone      # re-enable automatic timezone
 ```
 
-All time-related paths (Web UI, WiFi portal, `tzselect`, and the DHCP client scripts) now route through `timectl`. The old `dhcp.ignore_timezone` setting is migrated automatically. Docs: `docs/timezone.md` in the firmware repo.
+All time-related paths (Web UI, WiFi portal, `tzselect`, and the DHCP client scripts) route through `timectl`. The old `dhcp.ignore_timezone` setting is migrated automatically. Docs: `docs/timezone.md` in the firmware repo.
 
 ## USB Ethernet
 
@@ -81,7 +81,7 @@ Plug in the adapter and it should be recognized automatically.
 
 ## USB WiFi Dongles
 
-**Ralink RT5370** USB WiFi dongles are supported on master builds from 2026-08-23 (`242d92daf`). Useful as a replacement radio for cams with damaged internal WiFi or where you want to reposition the antenna.
+**Ralink RT5370** USB WiFi dongles are supported on master builds. Useful as a replacement radio for cams with damaged internal WiFi or where you want to reposition the antenna.
 
 ## mDNS / Bonjour Discovery
 
@@ -94,7 +94,7 @@ This means you can discover cameras without knowing their IP address:
 
 The camera's hostname (e.g., `ing-t31x-1234.local`) is also resolvable via mDNS.
 
-Since ciao 2026-09-03, the mDNS daemon watches **all** network interfaces in client mode instead of pinning to the first up non-loopback one. Previously a camera with a disconnected Ethernet port and an active WiFi connection could bind mDNS to the dead `eth0` and vanish from LAN discovery scans entirely; interfaces that come up later are now picked up automatically too. In AP/captive-portal mode the daemon still pins to a single interface so phones connecting to the camera's hotspot don't get a captive-portal login prompt pushed at them.
+The mDNS daemon watches **all** network interfaces in client mode instead of pinning to the first up non-loopback one, so interfaces that come up later are picked up automatically. In AP/captive-portal mode the daemon still pins to a single interface so phones connecting to the camera's hotspot don't get a captive-portal login prompt pushed at them.
 
 ## SNMP
 
@@ -111,7 +111,7 @@ Thingino supports VPN solutions for remote access:
 
 ### WiFi Roaming
 
-Builds from 2026-08-25 fix a bug where the *disable-roaming* patches on Realtek USB drivers (8188/8189/8192/8733/8812 families) never actually took effect -- layer-2 roaming was always compiled in. If you disable roaming in your build config, these builds honor it; roaming clients that hop between APs should behave more predictably.
+On Realtek USB WiFi drivers (8188/8189/8192/8733/8812 families), disabling roaming in your build config is honored: layer-2 roaming is not compiled in for these builds, and roaming clients that hop between APs behave predictably.
 
 ---
 

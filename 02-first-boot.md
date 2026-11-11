@@ -15,7 +15,7 @@ The camera runs this script once on boot, configures WiFi, then deletes it.
 
 During provisioning, the setup portal pre-scans for WiFi networks before bringing up its own access point, so the network list you see is a real scan of your environment (not a stale cache). If the scan times out, the portal falls back to a manual SSID entry.
 
-If the camera never broadcasts its setup hotspot on first boot, a stale `wpa_supplicant.conf` may be the culprit. Older builds (before 2026-08-24, `06cf8c284`) wrote the portal's AP settings into the persistent WiFi config on mt7601u cameras, so the camera skipped provisioning entirely. Re-flash or factory-reset to get the portal back.
+If the camera never broadcasts its setup hotspot on first boot, a stale `wpa_supplicant.conf` may be the culprit: on mt7601u cameras the portal's AP settings can end up in the persistent WiFi config, so the camera skips provisioning entirely. Re-flash or factory-reset to get the portal back.
 
 ## Accessing the Camera
 
@@ -28,7 +28,7 @@ After provisioning, access the camera via:
 
 The default `thingino`/`thingino` credentials are used for **streamer and ONVIF connections** (RTSP, ONVIF). The username and password you set during **provisioning** are used for the **Web UI and SSH**.
 
-Note: builds from 2026-08-23 (`0240c30be`) restrict Web UI login to the root account only -- the `thingino` service account can no longer open a web session, even with correct credentials.
+Note: the Web UI only accepts logins from the root account -- the `thingino` service account cannot open a web session, even with correct credentials.
 
 You can change both the root (SSH) password and the streaming user password from the Web UI **Settings** page.
 
@@ -62,12 +62,12 @@ If you need to start over -- wrong WiFi credentials, misconfigured settings -- a
 
 This is the fastest way to recover from incorrect WiFi credentials without needing network access.
 
-### Factory reset internals (2026-10-16)
+### Factory reset internals
 
-Two fixes landed the same day that make factory reset safer on current builds:
+Factory reset is safe on current builds:
 
-- `firstboot -e` (commit `233641e41`) now clears provisioning keys only instead of erasing the whole U-Boot environment. Erasing the env was dangerous: U-Boot would boot its built-in defaults (including `bootcmd=bootp`), then lose the `mtdparts` that sysupgrade wrote, so the next boot could no longer load the kernel.
-- The Web UI's factory-reset page (commit `84392b22b`) now wipes the overlay via `firstboot -e` instead of erasing `/dev/mtd2`, which is actually the config backup partition -- a web-triggered reset no longer destroys your settings backup.
+- `firstboot -e` clears provisioning keys only instead of erasing the whole U-Boot environment. (Erasing the env would make U-Boot boot its built-in defaults, including `bootcmd=bootp`, and lose the `mtdparts` that sysupgrade wrote, so the next boot could no longer load the kernel.)
+- The Web UI's factory-reset page wipes the overlay via `firstboot -e` instead of erasing `/dev/mtd2`, which is actually the config backup partition -- a web-triggered reset does not destroy your settings backup.
 
 ## Shell Access
 

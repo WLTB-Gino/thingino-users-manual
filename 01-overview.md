@@ -10,48 +10,25 @@ Thingino is open source firmware that replaces the stock firmware on IP cameras 
 
 ## Streamer
 
-Thingino's stable release builds use **Prudynt**, the production streamer. OSD data is embedded as SEI metadata in the H.264 stream by default, and recent ciao builds add an optional burn-in mode that renders OSD directly into video pixels.
+Thingino's stable release builds use **Prudynt**, the production streamer. OSD data is embedded as SEI metadata in the H.264 stream by default; ciao builds offer an optional burn-in mode that renders OSD directly into video pixels.
 
-**TIMPS** (Tiny IMP Streamer) is a newer lightweight alternative by Lu-Fi, available as a package in recent builds. It offers on-demand encoding (idle at 0% CPU), a live control API (POST/GET /control), SSE event push (/events), per-stream TrueType OSD, grid motion detection (IMP_IVS), native day/night detection, privacy cover masks, local SD recording, and optional Opus audio codec. Supports RTSP Digest/HTTP Basic auth and token auth. A third, experimental option arrived on 2026-11-02: **Divinus**, a compact proof-of-concept streamer for T31 cameras with RTSP, a snapshot web server and fMP4 recording -- select it at build time, run it by hand and tune `/etc/divinus.yaml`; it is not yet wired into the WebUI, day/night or ONVIF the way the other two are (see [Streaming](05-streaming.md)).
+**TIMPS** (Tiny IMP Streamer) is a lightweight alternative by Lu-Fi, available as an optional package. It offers on-demand encoding (idle at 0% CPU), a live control API (POST/GET /control), SSE event push (/events), per-stream TrueType OSD, grid motion detection (IMP_IVS), native day/night detection, privacy cover masks, local SD recording, and optional Opus audio codec. It supports RTSP Digest/HTTP Basic auth and token auth.
 
-**Raptor** is the next-generation modular streaming system, currently in development builds only. It will become the default in future releases. As of recent master builds, Raptor now uses **daynightd** as its day/night engine (replacing the older RIC tool), with dedicated `daynight`, `ircut`, and `light` wrapper scripts for both Web UI and command-line use.
+**Divinus** is a third, experimental streamer option: a compact proof-of-concept for T31 cameras with RTSP, a snapshot web server and fMP4 recording. Select it at build time, run it by hand and tune `/etc/divinus.yaml`; it is not yet wired into the WebUI, day/night or ONVIF the way the other two are (see [Streaming](05-streaming.md)).
 
-Recent master and ciao builds also integrate the **open-isp** package -- a complete open media stack for ISP tuning and development, including an `isp-inspector` tool that displays exposure values as log2 stops.
+**Raptor** is the next-generation modular streaming system, currently in development builds only. It will become the default in future releases. Raptor uses **daynightd** as its day/night engine (the successor to the older RIC tool), with dedicated `daynight`, `ircut`, and `light` wrapper scripts for both Web UI and command-line use.
+
+The **open-isp** package is also integrated in master and ciao builds -- a complete open media stack for ISP tuning and development, including an `isp-inspector` tool that displays exposure values as log2 stops.
 
 ## SoC Support
 
-Thingino currently runs on **Ingenic** T-series SoCs (T10, T20, T21, T23, T30, T31, T32, T33, T40, T41). The first T32 camera profile landed on master in September 2026 (Cinnado D1 T32LQ) -- builds for T32 are new and experimental. Early groundwork for **SigmaStar** (Infinity6e/SSC30KQ) support has been merged, but no usable SigmaStar camera builds exist yet.
+Thingino runs on **Ingenic** T-series SoCs (T10, T20, T21, T23, T30, T31, T32, T33, T40, T41). The first T32 camera profile is the Cinnado D1 T32LQ; builds for T32 are new and experimental. Early groundwork for **SigmaStar** (Infinity6e/SSC30KQ) support is merged, but no usable SigmaStar camera builds exist yet.
+
+See [thingino.com](https://thingino.com) for the full list of supported cameras.
 
 ## SNMP Monitoring
 
 Thingino includes an optional **thingino-snmpd** package (mini-snmpd 2.0) for network monitoring via SNMP. When enabled, it integrates with the Web UI as a plugin and exposes camera system metrics to SNMP managers like PRTG, Zabbix, or LibreNMS.
-
-## Recently Added Cameras
-
-- **Petcube C401A** (T31LC, MIS2008 sensor, ATBM6012B WiFi) -- master, cameras-exp (added 2026-10-05)
-- **Teacup DevBoard** (T31ZX, IMX219 sensor, Ethernet, 16MB flash) -- ciao branch (experimental, added 2026-09-29)
-- **Eufy T8416 (E220 family), dual-sensor mode** (T40XP, two sensors at 20 fps each) -- master. The T40 dual-sensor mode is real on master as of 2026-09-15: both lenses stream concurrently, with per-sensor Raptor configuration keys and U-Boot now parking every sensor's IR-cut pins at boot. Building a T40 dual image still needs the boosted rmem recipe (BR2_THINGINO_RMEM_MB=134, NMEM=22)
-- **Infiya K1** (T31L, SC231HAI sensor, ATBM6132CU WiFi) -- ciao branch (experimental, added 2026-09-11). Profile corrections landed 2026-09-27: the BT-combo `0x6162` USB revision of the WiFi module is auto-flagged for the driver, the audio/LED GPIOs switched to active-low symbols, and the ISP settings now carry per-line comments
-- **DEKCO DC5L** (T23N, SC3332P sensor, WS73V100 USB WiFi, 16MB flash) -- ciao branch (added 2026-09-20; promoted to the mainline camera list)
-- **Shelly S1** (T23N, MIS20C1 sensor, ATBM6132CU WiFi) -- supported on both branches (ciao 2026-09-09, master 2026-09-10). A hardware revision with USB ethernet instead of the wireless module is also supported (ciao, cameras-exp, 2026-09-17)
-- **Sonoff S3W** (T23N, SC231HAI or SC200AI sensor, ATBM6132CU WiFi) -- ciao branch (added 2026-09-17). Two sensor variants exist, one profile each. Recent builds also handle both USB hardware revisions of the ATBM6132CU module: units reporting USB ID `0x6162` are the Bluetooth-combo variant and need the matching driver option (`BR2_PACKAGE_WIFI_ATBM6132CU_6162`, selected automatically for the S3W profile), which ships the combo firmware, enables WiFi+BT sharing (`wifi_bt_comb=1`) and drops the driver's `p2p0` network device
-- **Sonoff CAM-B1P and CAM-PT2** (T23, SC2337P sensor) -- ciao branch (added 2026-10-03). These units carry the SC2337P die, which shares its chip ID with the more common SC2336P; builds from 2026-10-03 auto-tell the two dies apart at boot (see [Troubleshooting](13-troubleshooting.md)), so the wrong profile now fails with a clear sensor error instead of binding the wrong image tuning.
-- **SecuPlug SP1** (T10L, JXH42 sensor, MT7601 USB WiFi) -- ciao branch (added 2026-09-24; motor speed/travel calibrated)
-- **Wyze Cam v3 + RT5370 USB dongle** (T31X, GC2053 -- for units with unsupported internal WiFi; uses an external RT5370 USB dongle) -- ciao (experimental)
-- **Wyze Cam v4** (T41NQ, OS04D10 or GC4653 sensor, ATBM6062S WiFi) -- master (cameras-exp). EFuse-locked, but master builds boot via `secureboop`; an SD-card installer image is available at the [thingino-installers](https://github.com/wltechblog/thingino-installers) repo (`wyze-cam-4`). Recent profile work: the dual-pin IR-CUT solenoid pins are now declared in the profile, Raptor day/night thresholds are tuned for the board (see [Night Vision](07-night-vision.md)), and master builds from 2026-10-25 fix the "sensor undetect / no video" boot failure on some v4 units (see [Troubleshooting](13-troubleshooting.md))
-- **Vanhua S62I** (T40XP, SPI-NAND, IMX307, Ethernet) -- master and ciao (experimental)
-- **Vanhua Z55** (T31X, GC4653 4MP, Ethernet) -- master. Builds from 2026-08-28 repin the AVPU hardware encoder clock to a reachable 600 MHz, so it sustains H.265 2560x1440 at 30 fps with lower CPU use (previously the encoder silently ran at 400 MHz and dropped frames at 25 fps)
-- **Vanhua T55A** (T41LQ, GC5603 5MP, Ethernet) -- master (cameras-exp). Builds from 2026-10-31 reserve 25 MB of restricted memory for this sensor (22 MB proved too small once Raptor's OSD pools and JPEG channels were counted on top of the vendor sheet, which starved the main stream)
-- **Wyze Cam Pan V1** (JXF23 sensor + RTL8189FTV WiFi variant) -- master and ciao
-- **Wyze Floodlight V2** (T41NQ) -- ciao branch
-  - The Floodlight v1 light (via Wyze Cam Floodlight v1 accessory) now has a `floodlight_ctl` CLI for brightness control: `floodlight_ctl on <1-100>` / `floodlight_ctl off` (verbose with `-v`)
-- **Wyze Lamp Socket** accessory (ciao `3eabd559b`, 2026-10-06): the socket's switched power outlet is controllable from the Web UI and as a Home Assistant switch entity (see [Web UI](03-web-ui.md) and [Home Automation](09-home-automation.md))
-- **Hugolog E5P** (T41LQ) -- ciao branch
-- **Kiwibit BC111** (T23ZN) -- ciao branch
-- **Cinnado B6** (T23ZN) -- ciao branch
-- **Cinnado D1, T32 variant** (T32LQ, SC4336P sensor, ATBM6132U WiFi) -- master (experimental). First camera profile on the Ingenic T32 family -- T32 support is now real hardware, not just a name on the SoC list. Motors are wired in the profile but pan/tilt behavior is unverified on this variant. Caution: the D1 ships with several different SoCs (T23N, T31L, T41NQ, T32) -- identify your hardware before flashing any D1 image
-
-Check [thingino.com](https://thingino.com) for the full list of supported cameras.
 
 ## Unsupported Camera Types
 

@@ -10,9 +10,9 @@ Motion is configured in `/etc/prudynt.json` under the `motion` section. Key sett
 - **Video length** -- Duration of recorded clips when motion is detected
 - **Monitor stream** -- Which stream to monitor (0 = main, 1 = sub)
 
-Since ciao 2026-10-03 (`06590c9d8`), the motion ROI coordinates are interpreted against the monitored stream's own resolution instead of the sensor's, so an ROI drawn for the substream matches the frames the motion engine actually sees. On older builds an ROI configured on the Web UI could cover a different part of the picture than intended when the monitor stream was not the main one -- if your ROI seemed offset, re-save it after updating.
+ROI coordinates are interpreted against the monitored stream's own resolution, not the sensor's, so an ROI drawn for the substream matches the frames the motion engine actually sees. If an ROI on an older build seems offset, re-save it after updating.
 
-Alert timing also changed on ciao 2026-10-03 (`9f2222d4b`): speaker alerts and text-only notifications now fire the moment motion is detected, while snapshot/clip uploads still wait for the recording to finish. Previously every alert waited for the full clip capture (up to `video_length` + 10 s), which made speaker alerts lag noticeably behind the event on long clip settings.
+Alert timing differs by alert type: speaker alerts and text-only notifications fire the moment motion is detected, while snapshot/clip uploads wait for the recording to finish (up to `video_length` + 10 s). On builds before this change, speaker alerts lag noticeably behind the event on long clip settings.
 
 ## Alert Methods
 
@@ -27,18 +27,8 @@ When motion is detected, Thingino can send alerts via:
 | ntfy | `send2ntfy` | Push notifications via ntfy.sh |
 | Gotify | `send2gotify` | Self-hosted push notifications |
 | Pushover | `send2pushover` | Push notifications to iOS/Android/desktop |
-
-Recent ciao builds fix both ntfy and webhook notifications: `send2ntfy` now honors the configured scheme/SSL, sends the title and priority headers correctly, and forces HTTP/1.1 (HTTP/2 uploads to ntfy.sh stalled around 84%); `send2webhook` sends a raw JSON POST body for text-only messages and a proper multipart payload when a photo/video/file is attached -- builds from 2026-09-21 (fixes #1681) no longer fail on every webhook that carries an attachment.
-
-**Motion sensitivity now applies to the whole frame (ciao builds from 2026-10-30):** when OSD burn-in splits the motion grid into horizontal strips around the timestamp, only the first strip used to inherit your sensitivity setting -- the rest ran at the least sensitive extreme, so motion outside the centre strip could be missed. Every strip now honours the configured sensitivity, the timestamp exclusion zone is measured from the actually rendered timestamp (the old size estimate left the seconds digits inside a monitored strip, causing false alarms), and changing the sensitivity now applies without a manual restart (fixes issue #1895).
-
-**Motion snapshots are always fresh (ciao builds from 2026-10-31):** the snapshot attached to a motion alert is now captured for that event. Previously, with the snapshot worker idle (`jpeg_idle_fps=0`), an alert could deliver the stale frame left in the snapshot buffer -- potentially hours old -- showing what had been in front of the camera long before the trigger.
-
-**Snapshots and clips land with readable permissions (ciao 2026-10-09):** storage uploads (SD card or NFS, including the test snapshot) previously saved media files as owner-only (mode 600), so other users on an NFS/NAS share could not read them. Current builds chmod stored media to 644, so whatever lands in your share is readable by your NVR, HA, or other local users. On older builds the workaround was `find /mnt/... -name '*.jpg' -perm 600 -exec chmod a+r {} +`.
-
-Motion events are suppressed while pan/tilt motors are active: the motors daemon publishes `/run/motors-active` while a move is in flight, and every streamer's motion bridge (Prudynt, Raptor, TIMPS) checks it, so panning the camera no longer fires false motion alerts or clips.
 | FTP | `send2ftp` | Upload snapshots/clips to an FTP server |
-| FTPS | `send2ftp` | Same upload over explicit TLS (AUTH TLS, port 21) for hosts that require it, e.g. Hetzner Storage Box -- enable "Use FTPS (explicit TLS)" in the notification settings (since 2026-10-14; self-signed certificates supported via the ignore-certificate option). Fixed 2026-10-24 (master + ciao, `70f0775a8`): explicit FTPS previously used curl's `ftps://` scheme, which is *implicit* TLS on port 990, so explicit-only servers rejected the handshake with "invalid SSL record" (#1715) |
+| FTPS | `send2ftp` | Same upload over explicit TLS (AUTH TLS, port 21) for hosts that require it, e.g. Hetzner Storage Box -- enable "Use FTPS (explicit TLS)" in the notification settings; self-signed certificates are supported via the ignore-certificate option. The scheme is curl's explicit-TLS variant, not implicit TLS on port 990 |
 | Storage | `send2storage` | Save recordings to SD card or NFS |
 | XMPP | `send2xmpp` | Send message via Jabber/XMPP |
 | Speaker | `playonspeaker` | Play an audio alert through the camera's speaker |
@@ -47,13 +37,23 @@ Enable via the Web UI under **Tools** or through `jct /etc/prudynt.json`.
 
 **Note on master builds**: `send2xmpp` is a master-branch addition; on ciao/stable only the methods listed above it are available.
 
+`send2ntfy` honors the configured scheme/SSL, sends the title and priority headers correctly, and forces HTTP/1.1 (HTTP/2 uploads to ntfy.sh stall around 84%). `send2webhook` sends a raw JSON POST body for text-only messages and a proper multipart payload when a photo/video/file is attached.
+
+**Motion sensitivity applies to the whole frame:** when OSD burn-in splits the motion grid into horizontal strips around the timestamp, every strip honours the configured sensitivity, the timestamp exclusion zone is measured from the actually rendered timestamp, and changing the sensitivity applies without a manual restart.
+
+**Motion snapshots are always fresh:** the snapshot attached to a motion alert is captured for that event, even with the snapshot worker idle (`jpeg_idle_fps=0`), instead of delivering the stale frame left in the snapshot buffer.
+
+**Snapshots and clips land with readable permissions:** storage uploads (SD card or NFS, including the test snapshot) are written mode 644, so whatever lands in your share is readable by your NVR, HA, or other local users. On older builds the workaround was `find /mnt/... -name '*.jpg' -perm 600 -exec chmod a+r {} +`.
+
+Motion events are suppressed while pan/tilt motors are active: the motors daemon publishes `/run/motors-active` while a move is in flight, and every streamer's motion bridge (Prudynt, Raptor, TIMPS) checks it, so panning the camera does not fire false motion alerts or clips.
+
 ## send2 Toolkit Architecture (master)
 
 On the master branch the send2 notification scripts live in a standalone `thingino-send2` package shared by all three streamers (Prudynt, Raptor, TIMPS), with per-streamer adapter helpers:
 
 - Capture is split per streamer -- no runtime streamer branching, each streamer uses its own adapter (`prudynt-helpers` for Prudynt, snapshot helpers for Raptor/TIMPS)
 - Storage and FTP extensions handle extensionless temporary files correctly
-- Raptor ships a live motion->send2 bridge (`raptor-motion` + `S32raptor-motion`), so motion alerts now work with Raptor, not just Prudynt
+- Raptor ships a live motion->send2 bridge (`raptor-motion` + `S32raptor-motion`), so motion alerts work with Raptor, not just Prudynt
 - Settings live in `/etc/send2.json` as before
 
 ## Audio Alerts (Speaker)
@@ -65,7 +65,7 @@ Cameras with a built-in speaker can play audio alerts when motion is detected. C
 - **Gain** -- Audio gain (0--31)
 - **Repeat** -- Number of times to play (0 = forever)
 
-The speaker settings share a save button with motion detection settings in recent builds. Use the **Test** button to preview the sound without triggering motion. In builds from before October 2026 the test button reported success even when no speaker file was configured (the alert was a silent no-op); current builds fall back to the bundled sound and report the real result.
+The speaker settings share a save button with motion detection settings. Use the **Test** button to preview the sound without triggering motion; when no speaker file is configured it falls back to the bundled sound and reports the real result.
 
 ---
 

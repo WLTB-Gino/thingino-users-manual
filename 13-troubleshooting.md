@@ -22,9 +22,7 @@ thingino-diag -f
 thingino-diag -o -
 ```
 
-Recent builds redact sensitive fields (WiFi credentials, MAC addresses, and other identifying details) from diagnostics output for privacy. This means your credentials are safe to share when posting diagnostics in support channels.
-
-Diagnostics uploads to tb.thingino.com now use HTTPS for secure transfer. If the upload fails, the Web UI reports the error instead of redirecting to an empty page.
+Diagnostics output redacts sensitive fields (WiFi credentials, MAC addresses, and other identifying details) for privacy, so the report is safe to share in support channels. Uploads to tb.thingino.com use HTTPS; if the upload fails, the Web UI reports the error instead of redirecting to an empty page.
 
 Or via SD card: create a `.diag` file on a blank SD card and insert it into the running camera.
 
@@ -32,26 +30,26 @@ Or via SD card: create a `.diag` file on a blank SD card and insert it into the 
 
 Thingino detects the image sensor by its ID at boot. If the wrong sensor driver is configured, you see a clear error in the boot log and **no image is produced**. Check the boot log for sensor mismatch messages.
 
-**SC2336P vs SC2337P (Sonoff and similar T23 cameras, fixed in builds from 2026-10-03):** these two dies report the *same* chip ID to the driver, so older builds could not tell them apart -- a profile built for one bound the other's init timings and image tuning, giving a wrong-looking or broken picture instead of a clean error. The sensor driver now checks a revision register and selects the right die: a mismatched profile fails loudly at `AddSensor` (the usual "no image" path) instead of silently misbehaving. If your SC2336P/SC2337P camera showed odd colors or a dead image on an older build and the boot log mentions a sensor mismatch, identify the exact die and pick the matching profile on a build from 2026-10-03 or newer.
+**SC2336P vs SC2337P (Sonoff and similar T23 cameras):** these two dies report the *same* chip ID to the driver, so they cannot be told apart by ID alone -- a profile built for one bound the other's init timings and image tuning, giving a wrong-looking or broken picture instead of a clean error. The sensor driver checks a revision register and selects the right die: a mismatched profile fails loudly at `AddSensor` (the usual "no image" path) instead of silently misbehaving. If your SC2336P/SC2337P camera shows odd colors or a dead image and the boot log mentions a sensor mismatch, identify the exact die and pick the matching profile. Requires a current build.
 
-**T33DL mislabeled as T33LQ (builds up to 2026-10-20):** the SoC identification table mapped the chip-ID byte 0x11 to "T33LQ", but that die is actually **T33DL** -- so affected cameras reported the wrong SoC name in the Web UI footer and `soc` output. Master builds from 2026-10-20 also corrected several other T32/T33 variant names and newly recognize the T32Pro and CW080 dies. If your camera showed the wrong chip family in the UI, updating fixes the label; hardware behavior is unchanged.
+**T33DL mislabeled as T33LQ:** older SoC identification tables mapped the chip-ID byte 0x11 to "T33LQ", but that die is actually **T33DL** -- so affected cameras reported the wrong SoC name in the Web UI footer and `soc` output, along with several other T32/T33 variant names. Current builds also recognize the T32Pro and CW080 dies. If your camera shows the wrong chip family in the UI, update to a current build; hardware behavior is unchanged.
 
-**Wyze Cam v4 sensor never detected / no video (fixed in master builds from 2026-10-25, PR `#1887`):** on some v4 units the OS04D10 sensor received its 24 MHz master clock at too weak a GPIO drive strength, the sensor never answered on I2C, and the boot failed with "sensor undetect" -- no image. The camera profile now raises the clock pin's drive strength via the device tree, and affected units detect and stream on first boot. If your v4 showed no video on an older build with a sensor-probe error in the log, updating to a master build from 2026-10-25 or newer fixes it.
+**Wyze Cam v4 sensor never detected / no video:** on some v4 units the OS04D10 sensor receives its 24 MHz master clock at too weak a GPIO drive strength, the sensor never answers on I2C, and the boot fails with "sensor undetect" -- no image. The camera profile raises the clock pin's drive strength via the device tree, and affected units detect and stream on first boot. If your v4 shows no video with a sensor-probe error in the log, update to a current build.
 
 Camera sensors **cannot** be identified visually. Check `/proc/device-info` or boot logs for the sensor model. GalaxyCore sensors (GC-prefixed) generally have better low-light performance.
 
 ## WiFi Won't Connect
-
-**4.4-kernel cameras (T40/T41) with a `gpio.wlan` pin sequence in the profile (fixed in builds from 2026-10-03):** some boards power or reset their WiFi module through GPIOs, and the boot script only applied that pin sequence on 3.10-kernel builds -- on T40/T41 it logged "Skipping WLAN GPIO toggling for kernel 4.4" and did nothing, so the WiFi module never powered up (`590f68bdc`). If a T40/T41 camera's WiFi was dead from first boot with no driver error, updating fixes it.
-
-- **aic8800-based cameras (fixed in builds from 2026-10-30):** the boot script waited for the interface to show up in `/proc/net/wireless`, which only lists WEXT-capable drivers -- full-MAC cfg80211 drivers like aic8800 never appear there, so every boot paid a wait timeout even though `wlan0` was already up. Boot now checks `ip link` like the rest of the interface logic; the wait delay and misleading "WiFi missing" symptom during startup are gone.
 
 - Check reason codes in the log (see [Networking](04-networking.md))
 - Ensure your WPA2 passphrase is correct
 - Try moving the camera closer to the AP
 - Verify the WiFi module's GPIO power config in `/etc/thingino.json`
 
-**First-boot stuck at "Running pre-portal WiFi scan" (fixed in ciao builds from 2026-10-07):** during provisioning the camera scans for networks before starting its setup hotspot, and on builds up to and including the 2026-10-04 release a wedged WiFi driver could hang that scan indefinitely -- the camera sat at "Running pre-portal WiFi scan" for ten minutes, never broadcast the setup AP, and gave you no login prompt. The scan is now hard-bounded to a few seconds. If your camera hangs at this message on an older build: power-cycle it (a retry usually gets past it), and flash a ciao build from 2026-10-07 or newer for a permanent fix.
+**Boards that power WiFi through GPIOs:** some profiles use a `gpio.wlan` pin sequence to power or reset the WiFi module, and that sequence is applied on all kernel builds. If a camera's WiFi was dead from first boot with no driver error and the boot log says "Skipping WLAN GPIO toggling", update to a current build.
+
+**aic8800-based cameras:** the boot script waits for the interface in `ip link` output (not `/proc/net/wireless`, which only lists WEXT-capable drivers -- full-MAC cfg80211 drivers like aic8800 never appear there). If startup shows a "WiFi missing" wait delay even though `wlan0` is up, update to a current build.
+
+**First-boot stuck at "Running pre-portal WiFi scan":** during provisioning the camera scans for networks before starting its setup hotspot. A wedged WiFi driver could hang that scan indefinitely -- the camera sits at "Running pre-portal WiFi scan" for ten minutes, never broadcasts the setup AP, and gives no login prompt. Current builds hard-bound the scan to a few seconds. On an older build: power-cycle the camera (a retry usually gets past it), then flash a current build for a permanent fix.
 
 ## WebRTC 400 Bad Request (Firefox)
 
@@ -63,7 +61,7 @@ On stable (Prudynt) builds, the Web UI talks directly to the streamer API on por
 
 - Check that the streamer is running: `pidof prudynt_t`
 - Verify the API key exists: `cat /etc/thingino-api.key`
-- You may need to update to a newer ciao build that includes the fix
+- You may need to update to a current build
 
 ## Unbricking
 
@@ -97,15 +95,15 @@ $U/tools/netconsole 192.168.1.10 6666   # the board's ipaddr
 
 Hold Ctrl-C until the prompt appears; `boot` resumes, `reset` reboots, Ctrl-T exits the client. If keystrokes never arrive, switch to broadcast (`255.255.255.255` instead of the board IP) -- it needs no ARP entry.
 
-**WiFi-only cameras:** since 2026-08-31 NetConsole also runs over a USB-Ethernet dongle plugged into the USB OTG data port (ASIX AX88772 works out of the box; for an AX88179 run `fw_setenv nc_ethact axg0` on the board). The dongle must be on the same network segment as the client.
+**Wired options for WiFi-only cameras:** NetConsole runs over a USB-Ethernet dongle plugged into the USB OTG data port (ASIX AX88772 works out of the box; for an AX88179 run `fw_setenv nc_ethact axg0` on the board). The dongle must be on the same network segment as the client.
 
 **Security:** NetConsole has no authentication. In broadcast mode any host on the subnet can interrupt autoboot and get a U-Boot prompt -- enable it only on trusted networks. To pin a single client: `fw_setenv ncip <your-host-ip>`.
 
 Covers the U-Boot phase only; kernel messages still need a serial console or Linux-side netconsole.
 
-## Reboot Hangs (older master builds)
+## Reboot Hangs (older builds)
 
-`reboot` could hang forever on master builds: the kernel shutdown path disarmed the hardware watchdog, so when shutdown or the low-level restart routine stalled, nothing reset the SoC and the camera sat there until power-cycled. Master builds since 2026-09-18 (`c4d3bcc01`, ported from the ciao branch) keep the watchdog armed across shutdown as a fallback -- a wedged reboot now self-resets after the configured watchdog timeout. If your camera hangs on `reboot`, power-cycle it and update the firmware.
+`reboot` can hang forever on older builds: the kernel shutdown path disarms the hardware watchdog, so when shutdown or the low-level restart routine stalls, nothing resets the SoC and the camera sits there until power-cycled. Current builds keep the watchdog armed across shutdown as a fallback -- a wedged reboot self-resets after the configured watchdog timeout. If your camera hangs on `reboot`, power-cycle it and update the firmware.
 
 ## Copying Files via SCP
 
@@ -119,9 +117,9 @@ Without `-O`, OpenSSH defaults to the SFTP protocol and the transfer will fail.
 
 ## curl HTTPS Failures to Some Servers
 
-On-device curl (used by notification scripts such as `send2telegram` and custom webhooks) negotiated TLS 1.3, but the small MIPS TLS stack fails the handshake against some servers -- typically self-hosted endpoints -- with "A field in a message was incorrect or inconsistent". Builds since 2026-10-14 (master) cap curl at TLS 1.2 across all call sites (send2telegram and send2xmpp already did). If an older build cannot reach your HTTPS endpoint, update the firmware.
+On-device curl (used by notification scripts such as `send2telegram` and custom webhooks) negotiated TLS 1.3, but the small MIPS TLS stack fails the handshake against some servers -- typically self-hosted endpoints -- with "A field in a message was incorrect or inconsistent". Current builds cap curl at TLS 1.2 across all call sites. If an older build cannot reach your HTTPS endpoint, update the firmware.
 
-The certificate bundle ships refreshed: builds from early November 2026 carry an updated CA trust store, and a `make update-certs` target lets image builders refresh it from the current Mozilla bundle at build time. If the camera must reach a server whose certificate chain postdates your firmware image, either update the firmware or run `make update-certs` before building.
+The certificate bundle ships refreshed, and a `make update-certs` target lets image builders refresh it from the current Mozilla bundle at build time. If the camera must reach a server whose certificate chain postdates your firmware image, either update the firmware or run `make update-certs` before building.
 
 ## Remote Logging to a Syslog Server
 

@@ -5,19 +5,19 @@ Hover over the live preview to access PTZ controls. Two control modes are availa
 - **Step move** (default) -- Click or double-click directional buttons to move in steps
 - **Continuous move** -- Press and hold directional buttons for smooth continuous movement
 
-**Fixed 2026-10-25 (master `2783b5456`, issue #1858):** in continuous mode a fast double-tap queued two full-range moves in quick succession. A second press on the same direction within 300 ms is now ignored as a double-tap, and the control pad sets `touch-action: manipulation` so holding a direction on a phone no longer triggers the browser's pinch-zoom.
+In continuous mode a fast double-tap is ignored as a double-tap (a second press on the same direction within 300 ms), and the control pad sets `touch-action: manipulation` so holding a direction on a phone does not trigger the browser's pinch-zoom.
 
-On ciao and master builds with TIMPS as the streamer, a low-latency **WebSocket control path** is used for preview PTZ (`BR2_PACKAGE_THINGINO_MOTORS_WS`, on by default when TIMPS is selected). Since 2026-09-17 (ciao PR #1669) this is WebSocket-only: the CGI fallback was removed because it re-fired every 90 ms against an 82--275 ms round trip, backing up the web server and making held moves overshoot the button release by about two seconds. Every TIMPS build ships the socket, so no socket now means no control path -- the widget shows a notice instead of silently degrading. The joystick also gates its minor axis with hysteresis, so a near-axis hold sends a clean single-axis vector. The preview also gains an on-screen **joystick** and motor sensitivity sliders in the motors settings, plus a motors daemon version badge.
+On ciao and master builds with TIMPS as the streamer, preview PTZ uses a low-latency **WebSocket control path** (`BR2_PACKAGE_THINGINO_MOTORS_WS`, on by default when TIMPS is selected). Every TIMPS build ships the socket: if it is not running, the widget shows a notice instead of silently degrading. The joystick gates its minor axis with hysteresis, so a near-axis hold sends a clean single-axis vector. The preview also provides an on-screen **joystick** and motor sensitivity sliders in the motors settings, plus a motors daemon version badge.
 
 Keyboard jog on the preview page uses **Shift + arrow keys** -- one discrete step per press, browser auto-repeat ignored. Plain arrow keys (and other modifiers) are left to the browser for normal page scrolling.
 
-On ciao builds (2026-09-08+), the preview also shows a **preset quick-bar** under the video: ten slots -- click to move, long-press to save the current position. The bar initially went missing from reflashed cameras because its script was never committed; firmware commit `10bd51d53` fixed the packaging.
+The preview also shows a **preset quick-bar** under the video: ten slots -- click to move, long-press to save the current position.
 
-**Drag-to-point PTZ (TIMPS v1.9.18):** on TIMPS cameras, the preview video itself is now the PTZ control -- click or tap a spot in the frame and the camera pans/tilts so that point moves to the center, with the motors UI syncing its settings panel in real time. The same release names presets in the toast when you move to one and tolerates motor settle drift when highlighting the active preset. The long-standing arrows/joystick controls remain for fine adjustment.
+**Drag-to-point PTZ:** on TIMPS cameras, the preview video itself is a PTZ control -- click or tap a spot in the frame and the camera pans/tilts so that point moves to the center, with the motors UI syncing its settings panel in real time. Moving to a preset names it in the toast, the active preset highlight tolerates motor settle drift, and the arrows/joystick controls remain for fine adjustment.
 
 ## Presets
 
-The Web UI includes a **PTZ Presets** card on **Settings -> Pan/Tilt Motors**: move the camera to a position, give it a description, and save it. Presets are stored in the `motors.presets` array of `/etc/thingino.json` (each entry has a stable numeric `id`, a free-form `description`, and `x`/`y` coordinates) and can be edited and reordered in a **PTZ settings modal**. The id never changes on reorder or rename, and ONVIF clients see a stable token (`PresetToken_<id>`); builds from 2026-09-20 also report your description as the preset **name**, so NVRs like Frigate show the labels you set instead of generic `preset_N` entries. Preset edits made in the preview-page PTZ settings modal persist from 2026-09-20 builds too (they used to vanish on restart -- only the settings-page card wrote to disk). The **first preset doubles as the initial point** -- the motor daemon parks the camera at presets[0] on boot. `ptz_presets` CLI management still works (`-g`/`-a`/`-r`/`-o` reorder), and upgraded cameras import an existing `/etc/ptz_presets.conf` once, automatically.
+The Web UI includes a **PTZ Presets** card on **Settings -> Pan/Tilt Motors**: move the camera to a position, give it a description, and save it. Presets are stored in the `motors.presets` array of `/etc/thingino.json` (each entry has a stable numeric `id`, a free-form `description`, and `x`/`y` coordinates) and can be edited and reordered in a **PTZ settings modal**. The id never changes on reorder or rename, ONVIF clients see a stable token (`PresetToken_<id>`), and your description is reported as the preset **name**, so NVRs like Frigate show the labels you set instead of generic `preset_N` entries. Preset edits made in the preview-page PTZ settings modal persist across restarts. The **first preset doubles as the initial point** -- the motor daemon parks the camera at presets[0] on boot. `ptz_presets` CLI management still works (`-g`/`-a`/`-r`/`-o` reorder), and a pre-existing `/etc/ptz_presets.conf` is imported once, automatically.
 
 ## MQTT / Home Assistant
 
@@ -39,26 +39,20 @@ VCM (Voice Coil Motor) focus control uses the `dw9714-ctrl` script.
 
 ### Motor Direction Inversion
 
-**Ciao builds (Aug 24, 2026+) and current master:** the long-standing direction bugs are fixed, but the fix changed how inversion is expressed on GPIO/TCU cameras (commit `419eb8667`):
+Direction is determined by camera type:
 
-- **SPI motor cameras** (Tapo C200 class): `invert_x` / `invert_y` remain kernel module params in `/etc/thingino.json` and work as documented.
-- **GPIO/TCU stepper cameras** (Cinnado D1 class): tilt direction is now defined by the *pin order* of `gpio_tilt` in the camera profile -- `invert_y` is ignored entirely. If your tilt moves the wrong way, swap the two pins in `motors.gpio_tilt` instead. Profiles that previously used `invert_y:true` as a wiring fixup were migrated in the same commit.
+- **SPI motor cameras** (Tapo C200 class): `invert_x` / `invert_y` are kernel module params in `/etc/thingino.json` and work as documented.
+- **GPIO/TCU stepper cameras** (Cinnado D1 class): tilt direction is defined by the *pin order* of `gpio_tilt` in the camera profile -- `invert_y` is ignored entirely. If your tilt moves the wrong way, swap the two pins in `motors.gpio_tilt` instead.
 
 ```sh
 jct /etc/thingino.json get motors.gpio_tilt
 ```
 
-The earlier double-inversion bug (init script re-applying the daemon's inversion, making the setting a no-op) and the position-counter overshoot are fixed on all motor types; the runtime `motors -I x/y` block for non-SPI cameras was removed from `S59motor`.
-
-**Pan/tilt dead after an upside-down correction (fixed 2026-10-24, master + ciao):** on SPI-motor cameras (Tapo C200 class), the old builds delivered the `invert_y` setting to the kernel module *and* re-applied it in the motor daemon -- the two flips cancelled out (setting seemed to do nothing), and on top of that the boot-time homing sweep ran with the flipped direction, overshot, and the daemon clamped the tilt counter so the camera would not move vertically until reboot. The init script no longer passes invert params to the kernel module (fw commits `f083382c1` / `4654b3d32`): one `motors.invert_y true` + reboot now behaves as documented.
-
-**Fixed 2026-10-03 (ciao `277805e1b`): pan/tilt stopped responding until reboot.** The motor service's stop routine could not actually stop the daemon (its PID file was stale from the moment it was written, because the daemon forks itself into the background), so a restart left the old daemon running with the kernel driver removed underneath it -- PTZ then went dead until the camera was rebooted. Stop now finds the real PID and kills it before unloading the module; a stale `S59motor restart` no longer breaks motors on any camera that has panned at least once.
-
-**Fixed 2026-10-24 (master `164e67dde`, issue #1536): motor daemon wedge during motion.** On some boards a stop command during motion could wedge `motors-daemon` in an unrecoverable kernel wait: the daemon went D-state, pan/tilt stayed frozen, and only a power cycle brought it back. The daemon now bails out of the stop path before entering that state; such a stop leaves the camera responsive (worst case the move continues to its target or parks). 2026-10-04+ master builds only.
+A flip set via `motors.invert_y` takes effect on reboot; the stop routine finds the real daemon PID and kills it before unloading the kernel module, so a restart does not leave PTZ dead, and a stop command during motion bails out before the daemon can enter the kernel wait that leaves `motors-daemon` stuck in D-state (worst case the move continues to its target or parks, and the camera stays responsive).
 
 ### Upside-Down Mounts
 
-If the camera is mounted upside-down and you compensate with **Image Flip** (hflip/vflip) in the streamer, the motor directions now follow the on-screen picture automatically. The streamer's `image.hflip` / `image.vflip` are combined with `invert_x` / `invert_y`, so a flipped mount needs no hand-tuned motor inversion:
+If the camera is mounted upside-down and you compensate with **Image Flip** (hflip/vflip) in the streamer, the motor directions follow the on-screen picture automatically. The streamer's `image.hflip` / `image.vflip` are combined with `invert_x` / `invert_y`, so a flipped mount needs no hand-tuned motor inversion:
 
 ```
 net_x = invert_x XOR hflip
