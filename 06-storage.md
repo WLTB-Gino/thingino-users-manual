@@ -17,6 +17,8 @@ SD card support on XBurst2 SoCs (T40/T41) works via the MSC controller. Cameras 
 
 After an unclean stop -- a crash, a power cut, or a watchdog restart -- the boot script clears stale recorder state, so if **Motion recording** is enabled it resumes automatically once the camera comes back. No action is needed.
 
+**A full card does not take recording down.** When the SD card fills up, the recorder and recording manager handle the card-full condition cleanly instead of crashing or wedging the stream, and the cause is visible in the recorder's status. Free up space (or let automatic pruning do it) and recording continues.
+
 ## NFS Network Storage
 
 Thingino supports NFS v2/v3 (not v4). NFS storage is **opt-in**: the share is not mounted at boot unless enabled. Configure it with the nested `nfs` object:

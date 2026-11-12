@@ -33,6 +33,8 @@ mpv rtsp://thingino:thingino@192.168.1.10:554/ch0 \
 
 When available, WebRTC provides ultra-low-latency live view in the Web UI. The camera's streaming daemon handles WebRTC negotiation automatically.
 
+On Raptor builds the preview page adds **digital zoom buttons** (1x to 4x). Zoom-in is applied in place; zoom-out may restart the streamer out-of-process (WebRTC buffers cannot grow in place), and the page reloads afterwards so the session reconnects at the new resolution. The buttons only appear when the running streamer supports zoom, and the currently applied level is marked.
+
 ### WebRTC / WHEP on TIMPS
 
 TIMPS serves a standard **WHEP** endpoint (WebRTC-HTTP Egress Protocol): a player POSTs an SDP offer to the camera and receives H.264 video (plus audio) over ICE-lite/DTLS-SRTP -- no plugin, and none of the MSE buffering the fMP4 preview has.

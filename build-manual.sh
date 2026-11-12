@@ -1,5 +1,7 @@
 #!/bin/bash
-cd /home/gino/.gino/workspace/thingino-users-manual-repo
+# Regenerate manual.md from the chapter files in this repo.
+# Run from the repo root: ./build-manual.sh
+cd "$(dirname "$0")" || exit 1
 {
 cat 01-overview.md
 echo
@@ -28,5 +30,5 @@ echo
 cat 13-troubleshooting.md
 echo
 cat 14-glossary.md
-} > /home/gino/.gino/workspace/thingino-users-manual/manual.md
+} > manual.md
 echo "done"

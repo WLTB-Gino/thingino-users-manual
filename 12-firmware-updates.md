@@ -47,7 +47,7 @@ The default backup list includes `/etc/thingino.json`, TIMPS streamer settings (
 The most reliable update method, especially for cameras with unreliable WiFi:
 
 1. Download the firmware `.bin` for your camera from [thingino.com](https://thingino.com) or build it with the [Image Builder](https://image-builder.thingino.com/)
-2. Copy it to a FAT32 SD card as `autoupdate-full.bin`
+2. Copy it to a FAT32 SD card (MBR partition table) as `autoupdate-full.bin`
 3. Insert the SD card and reboot the camera
 4. The camera flashes automatically on boot
 
