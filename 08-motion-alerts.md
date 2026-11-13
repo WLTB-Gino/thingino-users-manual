@@ -45,7 +45,9 @@ Enable via the Web UI under **Tools** or through `jct /etc/prudynt.json`.
 
 **Snapshots and clips land with readable permissions:** storage uploads (SD card or NFS, including the test snapshot) are written mode 644, so whatever lands in your share is readable by your NVR, HA, or other local users. On older builds the workaround was `find /mnt/... -name '*.jpg' -perm 600 -exec chmod a+r {} +`.
 
-Motion events are suppressed while pan/tilt motors are active: the motors daemon publishes `/run/motors-active` while a move is in flight, and every streamer's motion bridge (Prudynt, Raptor, TIMPS) checks it, so panning the camera does not fire false motion alerts or clips.
+**Motion events are suppressed while pan/tilt motors are active:** the motors daemon publishes `/run/motors-active` while a move is in flight, and every streamer's motion bridge (Prudynt, Raptor, TIMPS) checks it, so panning the camera does not fire false motion alerts or clips.
+
+**Notification targets with special characters work reliably:** destination paths, captions, filenames, and credentials containing spaces or shell metacharacters are passed to the upload tools verbatim. Related behavior fixes: FTP uploads continue past a failed file and the script exits nonzero if anything failed (so your pipeline can detect partial uploads), ntfy picks the right scheme for `https://` targets and titles attachments with their file name, storage recordings land in paths relative to the configured template with readable permissions even when the write fails partway, and Telegram captions are JSON-escaped and file uploads use the document endpoint.
 
 ## send2 Toolkit Architecture (master)
 

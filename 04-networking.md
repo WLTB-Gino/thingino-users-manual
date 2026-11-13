@@ -104,7 +104,9 @@ Thingino includes an optional **thingino-snmpd** package (mini-snmpd 2.0) for SN
 
 Thingino supports VPN solutions for remote access:
 
-- **WireGuard** -- Included by default in all releases
+**Tailscale** -- Available in custom builds (a [wiki page](https://github.com/themactep/thingino-firmware/wiki/VPN:-Tailscale) covers setup). The firmware now enables the TUN kernel module automatically, so the tunnel interface works without a manual kernel tweak on recent builds.
+
+**WireGuard** -- Included by default in all releases
 - **ZeroTier** -- Available in custom builds for cameras with 16MB flash. See the [ZeroTier wiki page](https://github.com/themactep/thingino-firmware/wiki/VPN:-Zerotier)
 
 > **Note:** OpenVPN is not tested or promoted. Use WireGuard for VPN access.

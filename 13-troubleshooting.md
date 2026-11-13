@@ -22,7 +22,7 @@ thingino-diag -f
 thingino-diag -o -
 ```
 
-Diagnostics output redacts sensitive fields (WiFi credentials, MAC addresses, and other identifying details) for privacy, so the report is safe to share in support channels. Uploads to tb.thingino.com use HTTPS; if the upload fails, the Web UI reports the error instead of redirecting to an empty page.
+Diagnostics output redacts sensitive fields (WiFi credentials, MAC addresses, and other identifying details) for privacy, so the report is safe to share in support channels. Uploads to tb.thingino.com use HTTPS; if the upload fails, the Web UI reports the error instead of redirecting to an empty page. Recent builds also scrub the MQTT broker address and credentials from the process listing, and the WiFi network name from driver logs and scan results, before the report is written.
 
 Or via SD card: create a `.diag` file on a blank SD card and insert it into the running camera.
 

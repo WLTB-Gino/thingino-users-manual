@@ -348,7 +348,9 @@ Thingino includes an optional **thingino-snmpd** package (mini-snmpd 2.0) for SN
 
 Thingino supports VPN solutions for remote access:
 
-- **WireGuard** -- Included by default in all releases
+**Tailscale** -- Available in custom builds (a [wiki page](https://github.com/themactep/thingino-firmware/wiki/VPN:-Tailscale) covers setup). The firmware now enables the TUN kernel module automatically, so the tunnel interface works without a manual kernel tweak on recent builds.
+
+**WireGuard** -- Included by default in all releases
 - **ZeroTier** -- Available in custom builds for cameras with 16MB flash. See the [ZeroTier wiki page](https://github.com/themactep/thingino-firmware/wiki/VPN:-Zerotier)
 
 > **Note:** OpenVPN is not tested or promoted. Use WireGuard for VPN access.
@@ -814,7 +816,7 @@ At night the camera also watches the colour of the IR-lit picture (ISP AWB stati
 
 A "day" verdict must hold: a check decides "day" only once the reading has stayed on the day side for 10 seconds after settling, so drivers that report a stale exposure for a few seconds after the IR switch cannot strand the camera in day mode with the lamp off. The boot-time check waits at most 30 seconds for a steady exposure and recognises an obviously-bright scene at once. Each stream gets a keyframe about 0.8 s after an IR or IR-cut switch, once auto-exposure has settled, so players show the new scene instead of the old one until the next GOP boundary.
 
-Dawns stay calm: after a colour look the engine only re-checks while the reading is actually near the day boundary, and the overnight watchdog limit is 18 hours, so long winter nights do not end with a spurious check before dawn.
+Dawns stay calm: after a colour look the engine only re-checks while the reading is actually near the day boundary, and the overnight watchdog limit is 18 hours, so long winter nights do not end with a spurious check before dawn. In dim conditions (scenes darker than about 1.1× the night-side reference), the darker-scene timer also resets instead of counting toward a switch, which stops the camera flapping between modes on slow fades through the hysteresis zone -- the classic slow-dawn loop.
 
 Two implementation notes: timed switches and IR-probe commands (`daynight.switch_cmd`, `daynight.irprobe_cmd`) are launched with `vfork()`, so they still run on boards under memory pressure; and on T20 cameras the routine `isp_info` fallback is logged at INFO, so the Web UI health tile does not flag healthy day/night as errors. On T21 cameras running the vendor ISP driver, day/night reads exposure from the IMP library instead of the `isp_path` proc file, which that driver corrupts on read.
 
@@ -978,7 +980,9 @@ Enable via the Web UI under **Tools** or through `jct /etc/prudynt.json`.
 
 **Snapshots and clips land with readable permissions:** storage uploads (SD card or NFS, including the test snapshot) are written mode 644, so whatever lands in your share is readable by your NVR, HA, or other local users. On older builds the workaround was `find /mnt/... -name '*.jpg' -perm 600 -exec chmod a+r {} +`.
 
-Motion events are suppressed while pan/tilt motors are active: the motors daemon publishes `/run/motors-active` while a move is in flight, and every streamer's motion bridge (Prudynt, Raptor, TIMPS) checks it, so panning the camera does not fire false motion alerts or clips.
+**Motion events are suppressed while pan/tilt motors are active:** the motors daemon publishes `/run/motors-active` while a move is in flight, and every streamer's motion bridge (Prudynt, Raptor, TIMPS) checks it, so panning the camera does not fire false motion alerts or clips.
+
+**Notification targets with special characters work reliably:** destination paths, captions, filenames, and credentials containing spaces or shell metacharacters are passed to the upload tools verbatim. Related behavior fixes: FTP uploads continue past a failed file and the script exits nonzero if anything failed (so your pipeline can detect partial uploads), ntfy picks the right scheme for `https://` targets and titles attachments with their file name, storage recordings land in paths relative to the configured template with readable permissions even when the write fails partway, and Telegram captions are JSON-escaped and file uploads use the document endpoint.
 
 ## send2 Toolkit Architecture (master)
 
@@ -1307,7 +1311,7 @@ thingino-diag -f
 thingino-diag -o -
 ```
 
-Diagnostics output redacts sensitive fields (WiFi credentials, MAC addresses, and other identifying details) for privacy, so the report is safe to share in support channels. Uploads to tb.thingino.com use HTTPS; if the upload fails, the Web UI reports the error instead of redirecting to an empty page.
+Diagnostics output redacts sensitive fields (WiFi credentials, MAC addresses, and other identifying details) for privacy, so the report is safe to share in support channels. Uploads to tb.thingino.com use HTTPS; if the upload fails, the Web UI reports the error instead of redirecting to an empty page. Recent builds also scrub the MQTT broker address and credentials from the process listing, and the WiFi network name from driver logs and scan results, before the report is written.
 
 Or via SD card: create a `.diag` file on a blank SD card and insert it into the running camera.
 
