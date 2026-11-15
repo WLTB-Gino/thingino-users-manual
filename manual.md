@@ -22,7 +22,7 @@ The **open-isp** package is also integrated in master and ciao builds -- a compl
 
 ## SoC Support
 
-Thingino runs on **Ingenic** T-series SoCs (T10, T20, T21, T23, T30, T31, T32, T33, T40, T41). The first T32 camera profile is the Cinnado D1 T32LQ; builds for T32 are new and experimental. Early groundwork for **SigmaStar** (Infinity6e/SSC30KQ) support is merged, but no usable SigmaStar camera builds exist yet.
+Thingino runs on **Ingenic** T-series SoCs (T10, T20, T21, T23, T30, T31, T32, T33, T40, T41). The first T32 camera profile is the Cinnado D1 T32LQ; experimental builds now also exist for T33 boards (November 2026, OpenIMP-based). Treat both as test-quality. Early groundwork for **SigmaStar** (Infinity6e/SSC30KQ) support is merged, but no usable SigmaStar camera builds exist yet.
 
 See [thingino.com](https://thingino.com) for the full list of supported cameras.
 
@@ -224,7 +224,7 @@ Currently in the plugin system:
 - **Commands and logs**: one page with tabbed sections (Files / Logs / Info) replacing eleven separate Information entries; deep links of the `info.html?<section>` form still work
 - **Streamer pages** (OSD, streams, image, sensor, audio) -- per-streamer plugins; Prudynt pages ship with the prudynt-t package, Raptor pages with the thingino-raptor package, and TIMPS pages with the timps package
 
-Note: On master builds using Raptor there is no streamer config API. Stream settings must be edited directly in `/etc/raptor.conf` (see [Streaming and Video](05-streaming.md)). The Image Quality page controls (white balance, gain, AE compensation, flips, noise reduction and temporal noise reduction) are wired to the agent API and work in the Web UI; only stream parameters require editing `raptor.conf`. On master builds using **TIMPS** instead, the full set of streamer pages is available in the Web UI (streams, OSD, image, sensor, audio, motion, privacy, recordings, timelapse) via the timps plugin; the raw config stays at `/etc/timps.conf` under **Info -> File: timps.conf**. On ciao builds running TIMPS v1.10.1, the streamer pages also include **Crop/zoom** and **ROI** tabs on the overlays page -- a full-sensor crop editor with a draggable window and a zoom slider, plus per-region encoder quality editing -- and the Day/Night page includes an Idle-Dark card.
+Note: On master builds using Raptor there is no streamer config API. Stream settings must be edited directly in `/etc/raptor.conf` (see [Streaming and Video](05-streaming.md)). The Image Quality page controls (white balance, gain, AE compensation, flips, noise reduction and temporal noise reduction) are wired to the agent API and work in the Web UI; only stream parameters require editing `raptor.conf` (a November 2026 fix also made the noise-reduction sliders save to the keys the agent reads back -- on older builds changes silently didn't stick). On master builds using **TIMPS** instead, the full set of streamer pages is available in the Web UI (streams, OSD, image, sensor, audio, motion, privacy, recordings, timelapse) via the timps plugin; the raw config stays at `/etc/timps.conf` under **Info -> File: timps.conf**. On ciao builds running TIMPS v1.10.1, the streamer pages also include **Crop/zoom** and **ROI** tabs on the overlays page -- a full-sensor crop editor with a draggable window and a zoom slider, plus per-region encoder quality editing -- and the Day/Night page includes an Idle-Dark card. Deleting a clip on the recordings page always asks for confirmation (older builds let some browsers dismiss the dialog silently, so a stray keypress could delete a clip without visible consent).
 
 ## Settings
 
@@ -808,13 +808,13 @@ When enabled, cron entries are automatically generated for your location's sunri
 
 ### How Switching Works
 
-The daemon uses EV log2 as the primary brightness metric (T31/T23/T21/T30) or gain log2 (T20). A reading of zero is valid -- the ISP reports EV log2 as 0 at the brightest measurable scene. Configurable sample counts set how many consecutive samples must exceed the threshold before switching, and a hysteresis factor prevents flapping.
+The daemon uses EV log2 as the primary brightness metric (T31/T23/T21/T30), gain log2 (T20), or the AE expression interface (T32/T33). A reading of zero is valid -- the ISP reports EV log2 as 0 at the brightest measurable scene. Configurable sample counts set how many consecutive samples must exceed the threshold before switching, and a hysteresis factor prevents flapping.
 
-The engine works in periodic dark looks: every 45 minutes, or sooner when brightness falls 20% (`daynight.jump_pct`) below the last look, it takes a silent 8-second look with the IR illuminator off. Failed day-checks back off exponentially (1, 2, 4 ... minutes, capped at 16 minutes), and the lamps recover within 60 seconds of a failed check.
+The engine works in periodic dark looks: every 45 minutes, or sooner when brightness falls 20% (`daynight.jump_pct`) below the last look, it takes a silent 8-second look with the IR illuminator off. Failed day-checks back off exponentially (1, 2, 4 ... minutes, capped at 16 minutes), and the lamps recover within 60 seconds of a failed check. Looks whose dark reading is still far above the day-exit point are skipped outright -- there is no point paying for an IR-off look when day cannot possibly be the verdict.
 
 At night the camera also watches the colour of the IR-lit picture (ISP AWB statistics). When a lamp or dawn shifts that colour by more than `daynight.color_pct` (default 3%, 0 = off, applied live) for 20 seconds, the daemon takes an extra dark look immediately instead of waiting for the next timer look, so a weak illuminator ends night mode within about 40 seconds. Colour looks are at least 5 minutes apart and the gap doubles toward 45 minutes; with a working colour trigger the periodic look stretches to every 6 hours, so a night sees about 6 dark looks instead of 16. Every failed check teaches the daemon how much brighter that light source reads, so a living-room lamp or a neighbour's IR camera no longer buys a look pair at every brightness jump.
 
-A "day" verdict must hold: a check decides "day" only once the reading has stayed on the day side for 10 seconds after settling, so drivers that report a stale exposure for a few seconds after the IR switch cannot strand the camera in day mode with the lamp off. The boot-time check waits at most 30 seconds for a steady exposure and recognises an obviously-bright scene at once. Each stream gets a keyframe about 0.8 s after an IR or IR-cut switch, once auto-exposure has settled, so players show the new scene instead of the old one until the next GOP boundary.
+A "day" verdict must hold: a check decides "day" only once the reading has stayed on the day side for 10 seconds after settling, so drivers that report a stale exposure for a few seconds after the IR switch cannot strand the camera in day mode with the lamp off. A check that returns without any exposure reading never judges day, and if the daemon's mode disagrees with the ISP's running mode, the re-switch retries with exponential backoff until the ISP agrees for a full minute instead of re-asserting every half minute. The boot-time check waits at most 30 seconds for a steady exposure and recognises an obviously-bright scene at once. Each stream gets a keyframe about 0.8 s after an IR or IR-cut switch, once auto-exposure has settled, so players show the new scene instead of the old one until the next GOP boundary.
 
 Dawns stay calm: after a colour look the engine only re-checks while the reading is actually near the day boundary, and the overnight watchdog limit is 18 hours, so long winter nights do not end with a spurious check before dawn. In dim conditions (scenes darker than about 1.1× the night-side reference), the darker-scene timer also resets instead of counting toward a switch, which stops the camera flapping between modes on slow fades through the hysteresis zone -- the classic slow-dawn loop.
 
@@ -971,6 +971,8 @@ When motion is detected, Thingino can send alerts via:
 Enable via the Web UI under **Tools** or through `jct /etc/prudynt.json`.
 
 **Note on master builds**: `send2xmpp` is a master-branch addition; on ciao/stable only the methods listed above it are available.
+
+The XMPP and ntfy tool pages now load the standard navigation and footer (fixed November 2026); on older builds these pages could appear without the menu bar.
 
 `send2ntfy` honors the configured scheme/SSL, sends the title and priority headers correctly, and forces HTTP/1.1 (HTTP/2 uploads to ntfy.sh stall around 84%). `send2webhook` sends a raw JSON POST body for text-only messages and a proper multipart payload when a photo/video/file is attached.
 

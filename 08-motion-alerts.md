@@ -37,6 +37,8 @@ Enable via the Web UI under **Tools** or through `jct /etc/prudynt.json`.
 
 **Note on master builds**: `send2xmpp` is a master-branch addition; on ciao/stable only the methods listed above it are available.
 
+The XMPP and ntfy tool pages now load the standard navigation and footer (fixed November 2026); on older builds these pages could appear without the menu bar.
+
 `send2ntfy` honors the configured scheme/SSL, sends the title and priority headers correctly, and forces HTTP/1.1 (HTTP/2 uploads to ntfy.sh stall around 84%). `send2webhook` sends a raw JSON POST body for text-only messages and a proper multipart payload when a photo/video/file is attached.
 
 **Motion sensitivity applies to the whole frame:** when OSD burn-in splits the motion grid into horizontal strips around the timestamp, every strip honours the configured sensitivity, the timestamp exclusion zone is measured from the actually rendered timestamp, and changing the sensitivity applies without a manual restart.
