@@ -37,6 +37,8 @@ Two control modes are available under **Settings -> Pan/Tilt Motors -> Behavior 
 
 The Streamer section contains OSD editor, main stream, sub-stream, image, and sensor configuration. The sensor page reports the real SoC family.
 
+The Save button on the streamer pages (Image Quality, Main stream, Substream, Sensor) triggers exactly one save and shows one success toast -- older builds bound two handlers to the same button, so a single click saved twice and reported twice.
+
 On stable builds using Prudynt, the Web UI talks to the streamer's API through same-origin CGI endpoints on the camera itself, so the RTSP/ONVIF password form and the streamer settings pages also work when you browse the camera over HTTPS (the requests stay on the camera's own origin, so browsers do not block them as mixed content). The proxy keeps using the API key at `/etc/thingino-api.key` internally, so nothing changes for plain-HTTP users.
 
 ### OSD Editor

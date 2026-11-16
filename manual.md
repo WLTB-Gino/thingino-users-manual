@@ -112,6 +112,8 @@ tzselect -n "America/New_York"
 tzselect -i
 ```
 
+If your zone is missing from the camera's built-in list, you can define it as a raw POSIX string instead -- see [Time and Timezone](04-networking.md#time-and-timezone) in the Networking chapter.
+
 ## Factory Reset
 
 If you need to start over -- wrong WiFi credentials, misconfigured settings -- a factory reset wipes everything and returns the camera to provisioning mode:
@@ -190,6 +192,8 @@ Two control modes are available under **Settings -> Pan/Tilt Motors -> Behavior 
 ## Streamer
 
 The Streamer section contains OSD editor, main stream, sub-stream, image, and sensor configuration. The sensor page reports the real SoC family.
+
+The Save button on the streamer pages (Image Quality, Main stream, Substream, Sensor) triggers exactly one save and shows one success toast -- older builds bound two handlers to the same button, so a single click saved twice and reported twice.
 
 On stable builds using Prudynt, the Web UI talks to the streamer's API through same-origin CGI endpoints on the camera itself, so the RTSP/ONVIF password form and the streamer settings pages also work when you browse the camera over HTTPS (the requests stay on the camera's own origin, so browsers do not block them as mixed content). The proxy keeps using the API key at `/etc/thingino-api.key` internally, so nothing changes for plain-HTTP users.
 
@@ -312,6 +316,15 @@ timectl unpin-timezone      # re-enable automatic timezone
 ```
 
 All time-related paths (Web UI, WiFi portal, `tzselect`, and the DHCP client scripts) route through `timectl`. The old `dhcp.ignore_timezone` setting is migrated automatically. Docs: `docs/timezone.md` in the firmware repo.
+
+### Custom Time Zones
+
+The timezone list the camera ships with is frozen at build time, so a zone introduced or renamed after your firmware was built cannot be selected by name. For that case you can add a custom zone as a raw POSIX string (like `EST5EDT,M3.2.0,M11.1.0`):
+
+- **Web UI**: on the timezone page, use the add/update form to store a custom entry and select it; unused custom entries can be removed (removal always asks for confirmation).
+- **CLI**: `timectl set-timezone-custom "EST5EDT,M3.2.0,M11.1.0"` and `timectl remove-timezone-custom`.
+
+Custom zones are stored in `/etc/tz.user.json`, which sits on top of the read-only built-in table -- a custom entry wins when it shares a name with a built-in one. The file is included in configuration backups, so your custom zones survive firmware upgrades.
 
 ## USB Ethernet
 

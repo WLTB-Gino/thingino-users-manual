@@ -69,6 +69,15 @@ timectl unpin-timezone      # re-enable automatic timezone
 
 All time-related paths (Web UI, WiFi portal, `tzselect`, and the DHCP client scripts) route through `timectl`. The old `dhcp.ignore_timezone` setting is migrated automatically. Docs: `docs/timezone.md` in the firmware repo.
 
+### Custom Time Zones
+
+The timezone list the camera ships with is frozen at build time, so a zone introduced or renamed after your firmware was built cannot be selected by name. For that case you can add a custom zone as a raw POSIX string (like `EST5EDT,M3.2.0,M11.1.0`):
+
+- **Web UI**: on the timezone page, use the add/update form to store a custom entry and select it; unused custom entries can be removed (removal always asks for confirmation).
+- **CLI**: `timectl set-timezone-custom "EST5EDT,M3.2.0,M11.1.0"` and `timectl remove-timezone-custom`.
+
+Custom zones are stored in `/etc/tz.user.json`, which sits on top of the read-only built-in table -- a custom entry wins when it shares a name with a built-in one. The file is included in configuration backups, so your custom zones survive firmware upgrades.
+
 ## USB Ethernet
 
 Thingino supports USB Ethernet adapters out of the box:

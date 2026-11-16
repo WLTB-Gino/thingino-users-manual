@@ -49,6 +49,8 @@ tzselect -n "America/New_York"
 tzselect -i
 ```
 
+If your zone is missing from the camera's built-in list, you can define it as a raw POSIX string instead -- see [Time and Timezone](04-networking.md#time-and-timezone) in the Networking chapter.
+
 ## Factory Reset
 
 If you need to start over -- wrong WiFi credentials, misconfigured settings -- a factory reset wipes everything and returns the camera to provisioning mode:
