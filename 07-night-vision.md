@@ -61,6 +61,8 @@ Dawns stay calm: after a colour look the engine only re-checks while the reading
 
 Two implementation notes: timed switches and IR-probe commands (`daynight.switch_cmd`, `daynight.irprobe_cmd`) are launched with `vfork()`, so they still run on boards under memory pressure; and on T20 cameras the routine `isp_info` fallback is logged at INFO, so the Web UI health tile does not flag healthy day/night as errors. On T21 cameras running the vendor ISP driver, day/night reads exposure from the IMP library instead of the `isp_path` proc file, which that driver corrupts on read.
 
+One more edge case is fixed: a camera could previously stay stuck in night mode with its lamps on when a dark look's auto-exposure reading was at the sensor's limit -- that look learned nothing, so the next look (the one that actually saw daylight) also judged nothing. Railed dark readings now learn the brightness bar like any other look, so a lamp-lit night ends normally within a minute or so. Seen in the wild on T10 boards with the vendor AE engine; if your camera never left night mode despite obvious daylight, update to a current build.
+
 The Web UI Day/Night page offers an Idle-Dark card for an optional extra-dark idle night mode (off by default).
 
 ### Threshold and Tolerance
@@ -151,7 +153,7 @@ The `pulse_ms` option controls how long the GPIO pulse lasts when switching the 
 jct /etc/thingino.json set gpio.pulse_ms 10
 ```
 
-This is available on both master (Raptor) and ciao (Prudynt) branches.
+This is available on both master (Raptor) and ciao (Prudynt) branches. The default pulse is 100 ms; a stale filter that will not switch is usually a polarity (pin order) problem rather than a pulse-length one.
 
 ## IR LEDs
 

@@ -22,7 +22,7 @@ The **open-isp** package is also integrated in master and ciao builds -- a compl
 
 ## SoC Support
 
-Thingino runs on **Ingenic** T-series SoCs (T10, T20, T21, T23, T30, T31, T32, T33, T40, T41). The first T32 camera profile is the Cinnado D1 T32LQ; experimental builds now also exist for T33 boards (November 2026, OpenIMP-based). Treat both as test-quality. Early groundwork for **SigmaStar** (Infinity6e/SSC30KQ) support is merged, but no usable SigmaStar camera builds exist yet.
+Thingino runs on **Ingenic** T-series SoCs (T10, T20, T21, T23, T30, T31, T32, T33, T40, T41). The first T32 camera profile is the Cinnado D1 T32LQ; experimental builds now also exist for T33 boards (November 2026, OpenIMP-based). Treat both as test-quality. Groundwork for **SigmaStar** support is merged (Infinity6e/SSC30KQ first, the Infinity6C family added November 2026), but no usable SigmaStar camera builds exist yet.
 
 See [thingino.com](https://thingino.com) for the full list of supported cameras.
 
@@ -194,6 +194,8 @@ Two control modes are available under **Settings -> Pan/Tilt Motors -> Behavior 
 The Streamer section contains OSD editor, main stream, sub-stream, image, and sensor configuration. The sensor page reports the real SoC family.
 
 The Save button on the streamer pages (Image Quality, Main stream, Substream, Sensor) triggers exactly one save and shows one success toast -- older builds bound two handlers to the same button, so a single click saved twice and reported twice.
+
+The Web UI and its assets are cached by the browser: pages set long-lived Cache-Control headers on their tagged asset URLs and a short-lived header on HTML, so repeat visits load faster without stale pages. On ciao builds the built-in assets are served with caching as well. If a page looks stuck after a firmware update, a normal reload fetches the new assets.
 
 On stable builds using Prudynt, the Web UI talks to the streamer's API through same-origin CGI endpoints on the camera itself, so the RTSP/ONVIF password form and the streamer settings pages also work when you browse the camera over HTTPS (the requests stay on the camera's own origin, so browsers do not block them as mixed content). The proxy keeps using the API key at `/etc/thingino-api.key` internally, so nothing changes for plain-HTTP users.
 
@@ -664,6 +666,10 @@ The web server passes a player's `Range` header through to CGI scripts as `HTTP_
 
 TIMPS can optionally stream audio using the Opus codec in addition to AAC.
 
+### Audio Pipeline Fixes (vendor libimp, T31/T40/T41)
+
+On T31/T40/T41 cameras running the vendor media library, TIMPS now records from audio input device 1 -- the only device the vendor noise suppression, AGC and high-pass filters actually act on. Before this fix, `audio.ns`, `audio.agc` and `audio.high_pass` had no effect on these boards (settings appeared to do nothing). One consequence: enabling noise suppression now also enables the high-pass filter automatically where the vendor library requires it (a warning is logged). OpenIMP builds and other SoCs are unaffected. If your T31/T40/T41 camera's audio settings previously did nothing, update TIMPS and re-check -- measured on a T40 with the vendor stack, noise suppression removes roughly 21 dB of background noise.
+
 ### SSE Events
 
 Server-Sent Events at `/events` provide real-time push notifications for motion, day/night changes, and other events.
@@ -833,6 +839,8 @@ Dawns stay calm: after a colour look the engine only re-checks while the reading
 
 Two implementation notes: timed switches and IR-probe commands (`daynight.switch_cmd`, `daynight.irprobe_cmd`) are launched with `vfork()`, so they still run on boards under memory pressure; and on T20 cameras the routine `isp_info` fallback is logged at INFO, so the Web UI health tile does not flag healthy day/night as errors. On T21 cameras running the vendor ISP driver, day/night reads exposure from the IMP library instead of the `isp_path` proc file, which that driver corrupts on read.
 
+One more edge case is fixed: a camera could previously stay stuck in night mode with its lamps on when a dark look's auto-exposure reading was at the sensor's limit -- that look learned nothing, so the next look (the one that actually saw daylight) also judged nothing. Railed dark readings now learn the brightness bar like any other look, so a lamp-lit night ends normally within a minute or so. Seen in the wild on T10 boards with the vendor AE engine; if your camera never left night mode despite obvious daylight, update to a current build.
+
 The Web UI Day/Night page offers an Idle-Dark card for an optional extra-dark idle night mode (off by default).
 
 ### Threshold and Tolerance
@@ -923,7 +931,7 @@ The `pulse_ms` option controls how long the GPIO pulse lasts when switching the 
 jct /etc/thingino.json set gpio.pulse_ms 10
 ```
 
-This is available on both master (Raptor) and ciao (Prudynt) branches.
+This is available on both master (Raptor) and ciao (Prudynt) branches. The default pulse is 100 ms; a stale filter that will not switch is usually a polarity (pin order) problem rather than a pulse-length one.
 
 ## IR LEDs
 
@@ -997,7 +1005,7 @@ The XMPP and ntfy tool pages now load the standard navigation and footer (fixed 
 
 **Motion events are suppressed while pan/tilt motors are active:** the motors daemon publishes `/run/motors-active` while a move is in flight, and every streamer's motion bridge (Prudynt, Raptor, TIMPS) checks it, so panning the camera does not fire false motion alerts or clips.
 
-**Notification targets with special characters work reliably:** destination paths, captions, filenames, and credentials containing spaces or shell metacharacters are passed to the upload tools verbatim. Related behavior fixes: FTP uploads continue past a failed file and the script exits nonzero if anything failed (so your pipeline can detect partial uploads), ntfy picks the right scheme for `https://` targets and titles attachments with their file name, storage recordings land in paths relative to the configured template with readable permissions even when the write fails partway, and Telegram captions are JSON-escaped and file uploads use the document endpoint.
+**Notification attachments now carry real file names (ntfy):** motion snapshots sent via ntfy arrive named `photo-20261117-184212.jpg` (and clips as `.mp4`) instead of a raw temporary name like `send2_photo.hrzSDt`, which made iOS save them as a generic "data" file. Your ntfy tool needs no change. Related fixes: notification targets with special characters work reliably -- destination paths, captions, filenames, and credentials containing spaces or shell metacharacters are passed to the upload tools verbatim. Other related behavior fixes: FTP uploads continue past a failed file and the script exits nonzero if anything failed (so your pipeline can detect partial uploads), ntfy picks the right scheme for `https://` targets and titles attachments with their file name, storage recordings land in paths relative to the configured template with readable permissions even when the write fails partway, and Telegram captions are JSON-escaped and file uploads use the document endpoint.
 
 ## send2 Toolkit Architecture (master)
 
@@ -1341,6 +1349,16 @@ Thingino detects the image sensor by its ID at boot. If the wrong sensor driver 
 **Wyze Cam v4 sensor never detected / no video:** on some v4 units the OS04D10 sensor receives its 24 MHz master clock at too weak a GPIO drive strength, the sensor never answers on I2C, and the boot fails with "sensor undetect" -- no image. The camera profile raises the clock pin's drive strength via the device tree, and affected units detect and stream on first boot. If your v4 shows no video with a sensor-probe error in the log, update to a current build.
 
 Camera sensors **cannot** be identified visually. Check `/proc/device-info` or boot logs for the sensor model. GalaxyCore sensors (GC-prefixed) generally have better low-light performance.
+
+## Purple / Pink / Tinted Picture
+
+A purple, pink or magenta cast almost always means the IR-cut filter and the ISP colour pipeline disagree: the camera renders with IR illumination while still expecting daylight colours. Three known causes; separate them before changing settings:
+
+1. **Image mode set by hand while the board optics disagree.** The ISP `running_mode` setting only switches the colour pipeline -- the IR-cut filter and IR LEDs are moved by the day/night engine. Forcing the mode directly (script, slider, API call) without the engine leaves the filter out and the lamps on under a "day" pipeline. Let the day/night daemon switch modes, or drive its day/night commands instead of raw ISP settings.
+
+2. **TIMPS restarted (not rebooted) after running a night with day/night disabled.** With `daynight.enabled = 0` the streamer never moves the filter; a restart after dark leaves the filter out under a day pipeline. A full boot is safe (the boot script inserts the filter), so `ircut on` or a reboot clears it. With day/night enabled, TIMPS drives the filter itself at startup.
+
+3. **Sensor driver misconfigured (mirrored AND mis-coloured).** A picture that is both flipped and tinted is a sensor-driver problem, not a settings problem -- wrong flip/Bayer handling at sensor probe. Update the firmware; if it persists, the camera profile needs a driver fix, not configuration.
 
 ## WiFi Won't Connect
 

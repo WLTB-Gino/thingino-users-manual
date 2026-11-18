@@ -38,6 +38,16 @@ Thingino detects the image sensor by its ID at boot. If the wrong sensor driver 
 
 Camera sensors **cannot** be identified visually. Check `/proc/device-info` or boot logs for the sensor model. GalaxyCore sensors (GC-prefixed) generally have better low-light performance.
 
+## Purple / Pink / Tinted Picture
+
+A purple, pink or magenta cast almost always means the IR-cut filter and the ISP colour pipeline disagree: the camera renders with IR illumination while still expecting daylight colours. Three known causes; separate them before changing settings:
+
+1. **Image mode set by hand while the board optics disagree.** The ISP `running_mode` setting only switches the colour pipeline -- the IR-cut filter and IR LEDs are moved by the day/night engine. Forcing the mode directly (script, slider, API call) without the engine leaves the filter out and the lamps on under a "day" pipeline. Let the day/night daemon switch modes, or drive its day/night commands instead of raw ISP settings.
+
+2. **TIMPS restarted (not rebooted) after running a night with day/night disabled.** With `daynight.enabled = 0` the streamer never moves the filter; a restart after dark leaves the filter out under a day pipeline. A full boot is safe (the boot script inserts the filter), so `ircut on` or a reboot clears it. With day/night enabled, TIMPS drives the filter itself at startup.
+
+3. **Sensor driver misconfigured (mirrored AND mis-coloured).** A picture that is both flipped and tinted is a sensor-driver problem, not a settings problem -- wrong flip/Bayer handling at sensor probe. Update the firmware; if it persists, the camera profile needs a driver fix, not configuration.
+
 ## WiFi Won't Connect
 
 - Check reason codes in the log (see [Networking](04-networking.md))

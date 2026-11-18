@@ -286,6 +286,10 @@ The web server passes a player's `Range` header through to CGI scripts as `HTTP_
 
 TIMPS can optionally stream audio using the Opus codec in addition to AAC.
 
+### Audio Pipeline Fixes (vendor libimp, T31/T40/T41)
+
+On T31/T40/T41 cameras running the vendor media library, TIMPS now records from audio input device 1 -- the only device the vendor noise suppression, AGC and high-pass filters actually act on. Before this fix, `audio.ns`, `audio.agc` and `audio.high_pass` had no effect on these boards (settings appeared to do nothing). One consequence: enabling noise suppression now also enables the high-pass filter automatically where the vendor library requires it (a warning is logged). OpenIMP builds and other SoCs are unaffected. If your T31/T40/T41 camera's audio settings previously did nothing, update TIMPS and re-check -- measured on a T40 with the vendor stack, noise suppression removes roughly 21 dB of background noise.
+
 ### SSE Events
 
 Server-Sent Events at `/events` provide real-time push notifications for motion, day/night changes, and other events.
