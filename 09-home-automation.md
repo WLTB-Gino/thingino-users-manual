@@ -34,6 +34,8 @@ The Brightness and Day/Night State entities can be enabled or disabled independe
 
 On Raptor builds the agent adapter reads exposure and gain from Raptor's `rvd` runtime interface, and gain is reported in **dB** with a brightness entity that does not depend on daynightd. On builds that predate these changes the gain entity stays unknown.
 
+Settings are validated: invalid values sent to the configuration pages (for example a malformed boolean) are rejected instead of being written to `/etc/thingino.json`.
+
 Disable individual entities:
 
 ```sh

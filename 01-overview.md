@@ -22,7 +22,7 @@ The **open-isp** package is also integrated in master and ciao builds -- a compl
 
 ## SoC Support
 
-Thingino runs on **Ingenic** T-series SoCs (T10, T20, T21, T23, T30, T31, T32, T33, T40, T41). The first T32 camera profile is the Cinnado D1 T32LQ; experimental builds now also exist for T33 boards (November 2026, OpenIMP-based). Treat both as test-quality. Groundwork for **SigmaStar** support is merged (Infinity6e/SSC30KQ first, the Infinity6C family added November 2026), but no usable SigmaStar camera builds exist yet.
+Thingino runs on **Ingenic** T-series SoCs (T10, T20, T21, T23, T30, T31, T32, T33, T40, T41). The first T32 camera profile is the Cinnado D1 T32LQ; experimental builds now also exist for T33 boards (November 2026, OpenIMP-based). Treat both as test-quality. Groundwork for **SigmaStar** support is merged (Infinity6e/SSC30KQ first, the Infinity6C family added November 2026), but no usable SigmaStar camera builds exist yet. New profiles continue to land: the TP-Link Tapo C200 gained a T31L variant and the Noorio T110 (T41NQ) joined in November 2026.
 
 See [thingino.com](https://thingino.com) for the full list of supported cameras.
 

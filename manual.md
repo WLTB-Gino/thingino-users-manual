@@ -22,7 +22,7 @@ The **open-isp** package is also integrated in master and ciao builds -- a compl
 
 ## SoC Support
 
-Thingino runs on **Ingenic** T-series SoCs (T10, T20, T21, T23, T30, T31, T32, T33, T40, T41). The first T32 camera profile is the Cinnado D1 T32LQ; experimental builds now also exist for T33 boards (November 2026, OpenIMP-based). Treat both as test-quality. Groundwork for **SigmaStar** support is merged (Infinity6e/SSC30KQ first, the Infinity6C family added November 2026), but no usable SigmaStar camera builds exist yet.
+Thingino runs on **Ingenic** T-series SoCs (T10, T20, T21, T23, T30, T31, T32, T33, T40, T41). The first T32 camera profile is the Cinnado D1 T32LQ; experimental builds now also exist for T33 boards (November 2026, OpenIMP-based). Treat both as test-quality. Groundwork for **SigmaStar** support is merged (Infinity6e/SSC30KQ first, the Infinity6C family added November 2026), but no usable SigmaStar camera builds exist yet. New profiles continue to land: the TP-Link Tapo C200 gained a T31L variant and the Noorio T110 (T41NQ) joined in November 2026.
 
 See [thingino.com](https://thingino.com) for the full list of supported cameras.
 
@@ -341,6 +341,8 @@ Plug in the adapter and it should be recognized automatically.
 ## USB WiFi Dongles
 
 **Ralink RT5370** USB WiFi dongles are supported on master builds. Useful as a replacement radio for cams with damaged internal WiFi or where you want to reposition the antenna.
+
+**Seekwave SWT6621S / SV6160LITE** USB dongles are supported on master builds (driver added November 2026).
 
 ## mDNS / Bonjour Discovery
 
@@ -1067,6 +1069,8 @@ The Brightness and Day/Night State entities can be enabled or disabled independe
 
 On Raptor builds the agent adapter reads exposure and gain from Raptor's `rvd` runtime interface, and gain is reported in **dB** with a brightness entity that does not depend on daynightd. On builds that predate these changes the gain entity stays unknown.
 
+Settings are validated: invalid values sent to the configuration pages (for example a malformed boolean) are rejected instead of being written to `/etc/thingino.json`.
+
 Disable individual entities:
 
 ```sh
@@ -1356,7 +1360,7 @@ A purple, pink or magenta cast almost always means the IR-cut filter and the ISP
 
 1. **Image mode set by hand while the board optics disagree.** The ISP `running_mode` setting only switches the colour pipeline -- the IR-cut filter and IR LEDs are moved by the day/night engine. Forcing the mode directly (script, slider, API call) without the engine leaves the filter out and the lamps on under a "day" pipeline. Let the day/night daemon switch modes, or drive its day/night commands instead of raw ISP settings.
 
-2. **TIMPS restarted (not rebooted) after running a night with day/night disabled.** With `daynight.enabled = 0` the streamer never moves the filter; a restart after dark leaves the filter out under a day pipeline. A full boot is safe (the boot script inserts the filter), so `ircut on` or a reboot clears it. With day/night enabled, TIMPS drives the filter itself at startup.
+2. **TIMPS restarted (not rebooted) after running a night with day/night disabled.** With `daynight.enabled = 0` the streamer never moves the filter; a restart after dark -- or after a kernel-module swap on a test camera -- leaves the filter out under a day pipeline. A full boot is safe (the boot script inserts the filter), so `ircut on` or a reboot clears it. With day/night enabled, TIMPS drives the filter itself at startup. Reproduced on a T10 in a light box.
 
 3. **Sensor driver misconfigured (mirrored AND mis-coloured).** A picture that is both flipped and tinted is a sensor-driver problem, not a settings problem -- wrong flip/Bayer handling at sensor probe. Update the firmware; if it persists, the camera profile needs a driver fix, not configuration.
 

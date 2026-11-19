@@ -92,6 +92,8 @@ Plug in the adapter and it should be recognized automatically.
 
 **Ralink RT5370** USB WiFi dongles are supported on master builds. Useful as a replacement radio for cams with damaged internal WiFi or where you want to reposition the antenna.
 
+**Seekwave SWT6621S / SV6160LITE** USB dongles are supported on master builds (driver added November 2026).
+
 ## mDNS / Bonjour Discovery
 
 Thingino cameras advertise themselves on the local network via mDNS (Bonjour/Avahi). The service type is `_thingino._tcp`, broadcast on the camera's HTTP port.
