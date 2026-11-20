@@ -38,6 +38,8 @@ Thingino includes an optional **thingino-snmpd** package (mini-snmpd 2.0) for ne
 
 Some cameras ship with eFuse secure boot locked: Wyze Cam V4, Wyze Doorbell V2, Wyze Cam Pan 3/4, and select Galayou, Xiaomi, and Camsoy models. Thingino `master` builds patch the U-Boot SPL at build time (the `secureboop` package) so firmware images boot on these SoCs. Models on T23/T32/T40/T41 need no extra data; T31-based locked models additionally require the vendor RSA modulus extracted from a stock flash dump.
 
+Note: the Wyze Cam Pan v3 profiles moved to the experimental camera group in November 2026 -- the port is not finished, support is not offered for them yet, and they are served only when you select the experimental branch in the image builder. Expect nothing to work until the port completes and the profiles return to the main group.
+
 ## Community
 
 - **Telegram**: https://t.me/thingino
@@ -149,6 +151,12 @@ scp -O file.txt root@hostname.local:/tmp/
 ```
 
 Without `-O`, OpenSSH defaults to the SFTP protocol and the transfer will fail.
+
+## Voice Announcements
+
+Cameras with a speaker can talk: press-and-hold events, configuration-portal announcements and status messages are spoken through canned voice clips (`tell` voice announcements). You may hear these during setup, when the configuration portal opens, or from the physical setup button.
+
+If the camera has no internet access, voice announcements are unavailable; newer builds (November 2026) say so audibly with a dedicated "voice announcements need internet access" clip instead of staying silent. If your camera unexpectedly plays this clip, check that it has a working route to the internet -- announcements download or resolve what they need online before speaking.
 
 ---
 
@@ -264,6 +272,8 @@ wlan reset
 ```
 
 A reboot is required after changing WiFi credentials.
+
+For security, the network page never shows the stored WiFi password: the field is always blank and the password is never sent back to the browser. Leave the field empty to keep the current password; type a new one only when you want to change it.
 
 ### Pre-configuring WiFi via SD Card
 
@@ -1219,6 +1229,10 @@ GPIO pins for SD card power and WiFi modules are configured in `/etc/thingino.js
 
 **Finding pins:** the `gpio scan` command sweeps every free pin as an input and reports which ones change state -- handy when populating `gpio.mmc_power` or `gpio.wlan` on an undocumented board. Pins 55, 56 and pins referenced in `/etc/web.conf` are skipped automatically; `gpio scan 12 13` additionally leaves pins 12 and 13 alone.
 
+## Sysctl Drop-Ins
+
+Custom kernel parameters belong in drop-in files under `/etc/sysctl.d/` -- any `*.conf` file there is applied at boot by the `S00sysctl` boot script (sysctl keys use dot-separated names, one `key = value` pair per line, for example `net.ipv4.tcp_syncookies = 1`). The main `/etc/sysctl.conf` is applied first, then the drop-ins. This is the supported place for tuning networking or VM behavior; changes made directly with `sysctl -w` at runtime are lost on reboot unless also added as a drop-in.
+
 ## Hostname
 
 The hostname suffix is derived at boot from the SoC serial number (same function that generates the MAC), and it is never regenerated from a later MAC change. A custom hostname set via `conf s hostname` is stored in the provisioning key/value store and applied on boot.
@@ -1388,6 +1402,10 @@ On stable (Prudynt) builds, the Web UI talks directly to the streamer API on por
 - Check that the streamer is running: `pidof prudynt_t`
 - Verify the API key exists: `cat /etc/thingino-api.key`
 - You may need to update to a current build
+
+### Intentionally Rejected Saves
+
+Since the November 2026 hardening, the Web UI rejects some saves on purpose. If a settings page refuses to save, check the value it complained about: malformed IPv4/IPv6 addresses, invalid DNS server entries, invalid booleans and other malformed values are rejected with an error message instead of being written to the config. Enter a valid value and save again; a save that silently succeeded in an older build but produced a broken config now fails loudly instead.
 
 ## Unbricking
 

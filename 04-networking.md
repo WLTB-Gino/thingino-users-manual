@@ -15,6 +15,8 @@ wlan reset
 
 A reboot is required after changing WiFi credentials.
 
+For security, the network page never shows the stored WiFi password: the field is always blank and the password is never sent back to the browser. Leave the field empty to keep the current password; type a new one only when you want to change it.
+
 ### Pre-configuring WiFi via SD Card
 
 Place a `runonce.sh` script on the SD card root:

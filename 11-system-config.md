@@ -39,6 +39,10 @@ GPIO pins for SD card power and WiFi modules are configured in `/etc/thingino.js
 
 **Finding pins:** the `gpio scan` command sweeps every free pin as an input and reports which ones change state -- handy when populating `gpio.mmc_power` or `gpio.wlan` on an undocumented board. Pins 55, 56 and pins referenced in `/etc/web.conf` are skipped automatically; `gpio scan 12 13` additionally leaves pins 12 and 13 alone.
 
+## Sysctl Drop-Ins
+
+Custom kernel parameters belong in drop-in files under `/etc/sysctl.d/` -- any `*.conf` file there is applied at boot by the `S00sysctl` boot script (sysctl keys use dot-separated names, one `key = value` pair per line, for example `net.ipv4.tcp_syncookies = 1`). The main `/etc/sysctl.conf` is applied first, then the drop-ins. This is the supported place for tuning networking or VM behavior; changes made directly with `sysctl -w` at runtime are lost on reboot unless also added as a drop-in.
+
 ## Hostname
 
 The hostname suffix is derived at boot from the SoC serial number (same function that generates the MAC), and it is never regenerated from a later MAC change. A custom hostname set via `conf s hostname` is stored in the provisioning key/value store and applied on boot.

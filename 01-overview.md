@@ -38,6 +38,8 @@ Thingino includes an optional **thingino-snmpd** package (mini-snmpd 2.0) for ne
 
 Some cameras ship with eFuse secure boot locked: Wyze Cam V4, Wyze Doorbell V2, Wyze Cam Pan 3/4, and select Galayou, Xiaomi, and Camsoy models. Thingino `master` builds patch the U-Boot SPL at build time (the `secureboop` package) so firmware images boot on these SoCs. Models on T23/T32/T40/T41 need no extra data; T31-based locked models additionally require the vendor RSA modulus extracted from a stock flash dump.
 
+Note: the Wyze Cam Pan v3 profiles moved to the experimental camera group in November 2026 -- the port is not finished, support is not offered for them yet, and they are served only when you select the experimental branch in the image builder. Expect nothing to work until the port completes and the profiles return to the main group.
+
 ## Community
 
 - **Telegram**: https://t.me/thingino

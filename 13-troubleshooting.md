@@ -73,6 +73,10 @@ On stable (Prudynt) builds, the Web UI talks directly to the streamer API on por
 - Verify the API key exists: `cat /etc/thingino-api.key`
 - You may need to update to a current build
 
+### Intentionally Rejected Saves
+
+Since the November 2026 hardening, the Web UI rejects some saves on purpose. If a settings page refuses to save, check the value it complained about: malformed IPv4/IPv6 addresses, invalid DNS server entries, invalid booleans and other malformed values are rejected with an error message instead of being written to the config. Enter a valid value and save again; a save that silently succeeded in an older build but produced a broken config now fails loudly instead.
+
 ## Unbricking
 
 ### Soft Brick (Bootloader Works)

@@ -87,6 +87,12 @@ scp -O file.txt root@hostname.local:/tmp/
 
 Without `-O`, OpenSSH defaults to the SFTP protocol and the transfer will fail.
 
+## Voice Announcements
+
+Cameras with a speaker can talk: press-and-hold events, configuration-portal announcements and status messages are spoken through canned voice clips (`tell` voice announcements). You may hear these during setup, when the configuration portal opens, or from the physical setup button.
+
+If the camera has no internet access, voice announcements are unavailable; newer builds (November 2026) say so audibly with a dedicated "voice announcements need internet access" clip instead of staying silent. If your camera unexpectedly plays this clip, check that it has a working route to the internet -- announcements download or resolve what they need online before speaking.
+
 ---
 
 <- [Previous: Overview](01-overview.md) | [Next: Web UI](03-web-ui.md) ->
