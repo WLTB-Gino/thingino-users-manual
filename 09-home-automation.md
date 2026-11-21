@@ -48,6 +48,48 @@ Discovery topics use a sanitized node id derived from the hostname: HA silently 
 
 The HA integration also auto-discovers the camera's **sensor model** and **device model** from `/etc/os-release`, so the correct hardware name appears in HA automatically.
 
+## Programmable buttons
+
+Cameras and doorbells with a physical button expose it as a Linux input key. The `thingino-button` service watches the button and runs shell commands from `/etc/thingino-button.conf` when it is pressed, released, or held.
+
+Rules are one per line:
+
+```
+KEY_<name> <action> <seconds> <command>
+```
+
+- **Key names:** `KEY_0` through `KEY_9`, `KEY_MINUS`, and `KEY_ENTER`. Doorbell products map the doorbell button to `KEY_1`; the setup button on most cameras is `KEY_ENTER`.
+- **Actions:**
+  - `PRESS 0` -- command runs the moment the button goes down.
+  - `RELEASE 0` -- command runs when the button comes back up.
+  - `TIMED <seconds>` -- command runs on release if the button was held at least that long. When several TIMED rules match a hold, only the one with the longest time runs.
+  - `TIMED_FIRE <seconds>` -- command runs while the button is still held, as soon as the time elapses.
+- **Command:** the rest of the line, run through `/bin/sh`.
+
+On Wyze doorbells, `KEY_1` ships configured to ring the chime (`doorbell_event button_press`) and play a local doorbell sound. Rules you append run alongside those.
+
+### Example: webhook on doorbell press
+
+```sh
+echo KEY_1 RELEASE 0 send2webhook -u http://192.168.1.10:9000/hooks/chime -m \'{"action":"chime"}\' >> /etc/thingino-button.conf
+/etc/init.d/S15thingino-button restart
+```
+
+Notes:
+
+- `PRESS` and `RELEASE` differ only by the physical press duration (typically 0.1--0.3 seconds). Either is fine on a doorbell button.
+- On setup buttons, prefer `TIMED` rules for user commands: `PRESS` and `RELEASE` fire on every press, including the long-press maintenance holds (a 5 second hold resets wireless, a 20 second hold factory-resets the camera), while a `TIMED` rule below those thresholds stays silent whenever a longer hold action claims the event. When two TIMED rules share the same duration, the one listed first in the file wins.
+- Keep each rule on its own line, and add it once -- re-running the `echo` line duplicates the rule and the command fires twice per press.
+- The file lives on the writable overlay: rules survive reboots but a firmware reflash resets them.
+
+### Seeing button events
+
+```sh
+logread | grep thingino-button
+```
+
+Each press logs the detected key code and which rule fired.
+
 ## MQTT
 
 Thingino includes `mosquitto_pub` and `mosquitto_sub` clients. Configure broker settings under **Services -> MQTT Subscriptions** in the Web UI.
