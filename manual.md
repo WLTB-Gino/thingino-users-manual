@@ -562,7 +562,7 @@ convert logo-100x30-alpha.png -depth 8 bgra:logo.bgra
 
 ## TIMPS (Alternative Streamer)
 
-TIMPS (Tiny IMP Streamer) is a lightweight streamer available as an alternative to Prudynt/Raptor. The boot script runs `timpsd --check-libs`, which refuses to start against a mismatched `libimp` instead of crashing later. Notable streaming behavior:
+TIMPS (Tiny IMP Streamer) is a lightweight streamer available as an alternative to Prudynt/Raptor. Since 1.13.0 the boot script no longer runs `timpsd --check-libs` as a separate preflight step: the daemon runs the same libimp check itself and exits with the same codes (lines under `LIBIMP` in syslog). Init scripts that follow it start about two seconds sooner. Notable streaming behavior:
 
 - A dropped P-frame triggers an instant keyframe recovery request across all transports -- RTSP, SRT, WebRTC and fMP4 -- instead of leaving a smeared picture until the next natural keyframe.
 - RTSP-over-UDP clients that reconnect from a new source port (NAT rebinding) keep receiving video without a client restart.
@@ -582,7 +582,7 @@ TIMPS exposes a live control API at `http://<camera-ip>:8880/control` (GET to re
 - Take snapshots
 - Encoder rate-control knobs (qp, min/max QP, quality_lvl, i_bias_lvl, fluc_lvl) -- applied live where the SoC allows (`caps.video_live` advertises which keys apply live), with `deferred_keys` in the reply naming anything that waits for a restart; `caps.restart` lists the keys that need a `S95timps` restart
 - `encoder.<n>.rc` readback showing what the encoder actually holds right now, so writes can be verified against reality
-- The auto `sensor.fps` cap follows the fastest enabled `videoN.fps`
+- The auto `sensor.fps` cap follows the fastest enabled `videoN.fps`; POSTing a `sensor.fps` value above 0 retimes the sensor live -- no restart needed, the AE cap reference is re-learned automatically. A top-level `"persist":false` in a POST applies its values without writing `/etc/timps.conf` (counted in `not_persisted` in the reply) -- for board scripts such as a day/night hook that runs the sensor at 15 fps at night.
 - Config writes to flash are batched to at most once per 3 s (`persist_pending` in the status), so slider drags and automations do not hammer the flash
 
 Config changes through the API are applied atomically, so adjusting stream parameters while streaming cannot corrupt internal state. POST replies carry a per-key `errors` object with numeric codes; value rejection is reported as `409`, and an empty string clears a text field. `GET /control` advertises what the build can do (`caps.*`) instead of refusing without explanation.
@@ -923,6 +923,14 @@ On some boards (Wyze Cam v4 / OS04D10 tested) `ae_luma` is pinned near a constan
 
 On ciao (Prudynt) builds, night-mode FPS halving is handled directly by Prudynt rather than a separate script. This produces smoother transitions and avoids brief stream interruptions when switching modes.
 
+On TIMPS builds, drive it yourself from the `daynight.switch_cmd` hook with a live FPS change (no restart):
+
+```sh
+curl -X POST http://127.0.0.1:8880/control -d '{"sensor.fps":15,"persist":false}'
+```
+
+The ISP retimes the sensor without interrupting the streamer (tested 25 <-> 15 fps live on a T30). Add `"persist":false` so hook runs do not rewrite `/etc/timps.conf` on every switch.
+
 ## IR-CUT Filter
 
 The IR-CUT filter blocks infrared light during the day for accurate colors and removes it at night to allow IR illumination. GPIO pins are configured under `gpio.ircut` in `/etc/thingino.json`.
@@ -1092,6 +1100,48 @@ All MQTT topics use the prefix `cameras/<hostname>/`. The camera's **hostname** 
 Discovery topics use a sanitized node id derived from the hostname: HA silently drops discovery topics whose node id contains characters outside `a-zA-Z0-9_-`, so an FQDN-style hostname like `cam-hall.rdw.one` is sanitized for discovery only -- state topics still use the full hostname -- and such cameras appear correctly in HA.
 
 The HA integration also auto-discovers the camera's **sensor model** and **device model** from `/etc/os-release`, so the correct hardware name appears in HA automatically.
+
+## Programmable buttons
+
+Cameras and doorbells with a physical button expose it as a Linux input key. The `thingino-button` service watches the button and runs shell commands from `/etc/thingino-button.conf` when it is pressed, released, or held.
+
+Rules are one per line:
+
+```
+KEY_<name> <action> <seconds> <command>
+```
+
+- **Key names:** `KEY_0` through `KEY_9`, `KEY_MINUS`, and `KEY_ENTER`. Doorbell products map the doorbell button to `KEY_1`; the setup button on most cameras is `KEY_ENTER`.
+- **Actions:**
+  - `PRESS 0` -- command runs the moment the button goes down.
+  - `RELEASE 0` -- command runs when the button comes back up.
+  - `TIMED <seconds>` -- command runs on release if the button was held at least that long. When several TIMED rules match a hold, only the one with the longest time runs.
+  - `TIMED_FIRE <seconds>` -- command runs while the button is still held, as soon as the time elapses.
+- **Command:** the rest of the line, run through `/bin/sh`.
+
+On Wyze doorbells, `KEY_1` ships configured to ring the chime (`doorbell_event button_press`) and play a local doorbell sound. Rules you append run alongside those.
+
+### Example: webhook on doorbell press
+
+```sh
+echo KEY_1 RELEASE 0 send2webhook -u http://192.168.1.10:9000/hooks/chime -m \'{"action":"chime"}\' >> /etc/thingino-button.conf
+/etc/init.d/S15thingino-button restart
+```
+
+Notes:
+
+- `PRESS` and `RELEASE` differ only by the physical press duration (typically 0.1--0.3 seconds). Either is fine on a doorbell button.
+- On setup buttons, prefer `TIMED` rules for user commands: `PRESS` and `RELEASE` fire on every press, including the long-press maintenance holds (a 5 second hold resets wireless, a 20 second hold factory-resets the camera), while a `TIMED` rule below those thresholds stays silent whenever a longer hold action claims the event. When two TIMED rules share the same duration, the one listed first in the file wins.
+- Keep each rule on its own line, and add it once -- re-running the `echo` line duplicates the rule and the command fires twice per press.
+- The file lives on the writable overlay: rules survive reboots but a firmware reflash resets them.
+
+### Seeing button events
+
+```sh
+logread | grep thingino-button
+```
+
+Each press logs the detected key code and which rule fired.
 
 ## MQTT
 

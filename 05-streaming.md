@@ -170,7 +170,7 @@ convert logo-100x30-alpha.png -depth 8 bgra:logo.bgra
 
 ## TIMPS (Alternative Streamer)
 
-TIMPS (Tiny IMP Streamer) is a lightweight streamer available as an alternative to Prudynt/Raptor. The boot script runs `timpsd --check-libs`, which refuses to start against a mismatched `libimp` instead of crashing later. Notable streaming behavior:
+TIMPS (Tiny IMP Streamer) is a lightweight streamer available as an alternative to Prudynt/Raptor. Since 1.13.0 the boot script no longer runs `timpsd --check-libs` as a separate preflight step: the daemon runs the same libimp check itself and exits with the same codes (lines under `LIBIMP` in syslog). Init scripts that follow it start about two seconds sooner. Notable streaming behavior:
 
 - A dropped P-frame triggers an instant keyframe recovery request across all transports -- RTSP, SRT, WebRTC and fMP4 -- instead of leaving a smeared picture until the next natural keyframe.
 - RTSP-over-UDP clients that reconnect from a new source port (NAT rebinding) keep receiving video without a client restart.
@@ -190,7 +190,7 @@ TIMPS exposes a live control API at `http://<camera-ip>:8880/control` (GET to re
 - Take snapshots
 - Encoder rate-control knobs (qp, min/max QP, quality_lvl, i_bias_lvl, fluc_lvl) -- applied live where the SoC allows (`caps.video_live` advertises which keys apply live), with `deferred_keys` in the reply naming anything that waits for a restart; `caps.restart` lists the keys that need a `S95timps` restart
 - `encoder.<n>.rc` readback showing what the encoder actually holds right now, so writes can be verified against reality
-- The auto `sensor.fps` cap follows the fastest enabled `videoN.fps`
+- The auto `sensor.fps` cap follows the fastest enabled `videoN.fps`; POSTing a `sensor.fps` value above 0 retimes the sensor live -- no restart needed, the AE cap reference is re-learned automatically. A top-level `"persist":false` in a POST applies its values without writing `/etc/timps.conf` (counted in `not_persisted` in the reply) -- for board scripts such as a day/night hook that runs the sensor at 15 fps at night.
 - Config writes to flash are batched to at most once per 3 s (`persist_pending` in the status), so slider drags and automations do not hammer the flash
 
 Config changes through the API are applied atomically, so adjusting stream parameters while streaming cannot corrupt internal state. POST replies carry a per-key `errors` object with numeric codes; value rejection is reported as `409`, and an empty string clears a text field. `GET /control` advertises what the build can do (`caps.*`) instead of refusing without explanation.

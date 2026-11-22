@@ -133,6 +133,14 @@ On some boards (Wyze Cam v4 / OS04D10 tested) `ae_luma` is pinned near a constan
 
 On ciao (Prudynt) builds, night-mode FPS halving is handled directly by Prudynt rather than a separate script. This produces smoother transitions and avoids brief stream interruptions when switching modes.
 
+On TIMPS builds, drive it yourself from the `daynight.switch_cmd` hook with a live FPS change (no restart):
+
+```sh
+curl -X POST http://127.0.0.1:8880/control -d '{"sensor.fps":15,"persist":false}'
+```
+
+The ISP retimes the sensor without interrupting the streamer (tested 25 <-> 15 fps live on a T30). Add `"persist":false` so hook runs do not rewrite `/etc/timps.conf` on every switch.
+
 ## IR-CUT Filter
 
 The IR-CUT filter blocks infrared light during the day for accurate colors and removes it at night to allow IR illumination. GPIO pins are configured under `gpio.ircut` in `/etc/thingino.json`.
