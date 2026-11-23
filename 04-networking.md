@@ -107,6 +107,8 @@ This means you can discover cameras without knowing their IP address:
 
 The camera's hostname (e.g., `ing-t31x-1234.local`) is also resolvable via mDNS.
 
+The `_thingino._tcp` TXT record carries the camera's MAC address (`mac=` key) so discovery tools can identify the physical device, not just its hostname. The key updates automatically when a DHCP lease is bound or lost, and placeholder/unset MACs are skipped in favor of the next interface.
+
 The mDNS daemon watches **all** network interfaces in client mode instead of pinning to the first up non-loopback one, so interfaces that come up later are picked up automatically. In AP/captive-portal mode the daemon still pins to a single interface so phones connecting to the camera's hotspot don't get a captive-portal login prompt pushed at them.
 
 ## SNMP

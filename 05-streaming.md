@@ -117,7 +117,7 @@ service restart prudynt
 
 The Web UI SVG overlay (SEI) works on all streams when `osd.sei.enabled` is set to `true` (it is off by default and must be explicitly enabled).
 
-On Raptor (master), per-stream OSD control is a native config key: set `osd_enabled = false` under any `[streamN]` section in `raptor.conf` to drop the OSD from that stream while keeping it on others.
+On Raptor (master), per-stream OSD control is a native config key: set `osd_enabled = false` under any `[streamN]` section in `raptor.conf` to drop the OSD from that stream while keeping it on others. Note the agent side (the Web UI's streamer settings page) applies its OSD on/off choice to **both** streams at once, since the flag has no runtime toggle path.
 
 ### Streaming Behavior (Prudynt)
 

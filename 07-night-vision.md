@@ -92,6 +92,8 @@ curl http://<camera-ip>:8880/control?dn_history=1
 
 Give the daemon about 20 seconds of sustained samples before expecting a mode flip, and remember that brightness under a covered lens is bounded by the sensor's max gain. When fixed times are preferable to auto-switching, `daynight.schedule` with start/stop times is the stable fallback.
 
+The schedule window can also pin the mode *outside* its window. By default the camera returns to photosensing once the window ends (`daynight.schedule.outside = "keep"`); setting it to `"day"` or `"night"` holds that mode for the rest of the day -- for example a camera that should stay in night mode all evening after an early scheduled window. The web UI labels these fields "Window starts at" / "Window ends at".
+
 The tuning constants `probe_min_gap_s`, `probe_confirm_s`, `boot_probe` and `diagnose_thresholds` are retired: they are ignored with a warning and no longer echoed in the status output.
 
 **Real-world example (WUUK Y0510 / SC4336P):** the shipped raw-EV defaults (night >550000, day <350000) are miscalibrated for that sensor: daylight reads ~737k (misread as night) and a hand-covered lens reads ~1114k -- below the computed 1125k night line, so night mode can never engage in the dark, and because the percentage keys override raw `ev_*` values, raw thresholds alone cannot fix it. Working calibration:

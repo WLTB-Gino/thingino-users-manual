@@ -98,6 +98,20 @@ Motion publish script: `/usr/sbin/send2mqtt`
 
 **Encrypted brokers (MQTTS, port 8883):** TLS uses the OS certificate store (`--tls-use-os-certs`), so brokers with valid certificates -- a Let's Encrypt-secured Home Assistant broker, for example -- connect without extra setup.
 
+## Apple HomeKit (rhkd)
+
+Current builds include an optional native HomeKit camera daemon (`thingino-rhkd`, selected via the package menu when the raptor streamer is in use). With it enabled, the camera is added to Apple's Home app directly -- no Homebridge, no HAP-NodeJS, no bridge device:
+
+- **Live view**: H.264 video and Opus audio stream straight from raptor's rings over SRTP.
+- **Two-way audio**: the controller's audio plays through the camera speaker.
+- **Snapshots** and **HomeKit Secure Video** recording (fragmented MP4 with AAC-LC audio) via the HomeKit Data Stream.
+- **Camera settings in Home**: on/off, night vision, status light.
+- A **Services > HomeKit page** in the web UI shows the setup code and QR code.
+
+Motion-triggered recording is fed by raptor's built-in motion detection (the default "move" IVS algorithm). For the Home app to show the motion sensor -- and for Secure Video to record on motion -- motion must be switched on in `/etc/raptor.conf` (`[motion] enabled = true`). The package leaves it off by default, because that switch also controls raptor's own recording.
+
+The daemon requires the raptor stack (RVD video/JPEG rings, RAD audio ring, Opus support) and pulls in the FAAC encoder automatically.
+
 ## NVR / VMS Compatibility
 
 Thingino works with most NVR/VMS software via ONVIF or direct RTSP:

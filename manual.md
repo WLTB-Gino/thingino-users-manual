@@ -365,6 +365,8 @@ This means you can discover cameras without knowing their IP address:
 
 The camera's hostname (e.g., `ing-t31x-1234.local`) is also resolvable via mDNS.
 
+The `_thingino._tcp` TXT record carries the camera's MAC address (`mac=` key) so discovery tools can identify the physical device, not just its hostname. The key updates automatically when a DHCP lease is bound or lost, and placeholder/unset MACs are skipped in favor of the next interface.
+
 The mDNS daemon watches **all** network interfaces in client mode instead of pinning to the first up non-loopback one, so interfaces that come up later are picked up automatically. In AP/captive-portal mode the daemon still pins to a single interface so phones connecting to the camera's hotspot don't get a captive-portal login prompt pushed at them.
 
 ## SNMP
@@ -509,7 +511,7 @@ service restart prudynt
 
 The Web UI SVG overlay (SEI) works on all streams when `osd.sei.enabled` is set to `true` (it is off by default and must be explicitly enabled).
 
-On Raptor (master), per-stream OSD control is a native config key: set `osd_enabled = false` under any `[streamN]` section in `raptor.conf` to drop the OSD from that stream while keeping it on others.
+On Raptor (master), per-stream OSD control is a native config key: set `osd_enabled = false` under any `[streamN]` section in `raptor.conf` to drop the OSD from that stream while keeping it on others. Note the agent side (the Web UI's streamer settings page) applies its OSD on/off choice to **both** streams at once, since the flag has no runtime toggle path.
 
 ### Streaming Behavior (Prudynt)
 
@@ -882,6 +884,8 @@ curl http://<camera-ip>:8880/control?dn_history=1
 
 Give the daemon about 20 seconds of sustained samples before expecting a mode flip, and remember that brightness under a covered lens is bounded by the sensor's max gain. When fixed times are preferable to auto-switching, `daynight.schedule` with start/stop times is the stable fallback.
 
+The schedule window can also pin the mode *outside* its window. By default the camera returns to photosensing once the window ends (`daynight.schedule.outside = "keep"`); setting it to `"day"` or `"night"` holds that mode for the rest of the day -- for example a camera that should stay in night mode all evening after an early scheduled window. The web UI labels these fields "Window starts at" / "Window ends at".
+
 The tuning constants `probe_min_gap_s`, `probe_confirm_s`, `boot_probe` and `diagnose_thresholds` are retired: they are ignored with a warning and no longer echoed in the status output.
 
 **Real-world example (WUUK Y0510 / SC4336P):** the shipped raw-EV defaults (night >550000, day <350000) are miscalibrated for that sensor: daylight reads ~737k (misread as night) and a hand-covered lens reads ~1114k -- below the computed 1125k night line, so night mode can never engage in the dark, and because the percentage keys override raw `ev_*` values, raw thresholds alone cannot fix it. Working calibration:
@@ -1150,6 +1154,20 @@ Thingino includes `mosquitto_pub` and `mosquitto_sub` clients. Configure broker 
 Motion publish script: `/usr/sbin/send2mqtt`
 
 **Encrypted brokers (MQTTS, port 8883):** TLS uses the OS certificate store (`--tls-use-os-certs`), so brokers with valid certificates -- a Let's Encrypt-secured Home Assistant broker, for example -- connect without extra setup.
+
+## Apple HomeKit (rhkd)
+
+Current builds include an optional native HomeKit camera daemon (`thingino-rhkd`, selected via the package menu when the raptor streamer is in use). With it enabled, the camera is added to Apple's Home app directly -- no Homebridge, no HAP-NodeJS, no bridge device:
+
+- **Live view**: H.264 video and Opus audio stream straight from raptor's rings over SRTP.
+- **Two-way audio**: the controller's audio plays through the camera speaker.
+- **Snapshots** and **HomeKit Secure Video** recording (fragmented MP4 with AAC-LC audio) via the HomeKit Data Stream.
+- **Camera settings in Home**: on/off, night vision, status light.
+- A **Services > HomeKit page** in the web UI shows the setup code and QR code.
+
+Motion-triggered recording is fed by raptor's built-in motion detection (the default "move" IVS algorithm). For the Home app to show the motion sensor -- and for Secure Video to record on motion -- motion must be switched on in `/etc/raptor.conf` (`[motion] enabled = true`). The package leaves it off by default, because that switch also controls raptor's own recording.
+
+The daemon requires the raptor stack (RVD video/JPEG rings, RAD audio ring, Opus support) and pulls in the FAAC encoder automatically.
 
 ## NVR / VMS Compatibility
 
@@ -1434,6 +1452,7 @@ A purple, pink or magenta cast almost always means the IR-cut filter and the ISP
 - Ensure your WPA2 passphrase is correct
 - Try moving the camera closer to the AP
 - Verify the WiFi module's GPIO power config in `/etc/thingino.json`
+- **SSID / passphrase length limits are in BYTES, not characters**: the SSID must be at most 32 bytes and the passphrase 8--63 bytes. Multi-byte characters (accents, Cyrillic, emoji) count as 2--4 bytes each, so a name that "looks" 20 characters can exceed the 32-byte wall and be rejected -- or silently fail to match anything on SD-card provisioning files. `wlan configure` checks both limits up front and fails with a clear message; if the portal setup or SD provisioning appears to accept the credentials but the camera still won't join, count the bytes. Non-ASCII *characters* themselves are fine -- the parser accepts any bytes as long as the encoding is correct.
 
 **Boards that power WiFi through GPIOs:** some profiles use a `gpio.wlan` pin sequence to power or reset the WiFi module, and that sequence is applied on all kernel builds. If a camera's WiFi was dead from first boot with no driver error and the boot log says "Skipping WLAN GPIO toggling", update to a current build.
 

@@ -54,6 +54,7 @@ A purple, pink or magenta cast almost always means the IR-cut filter and the ISP
 - Ensure your WPA2 passphrase is correct
 - Try moving the camera closer to the AP
 - Verify the WiFi module's GPIO power config in `/etc/thingino.json`
+- **SSID / passphrase length limits are in BYTES, not characters**: the SSID must be at most 32 bytes and the passphrase 8--63 bytes. Multi-byte characters (accents, Cyrillic, emoji) count as 2--4 bytes each, so a name that "looks" 20 characters can exceed the 32-byte wall and be rejected -- or silently fail to match anything on SD-card provisioning files. `wlan configure` checks both limits up front and fails with a clear message; if the portal setup or SD provisioning appears to accept the credentials but the camera still won't join, count the bytes. Non-ASCII *characters* themselves are fine -- the parser accepts any bytes as long as the encoding is correct.
 
 **Boards that power WiFi through GPIOs:** some profiles use a `gpio.wlan` pin sequence to power or reset the WiFi module, and that sequence is applied on all kernel builds. If a camera's WiFi was dead from first boot with no driver error and the boot log says "Skipping WLAN GPIO toggling", update to a current build.
 
