@@ -40,6 +40,10 @@ Boot-time NFS mounts work reliably even when the NFS server is specified by **ho
 
 Snapshots and clips published by the notification system to storage (SD card or NFS share) are written world-readable (mode 644). Files saved by older builds keep their restrictive permissions -- a one-time `chmod 644` on the share fixes those.
 
+### RMR Recorder (master / Raptor builds)
+
+Master (Raptor) builds include an **rmr** recorder for continuous recording. Segments land under `storage_path`, which defaults to the auto-detected storage mount (SD card or NFS; `/tmp` as last resort), organized into `YYYY/MM/DD/HH` hour directories. A free-space floor (`min_free_mb`, default 20 MB) automatically deletes the oldest segments when the card or share fills up; segment length and related knobs are documented in the [Raptor config docs](https://github.com/gtxaspec/raptor-docs/blob/main/docs/config.md).
+
 ## Filesystem Overlay
 
 Thingino uses OverlayFS to provide a writable layer over the read-only root filesystem:

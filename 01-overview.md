@@ -12,7 +12,7 @@ Thingino is open source firmware that replaces the stock firmware on IP cameras 
 
 Thingino's stable release builds use **Prudynt**, the production streamer. OSD data is embedded as SEI metadata in the H.264 stream by default; ciao builds offer an optional burn-in mode that renders OSD directly into video pixels.
 
-**TIMPS** (Tiny IMP Streamer) is a lightweight alternative by Lu-Fi, available as an optional package. It offers on-demand encoding (idle at 0% CPU), a live control API (POST/GET /control), SSE event push (/events), per-stream TrueType OSD, grid motion detection (IMP_IVS), native day/night detection, privacy cover masks, local SD recording, and optional Opus audio codec. It supports RTSP Digest/HTTP Basic auth and token auth.
+**TIMPS** (Tiny IMP Streamer) is a lightweight alternative by Lu-Fi, available as an optional package. It offers on-demand encoding (idle at 0% CPU), a live control API (POST/GET /control), SSE event push (/events), per-stream TrueType OSD, grid motion detection (IMP_IVS), native day/night detection, privacy cover masks, local SD recording, and optional Opus audio codec. It supports RTSP Digest/HTTP Basic auth and token auth. On low-RAM boards recent builds ship with the **substream disabled** (`video1.enabled = 0` in `/etc/timps.conf`): only the main stream exists, ONVIF advertises no ch1, and the WebUI control bar shows a single stream. Set `video1.enabled = 1` and restart timps to bring the substream back.
 
 **Divinus** is a third, experimental streamer option: a compact proof-of-concept for T31 cameras with RTSP, a snapshot web server and fMP4 recording. Select it at build time, run it by hand and tune `/etc/divinus.yaml`; it is not yet wired into the WebUI, day/night or ONVIF the way the other two are (see [Streaming](05-streaming.md)).
 
@@ -23,6 +23,10 @@ The **open-isp** package is also integrated in master and ciao builds -- a compl
 ## SoC Support
 
 Thingino runs on **Ingenic** T-series SoCs (T10, T20, T21, T23, T30, T31, T32, T33, T40, T41). The first T32 camera profile is the Cinnado D1 T32LQ; experimental builds now also exist for T33 boards (November 2026, OpenIMP-based). Treat both as test-quality. Groundwork for **SigmaStar** support is merged (Infinity6e/SSC30KQ first, the Infinity6C family added November 2026), but no usable SigmaStar camera builds exist yet. New profiles continue to land: the TP-Link Tapo C200 gained a T31L variant and the Noorio T110 (T41NQ) joined in November 2026.
+
+## Kernel lines
+
+Newer master builds carry two kernel lines side by side. Vendor kernels (3.10.14 / 4.4.94) remain the default for existing profiles; the **mainline 7.4** line replaced the experimental 7.1-rc1 in late November 2026 and is opt-in per profile -- the Vanhua Z55 (T31X) is the first camera shipping on it. 7.4 boards get **zram swap** (lzo-rle) enabled by default, which adds usable RAM headroom on small-memory cameras. If your build is on a vendor kernel, none of this applies to you; check your kernel with `uname -r`.
 
 See [thingino.com](https://thingino.com) for the full list of supported cameras.
 

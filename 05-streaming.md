@@ -37,7 +37,7 @@ On Raptor builds the preview page adds **digital zoom buttons** (1x to 4x). Zoom
 
 ### WebRTC / WHEP on TIMPS
 
-TIMPS serves a standard **WHEP** endpoint (WebRTC-HTTP Egress Protocol): a player POSTs an SDP offer to the camera and receives H.264 video (plus audio) over ICE-lite/DTLS-SRTP -- no plugin, and none of the MSE buffering the fMP4 preview has.
+TIMPS serves a standard **WHEP** endpoint (WebRTC-HTTP Egress Protocol): a player POSTs an SDP offer to the camera and receives H.264 video (plus audio) over ICE-lite/DTLS-SRTP -- no plugin, and none of the MSE buffering the fMP4 preview has. On HTTPS builds, on-device loopback callers (heartbeat, color, snapshot) use plain HTTP automatically -- only `http.https = 2` (TLS-only mode) requires the caller to set `http.https = 1` to keep loopback calls working.
 
 ```
 POST   http://<camera-ip>:8880/webrtc/whep        # send the SDP offer, get the answer
