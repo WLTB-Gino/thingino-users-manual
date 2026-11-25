@@ -22,11 +22,11 @@ The **open-isp** package is also integrated in master and ciao builds -- a compl
 
 ## SoC Support
 
-Thingino runs on **Ingenic** T-series SoCs (T10, T20, T21, T23, T30, T31, T32, T33, T40, T41). The first T32 camera profile is the Cinnado D1 T32LQ; experimental builds now also exist for T33 boards (November 2026, OpenIMP-based). Treat both as test-quality. Groundwork for **SigmaStar** support is merged (Infinity6e/SSC30KQ first, the Infinity6C family added November 2026), but no usable SigmaStar camera builds exist yet. New profiles continue to land: the TP-Link Tapo C200 gained a T31L variant and the Noorio T110 (T41NQ) joined in November 2026.
+Thingino runs on **Ingenic** T-series SoCs (T10, T20, T21, T23, T30, T31, T32, T33, T40, T41). The first T32 camera profile is the Cinnado D1 T32LQ; experimental builds now also exist for T33 boards (November 2026, OpenIMP-based). Treat both as test-quality. Groundwork for **SigmaStar** support is merged (Infinity6e/SSC30KQ first, the Infinity6C family added November 2026), but no usable SigmaStar camera builds exist yet. New profiles continue to land: the TP-Link Tapo C200 gained a T31L variant and the Noorio T110 (T41NQ) and Noorio T120 (T41NQ, 8MP GC8613 sensor, USB Wi-Fi) joined in November 2026.
 
 ## Kernel lines
 
-Newer master builds carry two kernel lines side by side. Vendor kernels (3.10.14 / 4.4.94) remain the default for existing profiles; the **mainline 7.4** line replaced the experimental 7.1-rc1 in late November 2026 and is opt-in per profile -- the Vanhua Z55 (T31X) is the first camera shipping on it. 7.4 boards get **zram swap** (lzo-rle) enabled by default, which adds usable RAM headroom on small-memory cameras. If your build is on a vendor kernel, none of this applies to you; check your kernel with `uname -r`.
+Newer master builds carry two kernel lines side by side. Vendor kernels (3.10.14 / 4.4.94) remain the default for existing profiles; the **mainline 7.4** line replaced the experimental 7.1-rc1 in late November 2026 and is opt-in per profile -- the Vanhua Z55 (T31X) is the first camera shipping on it. The 7.4 roster has grown quickly since: the Cinnado D1 T32LQ now has a mainline variant alongside its vendor-kernel profile, the T10L (JXH42) and Wyze Cam v2 gained 7.4 profiles, and T32/T33 mainline enablement landed (still test-quality). 7.4 boards get **zram swap** (lzo-rle) enabled by default, which adds usable RAM headroom on small-memory cameras. If your build is on a vendor kernel, none of this applies to you; check your kernel with `uname -r`.
 
 See [thingino.com](https://thingino.com) for the full list of supported cameras.
 
@@ -1192,6 +1192,8 @@ Thingino works with most NVR/VMS software via ONVIF or direct RTSP:
 Note for Synology Surveillance Station: cameras can opt into compatibility shims that coax Synology's non-standard camera setup flow (synthetic CreateProfile response, deletable SynoProfileToken). On custom builds enable the `Synology Surveillance Station compatibility` package option (build-time) and set `"adv_synology_nvr": true` in `/etc/onvif.json` at runtime. Default builds stay strictly ONVIF spec-compliant.
 
 Note for Frigate + PTZ cameras: Frigate reads the camera's PTZ preset **names** from `GetPresets`, so the descriptions you set in the web UI appear in Frigate's preset menu instead of generic `preset_N` labels. Frigate keys its menu by the lowercased name and the preset token is unchanged, so existing `GotoPreset` calls keep working.
+
+Note on picky ONVIF controllers: since late November 2026, thingino's ONVIF service accepts SOAP request bodies that begin with whitespace (for example a newline before the XML envelope). A few NVR and home-automation clients emit exactly that; on older builds their discovery or control requests were rejected outright. If ONVIF discovery silently failed for one specific controller before, update the firmware and try again.
 
 ---
 

@@ -128,6 +128,8 @@ Note for Synology Surveillance Station: cameras can opt into compatibility shims
 
 Note for Frigate + PTZ cameras: Frigate reads the camera's PTZ preset **names** from `GetPresets`, so the descriptions you set in the web UI appear in Frigate's preset menu instead of generic `preset_N` labels. Frigate keys its menu by the lowercased name and the preset token is unchanged, so existing `GotoPreset` calls keep working.
 
+Note on picky ONVIF controllers: since late November 2026, thingino's ONVIF service accepts SOAP request bodies that begin with whitespace (for example a newline before the XML envelope). A few NVR and home-automation clients emit exactly that; on older builds their discovery or control requests were rejected outright. If ONVIF discovery silently failed for one specific controller before, update the firmware and try again.
+
 ---
 
 <- [Previous: Motion Detection and Alerts](08-motion-alerts.md) | [Next: PTZ (Pan-Tilt-Zoom)](10-ptz.md) ->
