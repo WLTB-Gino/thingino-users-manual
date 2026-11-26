@@ -22,7 +22,7 @@ The **open-isp** package is also integrated in master and ciao builds -- a compl
 
 ## SoC Support
 
-Thingino runs on **Ingenic** T-series SoCs (T10, T20, T21, T23, T30, T31, T32, T33, T40, T41). The first T32 camera profile is the Cinnado D1 T32LQ; experimental builds now also exist for T33 boards (November 2026, OpenIMP-based). Treat both as test-quality. Groundwork for **SigmaStar** support is merged (Infinity6e/SSC30KQ first, the Infinity6C family added November 2026), but no usable SigmaStar camera builds exist yet. New profiles continue to land: the TP-Link Tapo C200 gained a T31L variant and the Noorio T110 (T41NQ) and Noorio T120 (T41NQ, 8MP GC8613 sensor, USB Wi-Fi) joined in November 2026.
+Thingino runs on **Ingenic** T-series SoCs (T10, T20, T21, T23, T30, T31, T32, T33, T40, T41). The first T32 camera profile is the Cinnado D1 T32LQ; experimental builds now also exist for T33 boards (November 2026, OpenIMP-based). Treat both as test-quality. Groundwork for **SigmaStar** support is merged (Infinity6e/SSC30KQ first, the Infinity6C family added November 2026), but no usable SigmaStar camera builds exist yet. New profiles continue to land: the TP-Link Tapo C200 gained a T31L variant and the Noorio T110 (T41NQ) and Noorio T120 (T41NQ, 8MP GC8613 sensor, USB Wi-Fi) joined in November 2026. The Noorio T110 has since been promoted out of experimental status into the standard release builds, and the Tapo C210 profile now drives its motor GPIOs high at boot so the motors behave correctly from power-on instead of only after the motor service initializes.
 
 ## Kernel lines
 

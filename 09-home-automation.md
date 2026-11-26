@@ -106,6 +106,7 @@ Current builds include an optional native HomeKit camera daemon (`thingino-rhkd`
 - **Two-way audio**: the controller's audio plays through the camera speaker.
 - **Snapshots** and **HomeKit Secure Video** recording (fragmented MP4 with AAC-LC audio) via the HomeKit Data Stream.
 - **Camera settings in Home**: on/off, night vision, status light.
+- **One motion sensor per detection class** (rhkd 0.10+): each class the streamer detects (person, vehicle, and so on) appears as its own motion sensor in Home, so automations can trigger on *what* moved rather than just *that* something moved. Sensors are named after their detection model.
 - A **Services > HomeKit page** in the web UI shows the setup code and QR code.
 
 Motion-triggered recording is fed by raptor's built-in motion detection (the default "move" IVS algorithm). For the Home app to show the motion sensor -- and for Secure Video to record on motion -- motion must be switched on in `/etc/raptor.conf` (`[motion] enabled = true`). The package leaves it off by default, because that switch also controls raptor's own recording.

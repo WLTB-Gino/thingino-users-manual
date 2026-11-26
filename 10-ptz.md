@@ -61,6 +61,8 @@ net_y = invert_y XOR vflip
 
 Flip changes are picked up when the motor daemon reloads its config (`S59motor reload` / IPC 'R'), without a reboot.
 
+**ptz-ctrl up/down alignment (November 2026):** the `ptz-ctrl` script, used by HTTP motor shortcuts and home-automation callers, now drives up and down in the same direction as the WebUI arrow pad. On older builds the two disagreed; update if up/down commands appear swapped when driving the camera from outside the web UI.
+
 ---
 
 <- [Previous: Home Automation and Integration](09-home-automation.md) | [Next: System Configuration](11-system-config.md) ->

@@ -60,6 +60,8 @@ A purple, pink or magenta cast almost always means the IR-cut filter and the ISP
 
 **aic8800-based cameras:** the boot script waits for the interface in `ip link` output (not `/proc/net/wireless`, which only lists WEXT-capable drivers -- full-MAC cfg80211 drivers like aic8800 never appear there). If startup shows a "WiFi missing" wait delay even though `wlan0` is up, update to a current build.
 
+**aic8800 cameras dropping off WiFi (periodic blackouts):** builds from 27 November 2026 onward load the driver with power-save and U-APSD disabled (`ps_on=N uapsd_queues=0`), which stops the radio from dozing mid-conversation and getting kicked by the access point. On older builds the pattern is: camera vanishes from the network for minutes at a time, recovers on its own or after a power cycle, with no errors in the camera log. Update to a current build.
+
 **First-boot stuck at "Running pre-portal WiFi scan":** during provisioning the camera scans for networks before starting its setup hotspot. A wedged WiFi driver could hang that scan indefinitely -- the camera sits at "Running pre-portal WiFi scan" for ten minutes, never broadcasts the setup AP, and gives no login prompt. Current builds hard-bound the scan to a few seconds. On an older build: power-cycle the camera (a retry usually gets past it), then flash a current build for a permanent fix.
 
 ## WebRTC 400 Bad Request (Firefox)

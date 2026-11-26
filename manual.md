@@ -22,7 +22,7 @@ The **open-isp** package is also integrated in master and ciao builds -- a compl
 
 ## SoC Support
 
-Thingino runs on **Ingenic** T-series SoCs (T10, T20, T21, T23, T30, T31, T32, T33, T40, T41). The first T32 camera profile is the Cinnado D1 T32LQ; experimental builds now also exist for T33 boards (November 2026, OpenIMP-based). Treat both as test-quality. Groundwork for **SigmaStar** support is merged (Infinity6e/SSC30KQ first, the Infinity6C family added November 2026), but no usable SigmaStar camera builds exist yet. New profiles continue to land: the TP-Link Tapo C200 gained a T31L variant and the Noorio T110 (T41NQ) and Noorio T120 (T41NQ, 8MP GC8613 sensor, USB Wi-Fi) joined in November 2026.
+Thingino runs on **Ingenic** T-series SoCs (T10, T20, T21, T23, T30, T31, T32, T33, T40, T41). The first T32 camera profile is the Cinnado D1 T32LQ; experimental builds now also exist for T33 boards (November 2026, OpenIMP-based). Treat both as test-quality. Groundwork for **SigmaStar** support is merged (Infinity6e/SSC30KQ first, the Infinity6C family added November 2026), but no usable SigmaStar camera builds exist yet. New profiles continue to land: the TP-Link Tapo C200 gained a T31L variant and the Noorio T110 (T41NQ) and Noorio T120 (T41NQ, 8MP GC8613 sensor, USB Wi-Fi) joined in November 2026. The Noorio T110 has since been promoted out of experimental status into the standard release builds, and the Tapo C210 profile now drives its motor GPIOs high at boot so the motors behave correctly from power-on instead of only after the motor service initializes.
 
 ## Kernel lines
 
@@ -1171,6 +1171,7 @@ Current builds include an optional native HomeKit camera daemon (`thingino-rhkd`
 - **Two-way audio**: the controller's audio plays through the camera speaker.
 - **Snapshots** and **HomeKit Secure Video** recording (fragmented MP4 with AAC-LC audio) via the HomeKit Data Stream.
 - **Camera settings in Home**: on/off, night vision, status light.
+- **One motion sensor per detection class** (rhkd 0.10+): each class the streamer detects (person, vehicle, and so on) appears as its own motion sensor in Home, so automations can trigger on *what* moved rather than just *that* something moved. Sensors are named after their detection model.
 - A **Services > HomeKit page** in the web UI shows the setup code and QR code.
 
 Motion-triggered recording is fed by raptor's built-in motion detection (the default "move" IVS algorithm). For the Home app to show the motion sensor -- and for Secure Video to record on motion -- motion must be switched on in `/etc/raptor.conf` (`[motion] enabled = true`). The package leaves it off by default, because that switch also controls raptor's own recording.
@@ -1261,6 +1262,8 @@ net_y = invert_y XOR vflip
 ```
 
 Flip changes are picked up when the motor daemon reloads its config (`S59motor reload` / IPC 'R'), without a reboot.
+
+**ptz-ctrl up/down alignment (November 2026):** the `ptz-ctrl` script, used by HTTP motor shortcuts and home-automation callers, now drives up and down in the same direction as the WebUI arrow pad. On older builds the two disagreed; update if up/down commands appear swapped when driving the camera from outside the web UI.
 
 ---
 
@@ -1467,6 +1470,8 @@ A purple, pink or magenta cast almost always means the IR-cut filter and the ISP
 **Boards that power WiFi through GPIOs:** some profiles use a `gpio.wlan` pin sequence to power or reset the WiFi module, and that sequence is applied on all kernel builds. If a camera's WiFi was dead from first boot with no driver error and the boot log says "Skipping WLAN GPIO toggling", update to a current build.
 
 **aic8800-based cameras:** the boot script waits for the interface in `ip link` output (not `/proc/net/wireless`, which only lists WEXT-capable drivers -- full-MAC cfg80211 drivers like aic8800 never appear there). If startup shows a "WiFi missing" wait delay even though `wlan0` is up, update to a current build.
+
+**aic8800 cameras dropping off WiFi (periodic blackouts):** builds from 27 November 2026 onward load the driver with power-save and U-APSD disabled (`ps_on=N uapsd_queues=0`), which stops the radio from dozing mid-conversation and getting kicked by the access point. On older builds the pattern is: camera vanishes from the network for minutes at a time, recovers on its own or after a power cycle, with no errors in the camera log. Update to a current build.
 
 **First-boot stuck at "Running pre-portal WiFi scan":** during provisioning the camera scans for networks before starting its setup hotspot. A wedged WiFi driver could hang that scan indefinitely -- the camera sits at "Running pre-portal WiFi scan" for ten minutes, never broadcasts the setup AP, and gives no login prompt. Current builds hard-bound the scan to a few seconds. On an older build: power-cycle the camera (a retry usually gets past it), then flash a current build for a permanent fix.
 
